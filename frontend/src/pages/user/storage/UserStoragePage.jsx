@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useToast } from "../../../components/feedback/useToast";
 import { getApiError } from "../../../lib/api";
 import {
   addUserStorageItem,
@@ -18,6 +19,7 @@ function itemKey(value) {
 }
 
 export function UserStoragePage() {
+  const toast = useToast();
   const [storage, setStorage] = useState([]);
   const [availableItems, setAvailableItems] = useState([]);
   const [friendSuggestions, setFriendSuggestions] = useState([]);
@@ -25,13 +27,9 @@ export function UserStoragePage() {
   const [shareUrl, setShareUrl] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [status, setStatus] = useState("");
 
   async function refreshStorage() {
-    setError("");
-
-  try {
+    try {
       const [storageData, availableData, friendData] = await Promise.all([
         getUserStorage(),
         getUserStorageItems(),
@@ -41,7 +39,7 @@ export function UserStoragePage() {
       setAvailableItems(availableData || []);
       setFriendSuggestions(friendData || []);
     } catch (err) {
-      setError(getApiError(err, "Unable to load your storage"));
+      toast.error(getApiError(err, "Unable to load your storage"), { title: "Storage unavailable" });
     }
   }
 
@@ -56,7 +54,7 @@ export function UserStoragePage() {
         setFriendSuggestions(friendData || []);
       })
       .catch((err) => {
-        if (alive) setError(getApiError(err, "Unable to load your storage"));
+        if (alive) toast.error(getApiError(err, "Unable to load your storage"), { title: "Storage unavailable" });
       })
       .finally(() => {
         if (alive) setLoading(false);
@@ -65,7 +63,7 @@ export function UserStoragePage() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [toast]);
 
   const storageNames = useMemo(() => new Set(storage.map((item) => itemKey(item.item_name))), [storage]);
 
@@ -89,16 +87,14 @@ export function UserStoragePage() {
 
   async function addItem(name) {
     setSaving(true);
-    setError("");
-    setStatus("");
 
     try {
       await addUserStorageItem(name);
-      setStatus(`${name} added to your storage.`);
+      toast.success(`${name} added to your storage.`);
       setQuery("");
       await refreshStorage();
     } catch (err) {
-      setError(getApiError(err, "Unable to add item"));
+      toast.error(getApiError(err, "Unable to add item"), { title: "Item not added" });
     } finally {
       setSaving(false);
     }
@@ -106,15 +102,13 @@ export function UserStoragePage() {
 
   async function removeItem(item) {
     setSaving(true);
-    setError("");
-    setStatus("");
 
     try {
       await removeUserStorageItem(item.id);
-      setStatus(`${item.item_name} removed from storage.`);
+      toast.success(`${item.item_name} removed from storage.`);
       await refreshStorage();
     } catch (err) {
-      setError(getApiError(err, "Unable to remove item"));
+      toast.error(getApiError(err, "Unable to remove item"), { title: "Item not removed" });
     } finally {
       setSaving(false);
     }
@@ -124,15 +118,13 @@ export function UserStoragePage() {
     if (!storage.length) return;
 
     setSaving(true);
-    setError("");
-    setStatus("");
 
     try {
       await removeAllUserStorageItems();
-      setStatus("Storage cleared.");
+      toast.success("Storage cleared.");
       await refreshStorage();
     } catch (err) {
-      setError(getApiError(err, "Unable to clear storage"));
+      toast.error(getApiError(err, "Unable to clear storage"), { title: "Storage not cleared" });
     } finally {
       setSaving(false);
     }
@@ -140,15 +132,13 @@ export function UserStoragePage() {
 
   async function shareStorage() {
     setSaving(true);
-    setError("");
-    setStatus("");
 
     try {
       const data = await enableUserStorageShare();
       setShareUrl(data.app_share_url || data.share_url);
-      setStatus("Sharing enabled.");
+      toast.success("Sharing enabled.");
     } catch (err) {
-      setError(getApiError(err, "Unable to share storage"));
+      toast.error(getApiError(err, "Unable to share storage"), { title: "Sharing failed" });
     } finally {
       setSaving(false);
     }
@@ -156,15 +146,13 @@ export function UserStoragePage() {
 
   async function disableShare() {
     setSaving(true);
-    setError("");
-    setStatus("");
 
     try {
       await disableUserStorageShare();
       setShareUrl("");
-      setStatus("Sharing disabled.");
+      toast.success("Sharing disabled.");
     } catch (err) {
-      setError(getApiError(err, "Unable to disable sharing"));
+      toast.error(getApiError(err, "Unable to disable sharing"), { title: "Sharing update failed" });
     } finally {
       setSaving(false);
     }
@@ -173,20 +161,18 @@ export function UserStoragePage() {
   async function copyShareUrl() {
     if (!shareUrl) return;
     await navigator.clipboard?.writeText(shareUrl);
-    setStatus("Share link copied.");
+    toast.success("Share link copied.");
   }
 
   async function removeFriendSuggestion(suggestion) {
     setSaving(true);
-    setError("");
-    setStatus("");
 
     try {
       await removeUserStorageFriendSuggestion(suggestion.id);
       setFriendSuggestions((items) => items.filter((item) => item.id !== suggestion.id));
-      setStatus("Suggestion removed.");
+      toast.success("Suggestion removed.");
     } catch (err) {
-      setError(getApiError(err, "Unable to remove suggestion"));
+      toast.error(getApiError(err, "Unable to remove suggestion"), { title: "Suggestion not removed" });
     } finally {
       setSaving(false);
     }
@@ -210,9 +196,6 @@ export function UserStoragePage() {
           <strong>{loading ? "..." : storage.length}</strong>
         </div>
       </div>
-
-      {error ? <p className={styles.error}>{error}</p> : null}
-      {status ? <p className={styles.status}>{status}</p> : null}
 
       <section className={styles.addPanel}>
         <div>

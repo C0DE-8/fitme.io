@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { useToast } from "../../../components/feedback/useToast";
 import { getApiError } from "../../../lib/api";
 import { getFoodSuggestion } from "../../../lib/api/usersFoodApi";
 import styles from "./UserFoodDetailPage.module.css";
@@ -25,19 +26,18 @@ function buildCookingSteps(prepared) {
 
 export function UserFoodDetailPage() {
   const { type, id } = useParams();
+  const toast = useToast();
   const [food, setFood] = useState(null);
   const [chatAsked, setChatAsked] = useState(false);
   const [typing, setTyping] = useState(false);
   const [showAiResponse, setShowAiResponse] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   useEffect(() => {
     let alive = true;
 
     async function loadFood() {
       setLoading(true);
-      setError("");
 
       try {
         const data = await getFoodSuggestion(type, id);
@@ -48,7 +48,7 @@ export function UserFoodDetailPage() {
           setShowAiResponse(false);
         }
       } catch (err) {
-        if (alive) setError(getApiError(err, "Unable to load food details"));
+        if (alive) toast.error(getApiError(err, "Unable to load food details"), { title: "Food details unavailable" });
       } finally {
         if (alive) setLoading(false);
       }
@@ -59,7 +59,7 @@ export function UserFoodDetailPage() {
     return () => {
       alive = false;
     };
-  }, [id, type]);
+  }, [id, toast, type]);
 
   function askFitmeAi() {
     setChatAsked(true);
@@ -77,8 +77,6 @@ export function UserFoodDetailPage() {
       <div className={styles.topbar}>
         <Link to="/dashboard">Back</Link>
       </div>
-
-      {error ? <p className={styles.error}>{error}</p> : null}
 
       {loading ? (
         <div className={styles.skeleton}>

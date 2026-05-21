@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useToast } from "../../../components/feedback/useToast";
 import { getApiError } from "../../../lib/api";
 import { login } from "../../../lib/api/authApi";
 import { saveSession } from "../../../lib/auth";
@@ -7,27 +8,26 @@ import styles from "./AdminAuthPage.module.css";
 
 export function AdminAuthPage() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [form, setForm] = useState({ identifier: "", password: "" });
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(event) {
     event.preventDefault();
     setLoading(true);
-    setError("");
 
     try {
       const data = await login(form);
 
       if (data.user?.role !== "admin") {
-        setError("This sign in is only for admin accounts.");
+        toast.error("This sign in is only for admin accounts.", { title: "Admin access required" });
         return;
       }
 
       saveSession(data);
       navigate("/admin");
     } catch (err) {
-      setError(getApiError(err, "Admin login failed"));
+      toast.error(getApiError(err, "Admin login failed"), { title: "Admin sign in failed" });
     } finally {
       setLoading(false);
     }
@@ -70,8 +70,6 @@ export function AdminAuthPage() {
             required
           />
         </label>
-
-        {error ? <p className={styles.error}>{error}</p> : null}
 
         <button className={styles.submit} type="submit" disabled={loading}>
           {loading ? "Checking..." : "Enter admin"}

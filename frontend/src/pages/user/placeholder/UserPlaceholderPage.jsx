@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useToast } from "../../../components/feedback/useToast";
 import { getApiError } from "../../../lib/api";
 import { getUserStorage } from "../../../lib/api/userApi";
 import styles from "./UserPlaceholderPage.module.css";
@@ -12,10 +13,10 @@ const titles = {
 
 export function UserPlaceholderPage({ type }) {
   const title = titles[type] || "Dashboard";
+  const toast = useToast();
   const [storage, setStorage] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(type === "storage");
-  const [error, setError] = useState("");
 
   useEffect(() => {
     if (type !== "storage") return undefined;
@@ -24,13 +25,12 @@ export function UserPlaceholderPage({ type }) {
 
     async function loadStorage() {
       setLoading(true);
-      setError("");
 
       try {
         const data = await getUserStorage();
         if (alive) setStorage(data || []);
       } catch (err) {
-        if (alive) setError(getApiError(err, "Unable to load your storage"));
+        if (alive) toast.error(getApiError(err, "Unable to load your storage"), { title: "Storage unavailable" });
       } finally {
         if (alive) setLoading(false);
       }
@@ -41,7 +41,7 @@ export function UserPlaceholderPage({ type }) {
     return () => {
       alive = false;
     };
-  }, [type]);
+  }, [toast, type]);
 
   const filteredStorage = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -62,8 +62,6 @@ export function UserPlaceholderPage({ type }) {
             <strong>{loading ? "..." : storage.length}</strong>
           </div>
         </div>
-
-        {error ? <p className={styles.error}>{error}</p> : null}
 
         <div className={styles.storageTools}>
           <input

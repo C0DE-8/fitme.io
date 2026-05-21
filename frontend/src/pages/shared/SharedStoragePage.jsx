@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { useToast } from "../../components/feedback/useToast";
 import { getApiError } from "../../lib/api";
 import { getSharedStorage, getSharedStorageSuggestions, submitSharedStorageSuggestion } from "../../lib/api/userApi";
 import styles from "./SharedStoragePage.module.css";
@@ -13,6 +14,7 @@ const foodTypes = [
 
 export function SharedStoragePage() {
   const { shareId } = useParams();
+  const toast = useToast();
   const [username, setUsername] = useState("");
   const [storage, setStorage] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
@@ -24,8 +26,6 @@ export function SharedStoragePage() {
   const [suggesting, setSuggesting] = useState(false);
   const [pickingId, setPickingId] = useState("");
   const [error, setError] = useState("");
-  const [suggestionError, setSuggestionError] = useState("");
-  const [pickStatus, setPickStatus] = useState("");
 
   useEffect(() => {
     let alive = true;
@@ -40,7 +40,11 @@ export function SharedStoragePage() {
         setUsername(data.username || "This user");
         setStorage(data.storage || []);
       } catch (err) {
-        if (alive) setError(getApiError(err, "Unable to load shared storage"));
+        if (alive) {
+          const message = getApiError(err, "Unable to load shared storage");
+          setError(message);
+          toast.error(message, { title: "Shared storage unavailable" });
+        }
       } finally {
         if (alive) setLoading(false);
       }
@@ -51,18 +55,16 @@ export function SharedStoragePage() {
     return () => {
       alive = false;
     };
-  }, [shareId]);
+  }, [shareId, toast]);
 
   async function loadSuggestions(type = selectedType) {
     setSuggesting(true);
-    setSuggestionError("");
-    setPickStatus("");
 
     try {
       const data = await getSharedStorageSuggestions(shareId, type);
       setSuggestions(data.suggestions || []);
     } catch (err) {
-      setSuggestionError(getApiError(err, "Unable to load meal suggestions"));
+      toast.error(getApiError(err, "Unable to load meal suggestions"), { title: "Meal suggestions unavailable" });
     } finally {
       setSuggesting(false);
     }
@@ -71,23 +73,21 @@ export function SharedStoragePage() {
   async function pickSuggestion(food) {
     const friendName = suggestedByName.trim();
     if (!friendName) {
-      setSuggestionError("Enter your name so they know who suggested the meal.");
+      toast.info("Enter your name so they know who suggested the meal.", { title: "Your name is needed" });
       return;
     }
 
     setPickingId(`${food.type}-${food.id}`);
-    setSuggestionError("");
-    setPickStatus("");
 
     try {
       await submitSharedStorageSuggestion(shareId, food.id, {
         suggested_by_name: friendName,
         note: suggestionNote,
       });
-      setPickStatus(`${food.name} sent to ${username || "this user"}.`);
+      toast.success(`${food.name} sent to ${username || "this user"}.`, { title: "Suggestion sent" });
       setSuggestionNote("");
     } catch (err) {
-      setSuggestionError(getApiError(err, "Unable to send this suggestion"));
+      toast.error(getApiError(err, "Unable to send this suggestion"), { title: "Suggestion not sent" });
     } finally {
       setPickingId("");
     }
@@ -132,8 +132,6 @@ export function SharedStoragePage() {
           <strong>{loading ? "..." : storage.length}</strong>
         </div>
       </div>
-
-      {error ? <p className={styles.error}>{error}</p> : null}
 
       {!error ? (
         <>
@@ -204,9 +202,6 @@ export function SharedStoragePage() {
               ))}
             </div>
 
-            {suggestionError ? <p className={styles.error}>{suggestionError}</p> : null}
-            {pickStatus ? <p className={styles.status}>{pickStatus}</p> : null}
-
             {suggestions.length ? (
               <div className={styles.friendForm}>
                 <label>
@@ -256,7 +251,12 @@ export function SharedStoragePage() {
             ) : null}
           </section>
         </>
-      ) : null}
+      ) : (
+        <div className={styles.emptyState}>
+          <strong>Shared storage is unavailable.</strong>
+          <p>{error}</p>
+        </div>
+      )}
     </section>
   );
 }

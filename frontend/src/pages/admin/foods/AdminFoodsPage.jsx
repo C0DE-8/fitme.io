@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useToast } from "../../../components/feedback/useToast";
 import { getApiError, imageUrl } from "../../../lib/api";
 import {
   createAdminFood,
@@ -24,6 +25,7 @@ const emptyForm = {
 };
 
 export function AdminFoodsPage() {
+  const toast = useToast();
   const [foods, setFoods] = useState([]);
   const [ingredients, setIngredients] = useState([]);
   const [form, setForm] = useState(emptyForm);
@@ -38,15 +40,12 @@ export function AdminFoodsPage() {
   const [ingredientsModalOpen, setIngredientsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [status, setStatus] = useState("");
 
   useEffect(() => {
     let alive = true;
 
     async function loadInitialFoods() {
       setLoading(true);
-      setError("");
 
       try {
         const [foodsData, ingredientsData] = await Promise.all([
@@ -56,7 +55,7 @@ export function AdminFoodsPage() {
         if (alive) setFoods(foodsData);
         if (alive) setIngredients(ingredientsData);
       } catch (err) {
-        if (alive) setError(getApiError(err, "Unable to load foods"));
+        if (alive) toast.error(getApiError(err, "Unable to load foods"), { title: "Food data unavailable" });
       } finally {
         if (alive) setLoading(false);
       }
@@ -67,7 +66,7 @@ export function AdminFoodsPage() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [toast]);
 
   async function refreshFoods() {
     setFoods(await getAdminFoods());
@@ -101,8 +100,6 @@ export function AdminFoodsPage() {
   function openCreateFood() {
     resetForm();
     setFoodModalOpen(true);
-    setStatus("");
-    setError("");
   }
 
   function editFood(food) {
@@ -115,8 +112,6 @@ export function AdminFoodsPage() {
       ingredients: parseIngredients(food.ingredients),
       image: null,
     });
-    setStatus("");
-    setError("");
     setFoodModalOpen(true);
   }
 
@@ -165,8 +160,6 @@ export function AdminFoodsPage() {
   async function handleSubmit(event) {
     event.preventDefault();
     setSaving(true);
-    setError("");
-    setStatus("");
 
     const payload = {
       ...form,
@@ -178,32 +171,29 @@ export function AdminFoodsPage() {
     try {
       if (editingId) {
         await updateAdminFood(editingId, payload);
-        setStatus("Food item updated.");
+        toast.success("Food item updated.");
       } else {
         await createAdminFood(payload);
-        setStatus("Food item created.");
+        toast.success("Food item created.");
       }
 
       resetForm();
       setFoodModalOpen(false);
       await refreshFoods();
     } catch (err) {
-      setError(getApiError(err, "Unable to save food"));
+      toast.error(getApiError(err, "Unable to save food"), { title: "Food not saved" });
     } finally {
       setSaving(false);
     }
   }
 
   async function handleDelete(id) {
-    setError("");
-    setStatus("");
-
     try {
       await deleteAdminFood(id);
-      setStatus("Food item deleted.");
+      toast.success("Food item deleted.");
       await refreshFoods();
     } catch (err) {
-      setError(getApiError(err, "Unable to delete food"));
+      toast.error(getApiError(err, "Unable to delete food"), { title: "Delete failed" });
     }
   }
 
@@ -212,16 +202,13 @@ export function AdminFoodsPage() {
     const name = ingredientName.trim();
     if (!name) return;
 
-    setError("");
-    setStatus("");
-
     try {
       if (editingIngredient) {
         await updateAdminIngredient(editingIngredient.id, { name, image: ingredientImage });
-        setStatus("Ingredient updated.");
+        toast.success("Ingredient updated.");
       } else {
         await createAdminIngredient({ name, image: ingredientImage });
-        setStatus("Ingredient added.");
+        toast.success("Ingredient added.");
       }
 
       setIngredientName("");
@@ -229,20 +216,17 @@ export function AdminFoodsPage() {
       setEditingIngredient(null);
       await refreshIngredients();
     } catch (err) {
-      setError(getApiError(err, "Unable to save ingredient"));
+      toast.error(getApiError(err, "Unable to save ingredient"), { title: "Ingredient not saved" });
     }
   }
 
   async function handleIngredientDelete(id) {
-    setError("");
-    setStatus("");
-
     try {
       await deleteAdminIngredient(id);
-      setStatus("Ingredient deleted.");
+      toast.success("Ingredient deleted.");
       await refreshIngredients();
     } catch (err) {
-      setError(getApiError(err, "Unable to delete ingredient"));
+      toast.error(getApiError(err, "Unable to delete ingredient"), { title: "Delete failed" });
     }
   }
 
@@ -269,9 +253,6 @@ export function AdminFoodsPage() {
           </button>
         </div>
       </div>
-
-      {error ? <p className={styles.error}>{error}</p> : null}
-      {status ? <p className={styles.status}>{status}</p> : null}
 
       <div className={styles.tools}>
         <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search foods..." />

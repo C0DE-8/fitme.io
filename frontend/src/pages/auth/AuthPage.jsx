@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "../../components/feedback/useToast";
 import { getApiError } from "../../lib/api";
 import { login, register, verifyOtp } from "../../lib/api/authApi";
 import { saveSession } from "../../lib/auth";
@@ -11,26 +12,23 @@ const initialOtp = { email: "", otp: "" };
 
 export function AuthPage() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [mode, setMode] = useState("login");
   const [loginForm, setLoginForm] = useState(initialLogin);
   const [registerForm, setRegisterForm] = useState(initialRegister);
   const [otpForm, setOtpForm] = useState(initialOtp);
-  const [status, setStatus] = useState("");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleLogin(event) {
     event.preventDefault();
     setLoading(true);
-    setError("");
-    setStatus("");
 
     try {
       const data = await login(loginForm);
       saveSession(data);
       navigate(data.user?.role === "admin" ? "/admin" : "/dashboard");
     } catch (err) {
-      setError(getApiError(err, "Login failed"));
+      toast.error(getApiError(err, "Login failed"), { title: "Sign in failed" });
     } finally {
       setLoading(false);
     }
@@ -39,16 +37,14 @@ export function AuthPage() {
   async function handleRegister(event) {
     event.preventDefault();
     setLoading(true);
-    setError("");
-    setStatus("");
 
     try {
       const data = await register(registerForm);
       setOtpForm({ email: registerForm.email, otp: "" });
-      setStatus(data.message || "Registration started. Check your email for an OTP.");
+      toast.success(data.message || "Registration started. Check your email for an OTP.", { title: "Registration started" });
       setMode("verify");
     } catch (err) {
-      setError(getApiError(err, "Registration failed"));
+      toast.error(getApiError(err, "Registration failed"), { title: "Registration failed" });
     } finally {
       setLoading(false);
     }
@@ -57,16 +53,14 @@ export function AuthPage() {
   async function handleVerify(event) {
     event.preventDefault();
     setLoading(true);
-    setError("");
-    setStatus("");
 
     try {
       const data = await verifyOtp(otpForm);
-      setStatus(data.message || "Email verified. You can sign in now.");
+      toast.success(data.message || "Email verified. You can sign in now.", { title: "Email verified" });
       setMode("login");
       setLoginForm((current) => ({ ...current, identifier: otpForm.email }));
     } catch (err) {
-      setError(getApiError(err, "OTP verification failed"));
+      toast.error(getApiError(err, "OTP verification failed"), { title: "Verification failed" });
     } finally {
       setLoading(false);
     }
@@ -95,9 +89,6 @@ export function AuthPage() {
               Verify
             </button>
           </div>
-
-          {error ? <p className={styles.error}>{error}</p> : null}
-          {status ? <p className={styles.status}>{status}</p> : null}
 
           {mode === "login" ? (
             <form className={styles.form} onSubmit={handleLogin}>

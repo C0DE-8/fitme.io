@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useToast } from "../../../components/feedback/useToast";
 import { getApiError } from "../../../lib/api";
 import { getBudgetFoodSuggestions } from "../../../lib/api/usersFoodApi";
 import styles from "../dashboard/UserDashboardPage.module.css";
@@ -11,24 +12,23 @@ const foodTypes = [
 ];
 
 export function UserBudgetPage() {
+  const toast = useToast();
   const [budget, setBudget] = useState("");
   const [budgetMeta, setBudgetMeta] = useState(null);
   const [selectedType, setSelectedType] = useState("rice");
   const [recommendation, setRecommendation] = useState(null);
   const [finding, setFinding] = useState(false);
-  const [foodError, setFoodError] = useState("");
 
   async function runBudgetMeals(event) {
     event.preventDefault();
 
     const amount = Number(budget);
     if (!Number.isFinite(amount) || amount <= 0) {
-      setFoodError("Enter a valid budget amount.");
+      toast.error("Enter a valid budget amount.", { title: "Budget required" });
       return;
     }
 
     setFinding(true);
-    setFoodError("");
     setRecommendation(null);
 
     try {
@@ -46,7 +46,7 @@ export function UserBudgetPage() {
       );
       setBudgetMeta(data || null);
     } catch (err) {
-      setFoodError(getApiError(err, "Could not find meals within this budget"));
+      toast.error(getApiError(err, "Could not find meals within this budget"), { title: "Budget search failed" });
     } finally {
       setFinding(false);
     }
@@ -55,7 +55,6 @@ export function UserBudgetPage() {
   function resetResults() {
     setRecommendation(null);
     setBudgetMeta(null);
-    setFoodError("");
   }
 
   const budgetTierCount = budgetMeta?.tiers?.length || 0;
@@ -114,7 +113,6 @@ export function UserBudgetPage() {
             </button>
           </form>
 
-          {foodError ? <p className={styles.error}>{foodError}</p> : null}
         </section>
 
         <section className={styles.responsePanel}>

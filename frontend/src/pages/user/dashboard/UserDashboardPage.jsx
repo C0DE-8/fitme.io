@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useToast } from "../../../components/feedback/useToast";
 import { getApiError } from "../../../lib/api";
 import { getFoodSuggestions } from "../../../lib/api/usersFoodApi";
 import { getUserProfile, getUserStorage } from "../../../lib/api/userApi";
@@ -14,6 +15,7 @@ const foodTypes = [
 
 export function UserDashboardPage() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [profile, setProfile] = useState(null);
   const [storage, setStorage] = useState([]);
   const [selectedType, setSelectedType] = useState("rice");
@@ -21,15 +23,11 @@ export function UserDashboardPage() {
   const [otherSuggestions, setOtherSuggestions] = useState([]);
   const [storageModalOpen, setStorageModalOpen] = useState(false);
   const [finding, setFinding] = useState(false);
-  const [error, setError] = useState("");
-  const [foodError, setFoodError] = useState("");
 
   useEffect(() => {
     let alive = true;
 
     async function loadDashboard() {
-      setError("");
-
       try {
         const [profileData, storageData] = await Promise.all([
           getUserProfile(),
@@ -41,7 +39,7 @@ export function UserDashboardPage() {
         setProfile(profileData);
         setStorage(storageData || []);
       } catch (err) {
-        if (alive) setError(getApiError(err, "Unable to load your dashboard"));
+        if (alive) toast.error(getApiError(err, "Unable to load your dashboard"), { title: "Dashboard unavailable" });
       }
     }
 
@@ -50,12 +48,11 @@ export function UserDashboardPage() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [toast]);
 
   async function runFindMeals() {
     setStorageModalOpen(false);
     setFinding(true);
-    setFoodError("");
     setRecommendation(null);
 
     try {
@@ -65,7 +62,7 @@ export function UserDashboardPage() {
       setRecommendation(foods[0] || null);
       setOtherSuggestions(foods.slice(1, 5));
     } catch (err) {
-      setFoodError(getApiError(err, "Could not find meal suggestions right now"));
+      toast.error(getApiError(err, "Could not find meal suggestions right now"), { title: "Meal search failed" });
     } finally {
       setFinding(false);
     }
@@ -92,8 +89,6 @@ export function UserDashboardPage() {
         </div>
       </div>
 
-      {error ? <p className={styles.error}>{error}</p> : null}
-
       <div className={styles.plannerGrid}>
         <section className={styles.askPanel}>
           <div className={styles.panelTitle}>
@@ -113,7 +108,6 @@ export function UserDashboardPage() {
                   setSelectedType(type.value);
                   setRecommendation(null);
                   setOtherSuggestions([]);
-                  setFoodError("");
                 }}
                 type="button"
               >
@@ -140,14 +134,12 @@ export function UserDashboardPage() {
               onClick={() => {
                 setRecommendation(null);
                 setOtherSuggestions([]);
-                setFoodError("");
               }}
             >
               Clear response
             </button>
           </form>
 
-          {foodError ? <p className={styles.error}>{foodError}</p> : null}
         </section>
 
         <section className={styles.responsePanel}>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useToast } from "../../../components/feedback/useToast";
 import { getApiError } from "../../../lib/api";
 import {
   getAdminAccounts,
@@ -11,6 +12,7 @@ import {
 import styles from "./AdminPage.module.css";
 
 export function AdminPage() {
+  const toast = useToast();
   const [data, setData] = useState({
     profile: null,
     stats: null,
@@ -20,14 +22,12 @@ export function AdminPage() {
     pendingSubscriptions: [],
   });
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   useEffect(() => {
     let alive = true;
 
     async function loadAdmin() {
       setLoading(true);
-      setError("");
 
       try {
         const [profile, stats, users, accounts, plans, pendingSubscriptions] = await Promise.all([
@@ -43,7 +43,7 @@ export function AdminPage() {
 
         setData({ profile, stats, users, accounts, plans, pendingSubscriptions });
       } catch (err) {
-        if (alive) setError(getApiError(err, "Unable to load admin dashboard"));
+        if (alive) toast.error(getApiError(err, "Unable to load admin dashboard"), { title: "Dashboard unavailable" });
       } finally {
         if (alive) setLoading(false);
       }
@@ -54,7 +54,7 @@ export function AdminPage() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [toast]);
 
   const recentUsers = useMemo(() => data.users.slice(0, 6), [data.users]);
 
@@ -70,8 +70,6 @@ export function AdminPage() {
           <strong>{data.profile?.email || "fitme.io"}</strong>
         </div>
       </div>
-
-      {error ? <p className={styles.error}>{error}</p> : null}
 
       <div className={styles.stats}>
         <article>

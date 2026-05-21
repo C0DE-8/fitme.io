@@ -13,6 +13,7 @@ import { SharedStoragePage } from "./pages/shared/SharedStoragePage";
 import { UserBudgetPage } from "./pages/user/budget/UserBudgetPage";
 import { UserDashboardPage } from "./pages/user/dashboard/UserDashboardPage";
 import { UserFoodDetailPage } from "./pages/user/food/UserFoodDetailPage";
+import { UserFoodFeedPage } from "./pages/user/feed/UserFoodFeedPage";
 import { UserPlaceholderPage } from "./pages/user/placeholder/UserPlaceholderPage";
 import { UserStoragePage } from "./pages/user/storage/UserStoragePage";
 
@@ -158,11 +159,11 @@ function App() {
         element={
           <UserRoute>
             <PageSeo
-              title="Foods | fitme.io"
-              description="Explore fitme.io food suggestions and meal planning options based on your storage."
+              title="Food Feed | fitme.io"
+              description="Share food posts, reactions, comments, and follows in the fitme.io food feed."
               robots="noindex, nofollow"
             />
-            <UserPlaceholderPage type="foods" />
+            <UserFoodFeedPage />
           </UserRoute>
         }
       />

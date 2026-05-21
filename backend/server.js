@@ -33,6 +33,7 @@ app.get('/api/user/storage/shared/:shareId', (req, res, next) => {
 
 require('./jobs/chatWorker');
 require('./jobs/subscriptionExpiry');
+require('./jobs/foodFeedExpiry');
 
 // Middleware
 app.use(helmet());
@@ -45,6 +46,7 @@ const userSubscriptionRoutes = require('./routes/user.subscriptions');
 const userAccountRoutes = require('./routes/user.accounts');
 const userStorageRoutes = require('./routes/user.storage');
 const userFoodRoutes = require('./routes/user.foods');
+const userFoodFeedRoutes = require('./routes/user.foodFeed');
 const adminProfileRoutes = require('./routes/admin.profile');
 const adminUsersRoutes = require('./routes/admin.users');
 const adminStatsRoutes = require('./routes/admin.stats');
@@ -52,6 +54,7 @@ const adminAccountsRoutes = require('./routes/admin.accounts');
 const adminPlansRoutes = require('./routes/admin.plans');
 const adminSubscriptionsRoutes = require('./routes/admin.subscriptions');
 const adminFoodsRoutes = require('./routes/admin.foods');
+const adminFoodFeedRoutes = require('./routes/admin.foodFeed');
 const adminStorageItemsRoutes = require('./routes/admin.storageItems');
 const adminMessageBotMessagesRoutes = require('./routes/admin.messageBotMessages');
 const authRoutes = require('./routes/auth');
@@ -62,6 +65,7 @@ app.use('/api/user', userSubscriptionRoutes);
 app.use('/api/user', userAccountRoutes);
 app.use('/api/user', userStorageRoutes);
 app.use('/api/user', userFoodRoutes);
+app.use('/api/user', userFoodFeedRoutes);
 app.use('/api/admin', adminProfileRoutes);
 app.use('/api/admin', adminUsersRoutes);
 app.use('/api/admin', adminStatsRoutes);
@@ -69,6 +73,7 @@ app.use('/api/admin', adminAccountsRoutes);
 app.use('/api/admin', adminPlansRoutes);
 app.use('/api/admin', adminSubscriptionsRoutes);
 app.use('/api/admin', adminFoodsRoutes);
+app.use('/api/admin', adminFoodFeedRoutes);
 app.use('/api/admin', adminStorageItemsRoutes);
 app.use('/api/admin', adminMessageBotMessagesRoutes);
 app.use('/api/auth', authRoutes);
