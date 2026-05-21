@@ -248,7 +248,7 @@
 
 .ingredientForm {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) minmax(190px, 0.7fr) auto auto;
   gap: 8px;
   padding: 14px;
   border-bottom: 1px solid var(--fitme-line);
@@ -267,11 +267,27 @@
 
 .ingredientList article {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
   gap: 12px;
   align-items: center;
   padding: 12px 14px;
   border-top: 1px solid var(--fitme-line);
+}
+
+.ingredientList img,
+.ingredientImageFallback {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: var(--fitme-soft);
+}
+
+.ingredientImageFallback {
+  display: grid;
+  place-items: center;
+  color: var(--fitme-brand-text);
+  font-weight: 900;
 }
 
 .ingredientList span {

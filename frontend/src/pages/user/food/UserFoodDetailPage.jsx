@@ -160,6 +160,7 @@ export function UserFoodDetailPage() {
                       <table className={styles.aiTable}>
                         <thead>
                           <tr>
+                            <th>Image</th>
                             <th>Item</th>
                             <th>Status</th>
                             <th>Cost</th>
@@ -170,6 +171,13 @@ export function UserFoodDetailPage() {
                             const isMissing = food.missingIngredients?.some((missing) => missing.name === item.name);
                             return (
                               <tr key={item.name}>
+                                <td>
+                                  {item.image_url ? (
+                                    <img className={styles.ingredientThumb} src={item.image_url} alt="" />
+                                  ) : (
+                                    <span className={styles.ingredientThumbFallback}>{item.name?.charAt(0) || "I"}</span>
+                                  )}
+                                </td>
                                 <td>{item.name}</td>
                                 <td>{isMissing ? "Missing" : "Available"}</td>
                                 <td>{formatMoney(item.cost)}</td>
@@ -186,7 +194,12 @@ export function UserFoodDetailPage() {
                         <ul>
                           {food.missingIngredients.map((item) => (
                             <li key={item.name}>
-                              <span>{item.name}</span>
+                              <span>
+                                {item.image_url ? (
+                                  <img className={styles.ingredientMiniThumb} src={item.image_url} alt="" />
+                                ) : null}
+                                {item.name}
+                              </span>
                               <strong>{formatMoney(item.cost)}</strong>
                             </li>
                           ))}

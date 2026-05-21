@@ -6,11 +6,84 @@ const { authenticateUser, requireSubscription } = require('../middleware');
 
 const genShareId = () => crypto.randomBytes(16).toString('hex');
 
+function withImageUrl(req, item) {
+  return {
+    ...item,
+    image_url: item.image ? `${req.protocol}://${req.get('host')}/uploads/${item.image}` : null
+  };
+}
+
+function foodImageUrl(req, image) {
+  return image ? `${req.protocol}://${req.get('host')}/uploads/${image}` : null;
+}
+
+function parseFoodIngredients(value) {
+  return String(value || '')
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => {
+      const [name, cost] = part.split('-');
+      return { name: String(name || '').trim().toLowerCase(), cost: Number(cost || 0) };
+    })
+    .filter((item) => item.name && Number.isFinite(item.cost));
+}
+
+async function getEnabledShare(shareId) {
+  const [rows] = await db.promise().query(
+    `SELECT ss.user_id, ss.is_enabled, u.username
+     FROM storage_shares ss
+     JOIN users u ON ss.user_id = u.id
+     WHERE ss.share_id = ? LIMIT 1`,
+    [shareId]
+  );
+
+  if (!rows.length) return { error: { status: 404, message: 'Share link not found' } };
+  if (!rows[0].is_enabled) return { error: { status: 403, message: 'This share link is disabled' } };
+
+  return { share: rows[0] };
+}
+
+async function ensureFriendSuggestionsTable() {
+  await db.promise().query(`
+    CREATE TABLE IF NOT EXISTS storage_friend_suggestions (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      owner_user_id INT NOT NULL,
+      share_id VARCHAR(64) NOT NULL,
+      food_id INT NOT NULL,
+      food_type VARCHAR(50) NOT NULL,
+      food_name VARCHAR(255) NOT NULL,
+      suggested_by_name VARCHAR(255) NOT NULL,
+      note TEXT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_owner_user_id (owner_user_id),
+      INDEX idx_share_id (share_id),
+      INDEX idx_food_id (food_id)
+    )
+  `);
+}
+
+function cleanSuggestionName(value) {
+  const name = String(value || '').trim().replace(/\s+/g, ' ').slice(0, 80);
+  return name || 'A friend';
+}
+
+function cleanSuggestionNote(value) {
+  const note = String(value || '').trim().slice(0, 500);
+  return note || null;
+}
+
 // Get all storage items (optional: for display in frontend dropdowns)
 router.get('/storage-items', authenticateUser, requireSubscription(), async (req, res) => {
   try {
-    const [items] = await db.promise().query('SELECT * FROM storage_items');
-    res.json({ storage_items: items });
+    let items;
+    try {
+      [items] = await db.promise().query('SELECT * FROM storage_items');
+    } catch (error) {
+      if (error.code !== 'ER_BAD_FIELD_ERROR') throw error;
+      [items] = await db.promise().query('SELECT id, name FROM storage_items');
+    }
+    res.json({ storage_items: items.map((item) => withImageUrl(req, item)) });
   } catch (error) {
     console.error('Error fetching storage items:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -61,12 +134,24 @@ router.get('/storage', authenticateUser, requireSubscription(), async (req, res)
   const userId = req.user.id;
 
   try {
-    const [items] = await db.promise().query(
-      'SELECT id, item_name FROM user_storage WHERE user_id = ?',
-      [userId]
-    );
+    let items;
+    try {
+      [items] = await db.promise().query(
+        `SELECT us.id, us.item_name, si.image
+         FROM user_storage us
+         LEFT JOIN storage_items si ON LOWER(si.name) = LOWER(us.item_name)
+         WHERE us.user_id = ?`,
+        [userId]
+      );
+    } catch (error) {
+      if (error.code !== 'ER_BAD_FIELD_ERROR') throw error;
+      [items] = await db.promise().query(
+        'SELECT id, item_name FROM user_storage WHERE user_id = ?',
+        [userId]
+      );
+    }
 
-    res.json({ storage: items }); // items will be array of { id, item_name }
+    res.json({ storage: items.map((item) => withImageUrl(req, item)) }); // items will be array of { id, item_name }
   } catch (error) {
     console.error('Error fetching user storage:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -147,8 +232,8 @@ router.post('/storage/share', authenticateUser, async (req, res) => {
       [userId, share_id]
     );
 
-    const share_url = `${req.protocol}://${req.get('host')}/api/user/storage/shared/${share_id}`;
-    return res.json({ share_url });
+    const share_url = `${req.protocol}://${req.get('host')}/shared-storage.html?id=${share_id}`;
+    return res.json({ share_id, share_url });
   } catch (err) {
     console.error('Enable share error:', err);
     return res.status(500).json({ message: 'Server error' });
@@ -186,35 +271,205 @@ router.get('/storage/shared/:shareId', async (req, res) => {
 
   try {
     // Get share record + username
-    const [rows] = await db.promise().query(
-      `SELECT ss.user_id, ss.is_enabled, u.username
-       FROM storage_shares ss
-       JOIN users u ON ss.user_id = u.id
-       WHERE ss.share_id = ? LIMIT 1`,
-      [shareId]
-    );
+    const { share, error } = await getEnabledShare(shareId);
+    if (error) return res.status(error.status).json({ message: error.message });
 
-    if (!rows.length) {
-      return res.status(404).json({ message: 'Share link not found' });
-    }
-
-    const { user_id, is_enabled, username } = rows[0];
-    if (!is_enabled) {
-      return res.status(403).json({ message: 'This share link is disabled' });
-    }
+    const { user_id, username } = share;
 
     // Get storage items
-    const [items] = await db.promise().query(
-      'SELECT id, item_name FROM user_storage WHERE user_id = ? ORDER BY id DESC',
-      [user_id]
-    );
+    let items;
+    try {
+      [items] = await db.promise().query(
+        `SELECT us.id, us.item_name, si.image
+         FROM user_storage us
+         LEFT JOIN storage_items si ON LOWER(si.name) = LOWER(us.item_name)
+         WHERE us.user_id = ?
+         ORDER BY us.id DESC`,
+        [user_id]
+      );
+    } catch (error) {
+      if (error.code !== 'ER_BAD_FIELD_ERROR') throw error;
+      [items] = await db.promise().query(
+        'SELECT id, item_name FROM user_storage WHERE user_id = ? ORDER BY id DESC',
+        [user_id]
+      );
+    }
 
     return res.json({
       username,
-      storage: items
+      storage: items.map((item) => withImageUrl(req, item))
     });
   } catch (err) {
     console.error('Public share fetch error:', err);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// GET /storage/shared/:shareId/suggestions?type=rice  (public read-only)
+router.get('/storage/shared/:shareId/suggestions', async (req, res) => {
+  const { shareId } = req.params;
+  const requestedType = String(req.query.type || '').toLowerCase();
+  const allowedTypes = ['rice', 'swallow', 'junks'];
+
+  if (requestedType && !allowedTypes.includes(requestedType)) {
+    return res.status(400).json({ message: `Invalid type. Allowed types: ${allowedTypes.join(', ')}` });
+  }
+
+  try {
+    const { share, error } = await getEnabledShare(shareId);
+    if (error) return res.status(error.status).json({ message: error.message });
+
+    const [storageRows] = await db.promise().query(
+      'SELECT item_name FROM user_storage WHERE user_id = ?',
+      [share.user_id]
+    );
+    const storageSet = new Set(storageRows.map((item) => String(item.item_name || '').toLowerCase().trim()));
+
+    const params = [];
+    let foodQuery = 'SELECT id, name, package, ingredients, estimated_cost, image, type, prepared, created_at FROM foods';
+    if (requestedType) {
+      foodQuery += ' WHERE type = ?';
+      params.push(requestedType);
+    }
+    foodQuery += ' ORDER BY type ASC, estimated_cost ASC, created_at DESC';
+
+    const [foods] = await db.promise().query(foodQuery, params);
+
+    const suggestions = foods
+      .map((food) => {
+        const ingredients = parseFoodIngredients(food.ingredients);
+        const missingIngredients = ingredients.filter((item) => !storageSet.has(item.name));
+        const availableIngredients = ingredients.filter((item) => storageSet.has(item.name));
+        const totalMissingCost = missingIngredients.reduce((sum, item) => sum + item.cost, 0);
+
+        return {
+          id: food.id,
+          name: food.name,
+          package: food.package,
+          type: food.type,
+          prepared: food.prepared,
+          estimated_cost: food.estimated_cost,
+          image: food.image,
+          image_url: foodImageUrl(req, food.image),
+          ingredients,
+          availableIngredients,
+          missingIngredients,
+          totalMissingCost,
+          canCook: missingIngredients.length === 0,
+          created_at: food.created_at
+        };
+      })
+      .sort((a, b) => {
+        if (a.canCook !== b.canCook) return a.canCook ? -1 : 1;
+        return a.totalMissingCost - b.totalMissingCost;
+      });
+
+    return res.json({
+      username: share.username,
+      type: requestedType || 'all',
+      totalFoods: suggestions.length,
+      suggestions
+    });
+  } catch (err) {
+    console.error('Shared suggestion fetch error:', err);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// POST /storage/shared/:shareId/suggestions/:foodId  (public friend pick)
+router.post('/storage/shared/:shareId/suggestions/:foodId', async (req, res) => {
+  const { shareId, foodId } = req.params;
+  const suggestedBy = cleanSuggestionName(req.body?.suggested_by_name);
+  const note = cleanSuggestionNote(req.body?.note);
+
+  try {
+    const { share, error } = await getEnabledShare(shareId);
+    if (error) return res.status(error.status).json({ message: error.message });
+
+    const [foods] = await db.promise().query(
+      'SELECT id, name, type, image, estimated_cost FROM foods WHERE id = ? LIMIT 1',
+      [foodId]
+    );
+
+    if (!foods.length) {
+      return res.status(404).json({ message: 'Food not found' });
+    }
+
+    await ensureFriendSuggestionsTable();
+
+    const food = foods[0];
+    const [result] = await db.promise().query(
+      `INSERT INTO storage_friend_suggestions
+       (owner_user_id, share_id, food_id, food_type, food_name, suggested_by_name, note)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [share.user_id, shareId, food.id, food.type, food.name, suggestedBy, note]
+    );
+
+    return res.status(201).json({
+      suggestion: {
+        id: result.insertId,
+        owner_user_id: share.user_id,
+        share_id: shareId,
+        food_id: food.id,
+        food_type: food.type,
+        food_name: food.name,
+        suggested_by_name: suggestedBy,
+        note,
+        image_url: foodImageUrl(req, food.image),
+        estimated_cost: food.estimated_cost,
+        created_at: new Date()
+      }
+    });
+  } catch (err) {
+    console.error('Shared suggestion save error:', err);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// GET /storage/friend-suggestions  (owner view)
+router.get('/storage/friend-suggestions', authenticateUser, requireSubscription(), async (req, res) => {
+  try {
+    await ensureFriendSuggestionsTable();
+
+    const [rows] = await db.promise().query(
+      `SELECT s.id, s.food_id, s.food_type, s.food_name, s.suggested_by_name, s.note, s.created_at,
+              f.image, f.estimated_cost, f.package
+       FROM storage_friend_suggestions s
+       LEFT JOIN foods f ON f.id = s.food_id
+       WHERE s.owner_user_id = ?
+       ORDER BY s.created_at DESC, s.id DESC`,
+      [req.user.id]
+    );
+
+    return res.json({
+      suggestions: rows.map((row) => ({
+        ...row,
+        image_url: foodImageUrl(req, row.image)
+      }))
+    });
+  } catch (err) {
+    console.error('Friend suggestions fetch error:', err);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// DELETE /storage/friend-suggestions/:id  (owner dismiss)
+router.delete('/storage/friend-suggestions/:id', authenticateUser, requireSubscription(), async (req, res) => {
+  try {
+    await ensureFriendSuggestionsTable();
+
+    const [result] = await db.promise().query(
+      'DELETE FROM storage_friend_suggestions WHERE id = ? AND owner_user_id = ?',
+      [req.params.id, req.user.id]
+    );
+
+    if (!result.affectedRows) {
+      return res.status(404).json({ message: 'Suggestion not found' });
+    }
+
+    return res.json({ message: 'Suggestion removed' });
+  } catch (err) {
+    console.error('Friend suggestion remove error:', err);
     return res.status(500).json({ message: 'Server error' });
   }
 });

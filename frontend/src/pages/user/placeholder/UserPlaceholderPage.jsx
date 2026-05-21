@@ -76,7 +76,11 @@ export function UserPlaceholderPage({ type }) {
         <div className={styles.storageGrid}>
           {filteredStorage.map((item) => (
             <article className={styles.storageItem} key={item.id}>
-              <span>{item.item_name?.charAt(0)?.toUpperCase() || "F"}</span>
+              {item.image_url ? (
+                <img src={item.image_url} alt="" />
+              ) : (
+                <span>{item.item_name?.charAt(0)?.toUpperCase() || "F"}</span>
+              )}
               <div>
                 <strong>{item.item_name}</strong>
                 <p>Available in storage</p>

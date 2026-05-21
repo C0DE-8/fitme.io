@@ -28,6 +28,7 @@ export function AdminFoodsPage() {
   const [ingredients, setIngredients] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [ingredientName, setIngredientName] = useState("");
+  const [ingredientImage, setIngredientImage] = useState(null);
   const [editingIngredient, setEditingIngredient] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [search, setSearch] = useState("");
@@ -216,14 +217,15 @@ export function AdminFoodsPage() {
 
     try {
       if (editingIngredient) {
-        await updateAdminIngredient(editingIngredient.id, name);
+        await updateAdminIngredient(editingIngredient.id, { name, image: ingredientImage });
         setStatus("Ingredient updated.");
       } else {
-        await createAdminIngredient(name);
+        await createAdminIngredient({ name, image: ingredientImage });
         setStatus("Ingredient added.");
       }
 
       setIngredientName("");
+      setIngredientImage(null);
       setEditingIngredient(null);
       await refreshIngredients();
     } catch (err) {
@@ -247,6 +249,7 @@ export function AdminFoodsPage() {
   function startIngredientEdit(item) {
     setEditingIngredient(item);
     setIngredientName(item.name);
+    setIngredientImage(null);
   }
 
   return (
@@ -451,6 +454,11 @@ export function AdminFoodsPage() {
                 onChange={(event) => setIngredientName(event.target.value)}
                 placeholder="Ingredient name"
               />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(event) => setIngredientImage(event.target.files?.[0] || null)}
+              />
               <button type="submit">{editingIngredient ? "Update" : "Add"}</button>
               {editingIngredient ? (
                 <button
@@ -458,6 +466,7 @@ export function AdminFoodsPage() {
                   onClick={() => {
                     setEditingIngredient(null);
                     setIngredientName("");
+                    setIngredientImage(null);
                   }}
                 >
                   Cancel
@@ -475,6 +484,11 @@ export function AdminFoodsPage() {
             <div className={styles.ingredientList}>
               {filteredIngredients.map((item) => (
                 <article key={item.id}>
+                  {item.image_url ? (
+                    <img src={item.image_url} alt="" />
+                  ) : (
+                    <span className={styles.ingredientImageFallback}>{item.name?.charAt(0) || "I"}</span>
+                  )}
                   <span>{item.name}</span>
                   <div>
                     <button type="button" onClick={() => startIngredientEdit(item)}>

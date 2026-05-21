@@ -99,15 +99,23 @@
   padding: 14px;
 }
 
-.storageItem > span {
+.storageItem > span,
+.storageItem > img {
   flex: 0 0 auto;
   width: 40px;
   height: 40px;
-  display: grid;
-  place-items: center;
   border: 1px solid rgba(139, 92, 246, 0.28);
   border-radius: 15px;
   background: var(--fitme-brand-soft);
+}
+
+.storageItem > img {
+  object-fit: cover;
+}
+
+.storageItem > span {
+  display: grid;
+  place-items: center;
   color: var(--fitme-brand-text);
   font-weight: 1000;
 }

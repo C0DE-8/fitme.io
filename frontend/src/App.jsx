@@ -9,10 +9,12 @@ import { AdminPage } from "./pages/admin/dashboard/AdminPage";
 import { AdminFoodsPage } from "./pages/admin/foods/AdminFoodsPage";
 import { AuthPage } from "./pages/auth/AuthPage";
 import { HomePage } from "./pages/home/HomePage";
+import { SharedStoragePage } from "./pages/shared/SharedStoragePage";
 import { UserBudgetPage } from "./pages/user/budget/UserBudgetPage";
 import { UserDashboardPage } from "./pages/user/dashboard/UserDashboardPage";
 import { UserFoodDetailPage } from "./pages/user/food/UserFoodDetailPage";
 import { UserPlaceholderPage } from "./pages/user/placeholder/UserPlaceholderPage";
+import { UserStoragePage } from "./pages/user/storage/UserStoragePage";
 
 function AdminRoute({ children }) {
   if (!getToken()) return <Navigate to="/admin/auth" replace />;
@@ -121,8 +123,21 @@ function App() {
               description="Manage your saved food storage and ingredients for fitme.io meal planning."
               robots="noindex, nofollow"
             />
-            <UserPlaceholderPage type="storage" />
+            <UserStoragePage />
           </UserRoute>
+        }
+      />
+      <Route
+        path="/shared-storage/:shareId"
+        element={
+          <PublicLayout>
+            <PageSeo
+              title="Shared Storage | fitme.io"
+              description="View a shared fitme.io storage list."
+              robots="noindex, nofollow"
+            />
+            <SharedStoragePage />
+          </PublicLayout>
         }
       />
       <Route
