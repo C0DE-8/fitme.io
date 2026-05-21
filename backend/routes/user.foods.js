@@ -4,6 +4,39 @@ const db = require('../db');
 const { authenticateUser, requireSubscription } = require('../middleware');
 const moment = require('moment');
 
+function makeUploadUrl(req, filename) {
+  return filename ? `${req.protocol}://${req.get('host')}/uploads/${filename}` : null;
+}
+
+async function getIngredientImageMap(req) {
+  try {
+    const [rows] = await db.promise().query('SELECT name, image FROM storage_items');
+    return new Map(
+      rows.map((item) => [
+        String(item.name || '').toLowerCase().trim(),
+        {
+          image: item.image || null,
+          image_url: makeUploadUrl(req, item.image)
+        }
+      ])
+    );
+  } catch (error) {
+    if (error.code === 'ER_BAD_FIELD_ERROR') return new Map();
+    throw error;
+  }
+}
+
+function attachIngredientImages(ingredients, imageMap) {
+  return ingredients.map((ingredient) => {
+    const image = imageMap.get(String(ingredient.name || '').toLowerCase().trim());
+    return {
+      ...ingredient,
+      image: image?.image || null,
+      image_url: image?.image_url || null
+    };
+  });
+}
+
 // GET /foods/suggest/:type
 router.get('/foods/suggest/:type', authenticateUser, requireSubscription(), async (req, res) => {
   const userId = req.user.id;
@@ -21,6 +54,7 @@ router.get('/foods/suggest/:type', authenticateUser, requireSubscription(), asyn
       [userId]
     );
     const storageSet = new Set(storageItems.map(item => item.item_name.toLowerCase()));
+    const ingredientImageMap = await getIngredientImageMap(req);
 
     // Get all foods of this type (with prepared field)
     const [foods] = await db.promise().query(
@@ -47,7 +81,7 @@ router.get('/foods/suggest/:type', authenticateUser, requireSubscription(), asyn
 
     // Build full list with missing ingredients & cost
     const suggestions = foods.map(food => {
-      const ingredients = food.ingredients ? parseIngredients(food.ingredients) : [];
+      const ingredients = food.ingredients ? attachIngredientImages(parseIngredients(food.ingredients), ingredientImageMap) : [];
       const missing = ingredients.filter(i => !storageSet.has(i.name));
       const missingCost = missing.reduce((sum, i) => sum + i.cost, 0);
 
@@ -59,10 +93,9 @@ router.get('/foods/suggest/:type', authenticateUser, requireSubscription(), asyn
         prepared: food.prepared,
         estimated_cost: food.estimated_cost,
         image: food.image,
-        image_url: food.image
-          ? `${req.protocol}://${req.get('host')}/uploads/${food.image}`
-          : null,
+        image_url: makeUploadUrl(req, food.image),
         created_at: food.created_at ? moment(food.created_at).format('YYYY-MM-DD HH:mm') : null,
+        ingredients,
         missingIngredients: missing,
         totalMissingCost: missingCost,
         message:
@@ -108,6 +141,7 @@ router.get('/foods/suggest/:type/:id', authenticateUser, requireSubscription(), 
       [userId]
     );
     const storageSet = new Set(storageItems.map(i => i.item_name.toLowerCase()));
+    const ingredientImageMap = await getIngredientImageMap(req);
 
     // Fetch the food by id, but ensure the type matches
     const [rows] = await db.promise().query(
@@ -141,7 +175,7 @@ router.get('/foods/suggest/:type/:id', authenticateUser, requireSubscription(), 
         })
         .filter(x => x.name && !Number.isNaN(x.cost));
 
-    const ingredients = parseIngredients(food.ingredients);
+    const ingredients = attachIngredientImages(parseIngredients(food.ingredients), ingredientImageMap);
     const missing = ingredients.filter(i => !storageSet.has(i.name));
     const missingCost = missing.reduce((sum, i) => sum + i.cost, 0);
 
@@ -153,7 +187,7 @@ router.get('/foods/suggest/:type/:id', authenticateUser, requireSubscription(), 
       prepared: food.prepared,
       estimated_cost: food.estimated_cost,
       image: food.image,
-      image_url: food.image ? `${req.protocol}://${req.get('host')}/uploads/${food.image}` : null,
+      image_url: makeUploadUrl(req, food.image),
       created_at: food.created_at ? moment(food.created_at).format('YYYY-MM-DD HH:mm') : null,
       ingredients,
       missingIngredients: missing,

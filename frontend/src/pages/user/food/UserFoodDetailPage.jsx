@@ -8,22 +8,27 @@ function formatMoney(value) {
   return `₦${Number(value || 0).toLocaleString()}`;
 }
 
-function buildAiPreparation(food) {
-  const intro = `Here is a simple way to prepare ${food?.name || "this meal"} with your current plan.`;
-  const prepared = food?.prepared || "Start with your ingredients, cook them carefully, and adjust seasoning to taste.";
-  const missing = food?.missingIngredients?.length
-    ? `You are still missing ${food.missingIngredients.map((item) => item.name).join(", ")}. Get those first for the best result.`
-    : "Your storage looks ready for this meal.";
+function formatNames(items, fallback) {
+  if (!items?.length) return fallback;
+  return items.map((item) => item.name).join(", ");
+}
 
-  return `${intro}\n\n${missing}\n\n${prepared}`;
+function buildCookingSteps(prepared) {
+  const text = prepared || "Start with your ingredients, cook them carefully, and adjust seasoning to taste.";
+  const steps = text
+    .split(/(?:\n+|(?<=[.!?])\s+)/)
+    .map((step) => step.trim())
+    .filter(Boolean);
+
+  return steps.length ? steps : [text];
 }
 
 export function UserFoodDetailPage() {
   const { type, id } = useParams();
   const [food, setFood] = useState(null);
-  const [prepOpen, setPrepOpen] = useState(false);
-  const [shoppingOpen, setShoppingOpen] = useState(false);
-  const [prepText, setPrepText] = useState("");
+  const [chatAsked, setChatAsked] = useState(false);
+  const [typing, setTyping] = useState(false);
+  const [showAiResponse, setShowAiResponse] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -38,6 +43,9 @@ export function UserFoodDetailPage() {
         const data = await getFoodSuggestion(type, id);
         if (alive) {
           setFood(data);
+          setChatAsked(false);
+          setTyping(false);
+          setShowAiResponse(false);
         }
       } catch (err) {
         if (alive) setError(getApiError(err, "Unable to load food details"));
@@ -53,37 +61,15 @@ export function UserFoodDetailPage() {
     };
   }, [id, type]);
 
-  useEffect(() => {
-    if (!prepOpen || !food) return undefined;
+  function askFitmeAi() {
+    setChatAsked(true);
+    setTyping(true);
+    setShowAiResponse(false);
 
-    const text = buildAiPreparation(food);
-    let index = 0;
-
-    const interval = window.setInterval(() => {
-      index += 1;
-      setPrepText(text.slice(0, index));
-      if (index >= text.length) window.clearInterval(interval);
-    }, 18);
-
-    return () => window.clearInterval(interval);
-  }, [food, prepOpen]);
-
-  function downloadShoppingList() {
-    const items = food?.missingIngredients || [];
-    const lines = [
-      "fitme.io shopping checklist",
-      `Meal: ${food?.name || "Food"}`,
-      `Estimated missing cost: ${formatMoney(food?.totalMissingCost)}`,
-      "",
-      ...items.map((item) => `[ ] ${item.name} - ${formatMoney(item.cost)}`),
-    ];
-    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `fitme-shopping-${food?.name || "list"}.txt`.replace(/\s+/g, "-").toLowerCase();
-    link.click();
-    URL.revokeObjectURL(url);
+    window.setTimeout(() => {
+      setTyping(false);
+      setShowAiResponse(true);
+    }, 1200);
   }
 
   return (
@@ -119,138 +105,114 @@ export function UserFoodDetailPage() {
             </div>
           </section>
 
-          <section className={styles.costGrid}>
-            <article>
-              <span>Missing cost</span>
-              <strong>{formatMoney(food.totalMissingCost)}</strong>
-            </article>
-          </section>
-
-          <div className={styles.grid}>
-            <section className={styles.panel}>
-              <div className={styles.panelHeader}>
-                <h2>Ingredients</h2>
-              </div>
-              <ul className={styles.list}>
-                {(food.ingredients || []).map((item) => (
-                  <li key={item.name}>
-                    <span>{item.name}</span>
-                    <strong>{formatMoney(item.cost)}</strong>
-                  </li>
-                ))}
-              </ul>
-            </section>
-
-            <section className={styles.panel}>
-              <div className={styles.panelHeader}>
-                <h2>Missing ingredients</h2>
-                <div className={styles.panelActions}>
-                  <span>{formatMoney(food.totalMissingCost)}</span>
-                  <button
-                    type="button"
-                    disabled={!food.missingIngredients?.length}
-                    onClick={() => setShoppingOpen(true)}
-                  >
-                    Generate list
-                  </button>
+          <section className={styles.aiChat} aria-label="fitme.io AI meal chat">
+            <div className={styles.aiChatHeader}>
+              <div className={styles.aiTitle}>
+                <span>AI</span>
+                <div>
+                  <p className={styles.kicker}>fitme.io AI</p>
+                  <h2>Meal assistant</h2>
                 </div>
               </div>
-              <ul className={styles.list}>
-                {(food.missingIngredients || []).map((item) => (
-                  <li key={item.name}>
-                    <span>{item.name}</span>
-                    <strong>{formatMoney(item.cost)}</strong>
-                  </li>
-                ))}
-                {!food.missingIngredients?.length ? <li>You have everything needed.</li> : null}
-              </ul>
-            </section>
+            </div>
 
-            <section className={styles.panelFull}>
-              <div className={styles.panelHeader}>
-                <h2>Preparation</h2>
+            <div className={styles.chatStream}>
+              <div className={styles.aiBubble}>
+                <p className={styles.chatText}>
+                  I can check your ingredients, show what is missing, and organize the cooking steps for {food.name}.
+                </p>
+                {!chatAsked ? (
+                  <button className={styles.askAiButton} type="button" onClick={askFitmeAi}>
+                    Ask fitme.io AI
+                  </button>
+                ) : null}
               </div>
-              <div className={styles.prepBox}>
-                <p>{food.prepared || "No preparation note has been added yet."}</p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPrepText("");
-                    setPrepOpen(true);
-                  }}
-                >
-                  Ask fitme AI how to cook this
-                </button>
-              </div>
-            </section>
-          </div>
 
-          {prepOpen ? (
-            <div className={styles.modalBackdrop} role="presentation">
-              <div className={styles.aiModal} role="dialog" aria-modal="true" aria-label="fitme AI preparation">
-                <div className={styles.modalHeader}>
-                  <div className={styles.aiTitle}>
-                    <span>AI</span>
-                    <div>
-                      <p className={styles.kicker}>fitme AI</p>
-                      <h2>How to cook this</h2>
+              {chatAsked ? (
+                <div className={styles.userBubble}>
+                  <p>Tell me what I have, what is missing, and how to cook this meal.</p>
+                </div>
+              ) : null}
+
+              {typing ? (
+                <div className={styles.aiBubble}>
+                  <p className={styles.chatText}>fitme.io AI is checking your meal plan...</p>
+                  <div className={styles.typingDots} aria-label="fitme.io AI is typing">
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                </div>
+              ) : null}
+
+              {showAiResponse ? (
+                <div className={styles.aiBubble}>
+                  <div className={styles.aiAnswer}>
+                    <p>
+                      For <strong>{food.name}</strong>, you have{" "}
+                      <strong>{formatNames(food.ingredients, "no saved ingredients yet")}</strong>.
+                      {food.missingIngredients?.length
+                        ? ` You are missing ${formatNames(food.missingIngredients, "")}.`
+                        : " Nothing is missing from your storage."}
+                    </p>
+
+                    <div className={styles.aiTableWrap}>
+                      <table className={styles.aiTable}>
+                        <thead>
+                          <tr>
+                            <th>Item</th>
+                            <th>Status</th>
+                            <th>Cost</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(food.ingredients || []).map((item) => {
+                            const isMissing = food.missingIngredients?.some((missing) => missing.name === item.name);
+                            return (
+                              <tr key={item.name}>
+                                <td>{item.name}</td>
+                                <td>{isMissing ? "Missing" : "Available"}</td>
+                                <td>{formatMoney(item.cost)}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {food.missingIngredients?.length ? (
+                      <div className={styles.aiSection}>
+                        <h3>Missing ingredients</h3>
+                        <ul>
+                          {food.missingIngredients.map((item) => (
+                            <li key={item.name}>
+                              <span>{item.name}</span>
+                              <strong>{formatMoney(item.cost)}</strong>
+                            </li>
+                          ))}
+                        </ul>
+                        <p>Estimated missing cost: {formatMoney(food.totalMissingCost)}</p>
+                      </div>
+                    ) : (
+                      <div className={styles.aiSection}>
+                        <h3>Missing ingredients</h3>
+                        <p>Your storage has everything currently needed for this meal.</p>
+                      </div>
+                    )}
+
+                    <div className={styles.aiSection}>
+                      <h3>Cooking flow</h3>
+                      <ol>
+                        {buildCookingSteps(food.prepared).map((step) => (
+                          <li key={step}>{step}</li>
+                        ))}
+                      </ol>
                     </div>
                   </div>
-                  <button type="button" onClick={() => setPrepOpen(false)}>
-                    Close
-                  </button>
                 </div>
-                <div className={styles.typingDots} aria-hidden="true">
-                  <span />
-                  <span />
-                  <span />
-                </div>
-                <pre className={styles.aiText}>{prepText}</pre>
-              </div>
+              ) : null}
             </div>
-          ) : null}
-
-          {shoppingOpen ? (
-            <div className={styles.modalBackdrop} role="presentation">
-              <div className={styles.shoppingModal} role="dialog" aria-modal="true" aria-label="Shopping checklist">
-                <div className={styles.modalHeader}>
-                  <div>
-                    <p className={styles.kicker}>Shopping checklist</p>
-                    <h2>{food.name}</h2>
-                  </div>
-                  <button type="button" onClick={() => setShoppingOpen(false)}>
-                    Close
-                  </button>
-                </div>
-
-                <div className={styles.shoppingSummary}>
-                  <span>Need to buy</span>
-                  <strong>{formatMoney(food.totalMissingCost)}</strong>
-                </div>
-
-                <div className={styles.shoppingList}>
-                  {(food.missingIngredients || []).map((item) => (
-                    <label key={item.name}>
-                      <input type="checkbox" />
-                      <span>{item.name}</span>
-                      <strong>{formatMoney(item.cost)}</strong>
-                    </label>
-                  ))}
-                </div>
-
-                <p className={styles.screenshotHint}>Screenshot this checklist or download it for market runs.</p>
-
-                <div className={styles.modalActions}>
-                  <button type="button" onClick={() => setShoppingOpen(false)}>
-                    Done
-                  </button>
-                  <button type="button" onClick={downloadShoppingList}>
-                    Download list
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : null}
+          </section>
         </>
       ) : null}
     </section>
