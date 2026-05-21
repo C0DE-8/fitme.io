@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getApiError } from "../../../lib/api";
-import {
-  customizeFoodSuggestion,
-  getFoodSuggestion,
-} from "../../../lib/api/usersFoodApi";
+import { getFoodSuggestion } from "../../../lib/api/usersFoodApi";
 import styles from "./UserFoodDetailPage.module.css";
 
 function formatMoney(value) {
@@ -24,13 +21,10 @@ function buildAiPreparation(food) {
 export function UserFoodDetailPage() {
   const { type, id } = useParams();
   const [food, setFood] = useState(null);
-  const [excluded, setExcluded] = useState([]);
-  const [customizeOpen, setCustomizeOpen] = useState(false);
   const [prepOpen, setPrepOpen] = useState(false);
   const [shoppingOpen, setShoppingOpen] = useState(false);
   const [prepText, setPrepText] = useState("");
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -44,7 +38,6 @@ export function UserFoodDetailPage() {
         const data = await getFoodSuggestion(type, id);
         if (alive) {
           setFood(data);
-          setExcluded([]);
         }
       } catch (err) {
         if (alive) setError(getApiError(err, "Unable to load food details"));
@@ -74,42 +67,6 @@ export function UserFoodDetailPage() {
 
     return () => window.clearInterval(interval);
   }, [food, prepOpen]);
-
-  function toggleExcluded(name) {
-    setExcluded((current) =>
-      current.includes(name) ? current.filter((item) => item !== name) : [...current, name]
-    );
-  }
-
-  async function applyCustomize() {
-    setSaving(true);
-    setError("");
-
-    try {
-      const data = await customizeFoodSuggestion(type, id, { exclude: excluded });
-      setFood(data);
-      setCustomizeOpen(false);
-    } catch (err) {
-      setError(getApiError(err, "Unable to customize this meal"));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function resetCustomize() {
-    setSaving(true);
-    setError("");
-
-    try {
-      const data = await getFoodSuggestion(type, id);
-      setFood(data);
-      setExcluded([]);
-    } catch (err) {
-      setError(getApiError(err, "Unable to reset ingredients"));
-    } finally {
-      setSaving(false);
-    }
-  }
 
   function downloadShoppingList() {
     const items = food?.missingIngredients || [];
@@ -173,11 +130,6 @@ export function UserFoodDetailPage() {
             <section className={styles.panel}>
               <div className={styles.panelHeader}>
                 <h2>Ingredients</h2>
-                <div className={styles.panelActions}>
-                  <button type="button" onClick={() => setCustomizeOpen(true)}>
-                    Customize
-                  </button>
-                </div>
               </div>
               <ul className={styles.list}>
                 {(food.ingredients || []).map((item) => (
@@ -214,23 +166,6 @@ export function UserFoodDetailPage() {
               </ul>
             </section>
 
-            {food.excludedIngredients?.length ? (
-              <section className={styles.panelFull}>
-                <div className={styles.panelHeader}>
-                  <h2>Excluded ingredients</h2>
-                  <span>-{formatMoney(food.excluded_ingredients_cost)}</span>
-                </div>
-                <ul className={styles.excludedList}>
-                  {food.excludedIngredients.map((item) => (
-                    <li key={item.name}>
-                      <span>{item.name}</span>
-                      <strong>-{formatMoney(item.cost)}</strong>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
-
             <section className={styles.panelFull}>
               <div className={styles.panelHeader}>
                 <h2>Preparation</h2>
@@ -249,47 +184,6 @@ export function UserFoodDetailPage() {
               </div>
             </section>
           </div>
-
-          {customizeOpen ? (
-            <div className={styles.modalBackdrop} role="presentation">
-              <div className={styles.modal} role="dialog" aria-modal="true" aria-label="Customize ingredients">
-                <div className={styles.modalHeader}>
-                  <div>
-                    <p className={styles.kicker}>Customize</p>
-                    <h2>Remove ingredients</h2>
-                  </div>
-                  <button type="button" onClick={() => setCustomizeOpen(false)}>
-                    Close
-                  </button>
-                </div>
-                <p className={styles.modalText}>Uncheck anything you do not want included. fitme will update the total and missing cost.</p>
-                <div className={styles.checkList}>
-                  {(food.ingredients || []).map((item) => (
-                    <label className={excluded.includes(item.name) ? styles.excludedChoice : ""} key={item.name}>
-                      <input
-                        checked={!excluded.includes(item.name)}
-                        type="checkbox"
-                        onChange={() => toggleExcluded(item.name)}
-                      />
-                      <div>
-                        <span>{item.name}</span>
-                        <small>{excluded.includes(item.name) ? "Excluded from meal" : "Included in meal"}</small>
-                      </div>
-                      <strong>{formatMoney(item.cost)}</strong>
-                    </label>
-                  ))}
-                </div>
-                <div className={styles.modalActions}>
-                  <button type="button" disabled={saving} onClick={resetCustomize}>
-                    {saving ? "Resetting..." : "Reset"}
-                  </button>
-                  <button type="button" disabled={saving} onClick={applyCustomize}>
-                    {saving ? "Applying..." : "Apply changes"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : null}
 
           {prepOpen ? (
             <div className={styles.modalBackdrop} role="presentation">
