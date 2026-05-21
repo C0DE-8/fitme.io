@@ -1,0 +1,770 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>fitme.io — Choose Your Plan</title>
+    <meta name="description" content="Subscribe to fitme.io and unlock AI-powered nutrition tracking and insights." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' rx='12' fill='%2310b981'/%3E%3Cpath d='M18 36c4 4 8 6 14 6 6 0 10-2 14-6' stroke='white' stroke-width='5' stroke-linecap='round' fill='none'/%3E%3Ccircle cx='24' cy='24' r='3' fill='white'/%3E%3Ccircle cx='40' cy='24' r='3' fill='white'/%3E%3C/svg%3E" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../css/app.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: '#f5f3ff', 100: '#ede9fe', 200: '#ddd6fe', 300: '#c4b5fd',
+                400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9',
+                800: '#5b21b6', 900: '#4c1d95'
+              },
+              deep: { 900: '#071B13', 950: '#05150F' },
+              accent: { 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb' }
+            },
+            boxShadow: { glow: '0 0 80px 0 rgba(139,92,246,0.20)' }
+          }
+        }
+      }
+    </script>
+    <style>
+      html, body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    </style>
+  </head>
+  <body class="fitme-app min-h-dvh bg-deep-950 text-neutral-100">
+    <!-- Background effects -->
+    <div class="pointer-events-none fixed inset-0 -z-10">
+      <div class="absolute inset-0 bg-[radial-gradient(70%_60%_at_50%_0%,rgba(139,92,246,0.10),rgba(59,130,246,0.10),rgba(0,0,0,0))]"></div>
+      <div class="absolute -top-24 -left-20 h-80 w-80 rounded-full bg-violet-700/20 blur-3xl"></div>
+      <div class="absolute -bottom-24 -right-32 h-96 w-96 rounded-full bg-blue-800/20 blur-3xl"></div>
+    </div>
+
+    <!-- Navigation -->
+    <header class="app-header-safe sticky top-0 z-40 border-b border-white/5 bg-deep-950/70 backdrop-blur-xl supports-[backdrop-filter]:bg-deep-950/60">
+      <nav class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:py-4">
+        <a href="../index.html" class="flex items-center gap-3">
+          <div class="grid h-9 w-9 place-items-center rounded-xl bg-brand-500/20 ring-1 ring-inset ring-white/15">
+            <span class="text-lg font-black text-brand-300">F</span>
+          </div>
+          <span class="text-lg font-semibold tracking-tight text-brand-300">fitme.io</span>
+        </a>
+        <div class="flex items-center gap-2">
+          <a href="welcome.html" class="rounded-full border border-brand-500/30 bg-brand-500/10 px-4 py-2 text-sm font-medium text-brand-300 hover:bg-brand-500/20 focus:outline-none focus:ring-2 focus:ring-brand-400 transition-colors">
+            How it Works
+          </a>
+          <button id="logout" class="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-neutral-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">
+            Log out
+          </button>
+        </div>
+      </nav>
+    </header>
+
+    <main class="mx-auto w-full max-w-4xl px-4 py-8 sm:py-10 md:py-14 pb-[max(2.5rem,env(safe-area-inset-bottom))]">
+      <!-- Header -->
+      <section class="mb-10 text-center">
+        <h1 class="text-3xl font-semibold tracking-tight md:text-4xl bg-gradient-to-r from-brand-300 to-accent-300 bg-clip-text text-transparent">Choose Your Plan</h1>
+        <p class="mt-3 text-neutral-300 md:text-lg">Unlock AI-powered nutrition insights and advanced tracking features</p>
+      </section>
+
+      <!-- Status banner -->
+      <div id="status-banner" class="mb-6 hidden rounded-2xl border px-4 py-3 text-sm" role="status" aria-live="polite"></div>
+
+      <!-- Alert messages -->
+      <div id="subscription-alert" class="mb-6 hidden rounded-2xl border px-4 py-3 text-sm" role="alert" aria-live="polite"></div>
+
+      <!-- Pending section (shows accounts inline while waiting) -->
+      <section id="pending-section" class="mb-8 hidden">
+        <div class="rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4">
+          <div class="flex items-start gap-3">
+            <div class="mt-0.5 h-2 w-2 animate-pulse rounded-full bg-amber-300"></div>
+            <div class="flex-1">
+              <h3 class="font-semibold text-amber-200">Subscription pending verification</h3>
+              <p class="mt-1 text-sm text-amber-100/90">
+                We've received your request. Verification usually completes within an hour. You can review payment accounts below or update your bank details.
+              </p>
+              <div class="mt-3 flex flex-wrap gap-2">
+                <button id="refresh-status" class="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-neutral-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-amber-300">
+                  Refresh status
+                </button>
+                <button id="open-accounts" class="rounded-full bg-gradient-to-r from-brand-500 to-accent-500 px-3 py-1.5 text-xs font-semibold text-neutral-950 shadow-glow transition hover:from-brand-400 hover:to-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-400">
+                  View accounts / Upload proof
+                </button>
+                <button id="update-bank-info" class="rounded-full border border-brand-500/30 bg-brand-500/10 px-3 py-1.5 text-xs text-brand-300 hover:bg-brand-500/20 focus:outline-none focus:ring-2 focus:ring-brand-400">
+                  Update Bank Info
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bank Info Section -->
+        <div id="bank-info-section" class="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <h4 class="font-medium mb-3">Your Bank Information</h4>
+          <div id="current-bank-info" class="mb-4">
+            <!-- Current bank info will be displayed here -->
+          </div>
+          
+          <form id="bank-info-form" class="hidden grid gap-4">
+            <div class="grid gap-2">
+              <label class="text-sm text-neutral-300">Bank Name *</label>
+              <input
+                type="text"
+                id="payer-bank-name"
+                name="payer_bank_name"
+                required
+                class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-400 outline-none focus:border-brand-500/40 focus:ring-2 focus:ring-accent-400"
+                placeholder="e.g., First Bank of Nigeria"
+              />
+            </div>
+            <div class="grid gap-2">
+              <label class="text-sm text-neutral-300">Account Name *</label>
+              <input
+                type="text"
+                id="payer-account-name"
+                name="payer_account_name"
+                required
+                class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-400 outline-none focus:border-brand-500/40 focus:ring-2 focus:ring-accent-400"
+                placeholder="Your full name as on bank account"
+              />
+            </div>
+            <div class="grid gap-2">
+              <label class="text-sm text-neutral-300">Account Number</label>
+              <input
+                type="text"
+                id="payer-account-number"
+                name="payer_account_number"
+                class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-400 outline-none focus:border-brand-500/40 focus:ring-2 focus:ring-accent-400"
+                placeholder="Optional"
+              />
+            </div>
+            <div class="flex gap-3">
+              <button type="submit" class="rounded-xl bg-gradient-to-r from-brand-500 to-accent-500 px-4 py-2 text-sm font-semibold text-neutral-950 shadow-glow transition hover:from-brand-400 hover:to-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-400">
+                Save Bank Info
+              </button>
+              <button type="button" id="cancel-bank-form" class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-neutral-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Accounts list inline while pending -->
+        <div class="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <h4 class="font-medium">Payment Accounts</h4>
+          <p class="mt-2 text-sm text-neutral-300">Send payment to one of the accounts below. If you've already paid, no further action is required.</p>
+          <div id="pending-accounts-list" class="mt-4 grid grid-cols-1 gap-3">
+            <div class="rounded-lg border border-white/10 bg-neutral-900/60 p-4 text-neutral-400">Loading accounts...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Plans grid -->
+      <section id="plans-container" class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <!-- Placeholder -->
+        <div class="col-span-full flex items-center justify-center py-10">
+          <div class="text-neutral-400">Loading plans...</div>
+        </div>
+      </section>
+
+      <!-- Subscription form modal -->
+      <div id="subscription-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4">
+        <div class="w-full max-w-md rounded-3xl border border-white/10 bg-deep-950/95 p-6 backdrop-blur-xl">
+          <div class="mb-4 flex items-center justify-between">
+            <h3 id="modal-title" class="text-xl font-semibold">Subscribe to Plan</h3>
+            <button id="close-modal" class="rounded-full p-2 text-neutral-400 hover:bg-white/10 hover:text-neutral-200" aria-label="Close">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+
+          <form id="subscription-form" class="grid gap-4" enctype="multipart/form-data">
+            <input type="hidden" id="selected-plan" name="plan_name" />
+
+            <!-- Dynamic payment accounts -->
+            <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+              <h4 class="font-medium">Payment Accounts</h4>
+              <p class="mt-2 text-sm text-neutral-300">
+                Send payment to one of the accounts below, then upload your proof of payment.
+              </p>
+
+              <!-- Accounts list -->
+              <div id="accounts-container" class="mt-4 grid grid-cols-1 gap-3">
+                <div class="rounded-lg border border-white/10 bg-neutral-900/60 p-4 text-neutral-400">
+                  Loading accounts...
+                </div>
+              </div>
+
+              <p class="mt-3 text-xs text-neutral-400">
+                Your subscription will be activated after verification (usually within 1 hour).
+              </p>
+            </div>
+
+            <label class="grid gap-2">
+              <span class="text-sm text-neutral-300">Payment Proof Image</span>
+              <input
+                type="file"
+                name="payment_proof"
+                accept="image/*"
+                required
+                class="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-neutral-100 file:mr-4 file:rounded-lg file:border-0 file:bg-gradient-to-r file:from-brand-500 file:to-accent-500 file:px-3 file:py-1 file:text-sm file:font-medium file:text-neutral-950 hover:file:from-brand-400 hover:file:to-accent-400"
+              />
+              <span class="text-xs text-neutral-400">Upload a screenshot or photo of your receipt</span>
+            </label>
+
+            <div class="flex gap-3">
+              <button type="submit" class="flex-1 rounded-xl bg-gradient-to-r from-brand-500 to-accent-500 px-4 py-3 font-semibold text-neutral-950 shadow-glow transition hover:from-brand-400 hover:to-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-400">
+                Submit Subscription
+              </button>
+              <button type="button" id="cancel-subscription" class="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-neutral-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      // API configuration
+      const API_BASE = "http://localhost:7005/api/user";
+      const ACCOUNT_ASSET_BASE = "http://localhost:7005"; // base for account_logo
+
+      // Session validation
+      const token = localStorage.getItem('fitme_token');
+      const userRaw = localStorage.getItem('fitme_user');
+      const user = (() => { try { return JSON.parse(userRaw || 'null'); } catch { return null; } })();
+      if (!token || !user) {
+        window.location.replace('../index.html');
+      }
+
+      // DOM refs
+      const plansContainer = document.getElementById('plans-container');
+      const subscriptionAlert = document.getElementById('subscription-alert');
+      const statusBanner = document.getElementById('status-banner');
+      const pendingSection = document.getElementById('pending-section');
+      const pendingAccountsList = document.getElementById('pending-accounts-list');
+      const subscriptionModal = document.getElementById('subscription-modal');
+      const subscriptionForm = document.getElementById('subscription-form');
+      const modalTitle = document.getElementById('modal-title');
+      const selectedPlanInput = document.getElementById('selected-plan');
+      const closeModalBtn = document.getElementById('close-modal');
+      const cancelSubscriptionBtn = document.getElementById('cancel-subscription');
+      const accountsContainer = document.getElementById('accounts-container');
+      const refreshStatusBtn = document.getElementById('refresh-status');
+      const openAccountsBtn = document.getElementById('open-accounts');
+      
+      // Bank info elements
+      const updateBankInfoBtn = document.getElementById('update-bank-info');
+      const bankInfoSection = document.getElementById('bank-info-section');
+      const currentBankInfo = document.getElementById('current-bank-info');
+      const bankInfoForm = document.getElementById('bank-info-form');
+      const cancelBankFormBtn = document.getElementById('cancel-bank-form');
+
+      // State
+      let currentStatus = null;
+      let currentSubscription = null;
+      let pollTimer = null;
+
+      // Logout
+      document.getElementById('logout').addEventListener('click', () => {
+        localStorage.removeItem('fitme_token');
+        localStorage.removeItem('fitme_user');
+        window.location.replace('../index.html');
+      });
+
+      // Alerts
+      function showAlert(msg, type = 'info') {
+        subscriptionAlert.textContent = msg;
+        subscriptionAlert.classList.remove('hidden');
+        subscriptionAlert.className = 'mb-6 rounded-2xl border px-4 py-3 text-sm';
+        if (type === 'error') {
+          subscriptionAlert.classList.add('border-red-500/40','text-red-200','bg-red-500/10');
+        } else if (type === 'success') {
+          subscriptionAlert.classList.add('border-brand-500/40','text-brand-200','bg-brand-500/10');
+        } else {
+          subscriptionAlert.classList.add('border-white/10','text-neutral-200','bg-white/5');
+        }
+      }
+      function hideAlert() {
+        subscriptionAlert.classList.add('hidden');
+        subscriptionAlert.textContent = '';
+      }
+
+      // Status banner helpers
+      function setBanner(kind, text) {
+        statusBanner.classList.remove('hidden');
+        statusBanner.className = 'mb-6 rounded-2xl border px-4 py-3 text-sm';
+        if (kind === 'pending') {
+          statusBanner.classList.add('border-amber-400/30','bg-amber-400/10','text-amber-100');
+        } else if (kind === 'expired') {
+          statusBanner.classList.add('border-orange-400/40','bg-orange-500/10','text-orange-100');
+        } else if (kind === 'need-sub') {
+          statusBanner.classList.add('border-white/10','bg-white/5','text-neutral-200');
+        } else {
+          statusBanner.classList.add('border-white/10','bg-white/5','text-neutral-200');
+        }
+        statusBanner.textContent = text;
+      }
+      function clearBanner() {
+        statusBanner.classList.add('hidden');
+        statusBanner.textContent = '';
+      }
+
+      // API helpers
+      async function api(path, options = {}) {
+        const headers = { 'Authorization': `Bearer ${token}` };
+        
+        if (options.body && !(options.body instanceof FormData)) {
+          headers['Content-Type'] = 'application/json';
+          options.body = JSON.stringify(options.body);
+        }
+
+        const res = await fetch(API_BASE + path, {
+          ...options,
+          headers: { ...headers, ...(options.headers || {}) }
+        });
+
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json?.error || json?.message || 'Request failed');
+        return json;
+      }
+
+      function escapeHtml(str) {
+        return (str || '').toString().replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+      }
+
+      function toAbsoluteLogoUrl(path) {
+        if (!path) return '';
+        try {
+          const fileName = String(path).split('/').pop();
+          return `${ACCOUNT_ASSET_BASE}/uploads/account-logos/${fileName}`;
+        } catch { return ''; }
+      }
+
+      function copyToClipboard(text) {
+        try {
+          navigator.clipboard.writeText(text);
+          showInlineToast('Copied!');
+        } catch {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          showInlineToast('Copied!');
+        }
+      }
+
+      // Tiny inline toast
+      let toastTimer;
+      function showInlineToast(msg) {
+        clearTimeout(toastTimer);
+        const div = document.createElement('div');
+        div.className = 'fixed bottom-5 left-1/2 z-50 -translate-x-1/2 rounded-full border border-brand-500/40 bg-brand-500/10 px-3 py-1.5 text-sm text-brand-200 shadow';
+        div.textContent = msg;
+        document.body.appendChild(div);
+        toastTimer = setTimeout(() => div.remove(), 1200);
+      }
+
+      // Bank info functions
+      function displayCurrentBankInfo(subscription) {
+        if (!subscription || (!subscription.payer_bank_name && !subscription.payer_account_name)) {
+          currentBankInfo.innerHTML = `
+            <div class="rounded-lg border border-white/10 bg-white/5 p-3 text-center">
+              <p class="text-sm text-neutral-400 mb-2">No bank information provided yet</p>
+              <button id="add-bank-info" class="text-sm text-brand-300 hover:text-brand-200">Add your bank details</button>
+            </div>
+          `;
+          document.getElementById('add-bank-info')?.addEventListener('click', showBankInfoForm);
+          return;
+        }
+
+        currentBankInfo.innerHTML = `
+          <div class="rounded-lg border border-white/10 bg-white/5 p-3">
+            <div class="flex items-center justify-between mb-2">
+              <h5 class="text-sm font-medium">Bank Details</h5>
+              <button id="edit-bank-info" class="text-xs text-brand-300 hover:text-brand-200">Edit</button>
+            </div>
+            <div class="space-y-1 text-sm">
+              <div><span class="text-neutral-400">Bank:</span> ${escapeHtml(subscription.payer_bank_name || '')}</div>
+              <div><span class="text-neutral-400">Account Name:</span> ${escapeHtml(subscription.payer_account_name || '')}</div>
+              ${subscription.payer_account_number ? `<div><span class="text-neutral-400">Account Number:</span> ${escapeHtml(subscription.payer_account_number)}</div>` : ''}
+            </div>
+          </div>
+        `;
+        document.getElementById('edit-bank-info')?.addEventListener('click', showBankInfoForm);
+      }
+
+      function showBankInfoForm() {
+        // Pre-fill form if data exists
+        if (currentSubscription) {
+          document.getElementById('payer-bank-name').value = currentSubscription.payer_bank_name || '';
+          document.getElementById('payer-account-name').value = currentSubscription.payer_account_name || '';
+          document.getElementById('payer-account-number').value = currentSubscription.payer_account_number || '';
+        }
+        
+        currentBankInfo.classList.add('hidden');
+        bankInfoForm.classList.remove('hidden');
+      }
+
+      function hideBankInfoForm() {
+        bankInfoForm.classList.add('hidden');
+        currentBankInfo.classList.remove('hidden');
+        bankInfoForm.reset();
+      }
+
+      // Bank info form handlers
+      updateBankInfoBtn?.addEventListener('click', showBankInfoForm);
+      cancelBankFormBtn?.addEventListener('click', hideBankInfoForm);
+
+      bankInfoForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (!currentSubscription?.id) {
+          showAlert('No pending subscription found', 'error');
+          return;
+        }
+
+        const formData = new FormData(bankInfoForm);
+        const submitBtn = bankInfoForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+
+        try {
+          submitBtn.textContent = 'Saving...';
+          submitBtn.disabled = true;
+
+          await api(`/subscriptions/${currentSubscription.id}/payer`, {
+            method: 'PUT',
+            body: {
+              payer_bank_name: formData.get('payer_bank_name'),
+              payer_account_name: formData.get('payer_account_name'),
+              payer_account_number: formData.get('payer_account_number') || null
+            }
+          });
+
+          showAlert('Bank information saved successfully!', 'success');
+          hideBankInfoForm();
+          
+          // Refresh subscription data
+          await loadUserSubscriptions();
+
+        } catch (err) {
+          showAlert(err.message || 'Failed to save bank information', 'error');
+        } finally {
+          submitBtn.textContent = originalText;
+          submitBtn.disabled = false;
+        }
+      });
+
+      // Load user subscriptions
+      async function loadUserSubscriptions() {
+        try {
+          const { subscriptions } = await api('/subscriptions/my?status=pending');
+          currentSubscription = subscriptions?.[0] || null;
+          
+          if (currentSubscription) {
+            displayCurrentBankInfo(currentSubscription);
+          }
+        } catch (err) {
+          console.error('Failed to load user subscriptions:', err);
+        }
+      }
+
+      // Accounts rendering
+      function renderAccountsInto(accounts, targetEl) {
+        if (!accounts || !accounts.length) {
+          targetEl.innerHTML = `
+            <div class="rounded-lg border border-white/10 bg-neutral-900/60 p-4 text-neutral-400">
+              No payment accounts available. Please try again later.
+            </div>
+          `;
+          return;
+        }
+        targetEl.innerHTML = accounts.map((acc) => {
+          const logo = toAbsoluteLogoUrl(acc.account_logo);
+          const bank = escapeHtml(acc.bank_name);
+          const name = escapeHtml(acc.account_name);
+          const number = escapeHtml(acc.account_number);
+          return `
+            <div class="flex items-center gap-3 rounded-lg border border-white/10 bg-neutral-900/60 p-3">
+              ${logo
+                ? `<img src="${logo}" alt="${bank} logo" class="h-10 w-10 shrink-0 rounded object-cover ring-1 ring-white/10" />`
+                : `<div class="grid h-10 w-10 shrink-0 place-items-center rounded bg-white/5 ring-1 ring-white/10 text-sm text-neutral-300">${bank.slice(0,2).toUpperCase()}</div>`
+              }
+              <div class="min-w-0 flex-1">
+                <div class="truncate text-sm font-medium">${bank}</div>
+                <div class="truncate text-xs text-neutral-400">${name}</div>
+                <div class="mt-0.5 flex items-center gap-2 text-sm">
+                  <code class="rounded bg-white/5 px-1.5 py-0.5">${number}</code>
+                  <button type="button" class="rounded border border-white/10 bg-white/5 px-2 py-0.5 text-xs text-neutral-200 hover:bg-white/10" data-copy="${number}">
+                    Copy
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // Wire copy buttons
+        targetEl.querySelectorAll('button[data-copy]').forEach(btn => {
+          btn.addEventListener('click', () => copyToClipboard(btn.getAttribute('data-copy') || ''));
+        });
+      }
+
+      async function loadAccountsInto(targetEl) {
+        targetEl.innerHTML = `
+          <div class="rounded-lg border border-white/10 bg-neutral-900/60 p-4 text-neutral-400">Loading accounts...</div>
+        `;
+        try {
+          const { accounts } = await api('/accounts');
+          renderAccountsInto(accounts, targetEl);
+        } catch (err) {
+          targetEl.innerHTML = `
+            <div class="rounded-lg border border-white/10 bg-neutral-900/60 p-4 text-red-300">Failed to load accounts: ${escapeHtml(err.message)}</div>
+          `;
+        }
+      }
+
+      // Plans
+      async function loadPlans() {
+        try {
+          const response = await fetch(API_BASE + '/plans');
+          const data = await response.json();
+          if (!response.ok) throw new Error(data?.error || 'Failed to load plans');
+          displayPlans(data.plans || []);
+        } catch (err) {
+          plansContainer.innerHTML = `
+            <div class="col-span-full text-center text-red-400">
+              Failed to load plans: ${escapeHtml(err.message)}
+            </div>
+          `;
+        }
+      }
+
+      function displayPlans(plans) {
+        if (!plans.length) {
+          plansContainer.innerHTML = `
+            <div class="col-span-full text-center text-neutral-400">
+              No plans available at the moment.
+            </div>
+          `;
+          return;
+        }
+
+        const isPending = currentStatus === 'pending';
+        plansContainer.innerHTML = plans.map(plan => `
+          <div class="rounded-3xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl">
+            <div class="mb-4">
+              <h3 class="text-xl font-semibold">${escapeHtml(plan.plan_name)}</h3>
+              <div class="mt-2 text-2xl font-bold bg-gradient-to-r from-brand-300 to-accent-300 bg-clip-text text-transparent">$${plan.price}</div>
+              <div class="text-sm text-neutral-400">per month</div>
+            </div>
+
+            <ul class="mb-6 space-y-2 text-sm text-neutral-300">
+              <li class="flex items-center gap-2"><span class="text-brand-400">✓</span> AI-powered meal analysis</li>
+              <li class="flex items-center gap-2"><span class="text-brand-400">✓</span> Advanced nutrition tracking</li>
+              <li class="flex items-center gap-2"><span class="text-brand-400">✓</span> Personalized insights</li>
+              <li class="flex items-center gap-2"><span class="text-brand-400">✓</span> Progress analytics</li>
+            </ul>
+
+            <button
+              class="w-full rounded-xl ${isPending ? 'cursor-not-allowed bg-white/10 text-neutral-300' : 'bg-gradient-to-r from-brand-500 to-accent-500 text-neutral-950 shadow-glow transition hover:from-brand-400 hover:to-accent-400'} px-4 py-3 font-semibold focus:outline-none focus:ring-2 focus:ring-accent-400"
+              ${isPending ? 'disabled' : `onclick="openSubscriptionModal('${escapeHtml(plan.plan_name)}', ${plan.price})"`}
+            >
+              ${isPending ? 'Pending verification' : 'Subscribe Now'}
+            </button>
+          </div>
+        `).join('');
+      }
+
+      // Modal controls
+      function openSubscriptionModal(planName, price) {
+        if (currentStatus === 'pending') {
+          showAlert('Your subscription is pending verification. Please wait for approval.', 'info');
+          return;
+        }
+        modalTitle.textContent = `Subscribe to ${planName} - $${price}/month`;
+        selectedPlanInput.value = planName;
+        subscriptionModal.classList.remove('hidden');
+        subscriptionModal.classList.add('flex');
+        hideAlert();
+        // Load accounts each time modal opens
+        loadAccountsInto(accountsContainer);
+      }
+
+      function closeSubscriptionModal() {
+        subscriptionModal.classList.add('hidden');
+        subscriptionModal.classList.remove('flex');
+        subscriptionForm.reset();
+      }
+
+      closeModalBtn.addEventListener('click', closeSubscriptionModal);
+      cancelSubscriptionBtn.addEventListener('click', closeSubscriptionModal);
+      subscriptionModal.addEventListener('click', (e) => {
+        if (e.target === subscriptionModal) closeSubscriptionModal();
+      });
+
+      // Submit subscription (multipart/form-data)
+      subscriptionForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideAlert();
+
+        const formData = new FormData(subscriptionForm);
+        const submitBtn = subscriptionForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+
+        try {
+          submitBtn.textContent = 'Submitting...';
+          submitBtn.disabled = true;
+
+          const response = await api('/subscribe', { method: 'POST', body: formData });
+          showAlert(response.message || 'Subscription request submitted successfully!', 'success');
+          closeSubscriptionModal();
+
+          // Move page into pending state immediately
+          await checkSubStatus();
+
+        } catch (err) {
+          showAlert(err.message || 'Failed to submit subscription', 'error');
+        } finally {
+          submitBtn.textContent = originalText;
+          submitBtn.disabled = false;
+        }
+      });
+
+      // Subscription status handling
+      async function checkSubStatus() {
+        try {
+          let hintReason = new URLSearchParams(window.location.search).get('reason');
+          let hintExp = new URLSearchParams(window.location.search).get('exp');
+          if (!hintReason && !hintExp) {
+            hintReason = sessionStorage.getItem('fitme_sub_hint_reason');
+            hintExp = hintExp || sessionStorage.getItem('fitme_sub_hint_exp');
+          }
+          if (hintReason || hintExp) {
+            sessionStorage.removeItem('fitme_sub_hint_reason');
+            sessionStorage.removeItem('fitme_sub_hint_exp');
+            history.replaceState({}, '', window.location.pathname);
+          }
+
+          if (hintReason === 'expired') {
+            const d = hintExp
+              ? new Date(hintExp).toLocaleDateString(undefined, { dateStyle: 'medium' })
+              : '';
+            setBanner(
+              'expired',
+              `Your plan has expired${d ? ' on ' + d : ''}. Subscribe below to restore full access.`
+            );
+            pendingSection.classList.add('hidden');
+          }
+
+          const { subscribed, status, plan, start_date, expiry_date, reason, message } =
+            await api('/subscription/status');
+          currentStatus = status || (subscribed ? 'active' : 'inactive');
+
+          if (pollTimer) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+          }
+
+          if (subscribed) {
+            window.location.href = 'dashboard.html';
+            return;
+          }
+
+          if (reason === 'pending' || currentStatus === 'pending') {
+            setBanner('pending', message || 'Your subscription is pending verification.');
+            pendingSection.classList.remove('hidden');
+            await loadUserSubscriptions();
+            loadAccountsInto(pendingAccountsList);
+            displayPlansCacheIfAny();
+            pollTimer = setInterval(checkSubStatus, 15000);
+            return;
+          }
+
+          if (reason === 'expired') {
+            pendingSection.classList.add('hidden');
+            const d = expiry_date
+              ? new Date(expiry_date).toLocaleDateString(undefined, { dateStyle: 'medium' })
+              : '';
+            setBanner(
+              'expired',
+              `Your subscription has expired${plan ? ` (${plan})` : ''}${d ? ' — ended ' + d : ''}. Choose a plan below to continue using fitme.io.`
+            );
+            displayPlansCacheIfAny();
+            return;
+          }
+
+          pendingSection.classList.add('hidden');
+
+          let bannerMessage =
+            message || 'No active subscription. Choose a plan to continue.';
+          let kind = 'need-sub';
+          if (reason === 'cancelled') {
+            bannerMessage =
+              'Your subscription has been cancelled. Choose a plan to reactivate.';
+          } else if (reason === 'inactive') {
+            bannerMessage =
+              'Your subscription is inactive. Choose a plan to continue.';
+          } else if (reason === 'none') {
+            bannerMessage =
+              'You do not have an active plan yet. Subscribe to unlock AI chat, storage, and more.';
+          }
+          setBanner(kind, bannerMessage);
+          displayPlansCacheIfAny();
+        } catch (err) {
+          console.error('Failed to check subscription status:', err);
+          if (!currentStatus) {
+            setBanner(
+              'need-sub',
+              'Unable to verify subscription right now. You can still choose a plan.'
+            );
+          }
+        }
+      }
+
+      // Keep latest plans visible with correct button state when status changes
+      let lastPlans = null;
+      function displayPlansCacheIfAny() {
+        if (lastPlans) {
+          displayPlans(lastPlans);
+        } else {
+          // Load once and cache
+          loadPlans().then(() => {}).catch(() => {});
+        }
+      }
+
+      // Patch loadPlans to cache results
+      (function patchLoadPlansToCache() {
+        const originalDisplay = displayPlans;
+        displayPlans = function(plans) {
+          lastPlans = plans;
+          originalDisplay(plans);
+        }
+      })();
+
+      // Pending helpers
+      refreshStatusBtn?.addEventListener('click', () => checkSubStatus());
+      openAccountsBtn?.addEventListener('click', () => {
+        // Open modal without changing plan (user can still select a plan if needed)
+        subscriptionModal.classList.remove('hidden');
+        subscriptionModal.classList.add('flex');
+        modalTitle.textContent = 'Payment Accounts';
+        selectedPlanInput.value = selectedPlanInput.value || '';
+        loadAccountsInto(accountsContainer);
+      });
+
+      // Init
+      checkSubStatus();
+      loadPlans();
+
+      // Expose
+      window.openSubscriptionModal = openSubscriptionModal;
+    </script>
+  </body>
+</html>

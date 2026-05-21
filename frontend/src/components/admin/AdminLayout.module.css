@@ -1,0 +1,88 @@
+.layout {
+  min-height: 100svh;
+  color: var(--fitme-ink);
+}
+
+.mobileBar {
+  display: none;
+}
+
+.body {
+  position: relative;
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 18px;
+  width: min(100%, 1280px);
+  box-sizing: border-box;
+  margin: 0 auto;
+  padding: 18px 16px 24px;
+}
+
+.collapsed {
+  grid-template-columns: 86px minmax(0, 1fr);
+}
+
+.main {
+  min-width: 0;
+  min-height: calc(100svh - 190px);
+}
+
+@media (max-width: 900px) {
+  .mobileBar {
+    position: sticky;
+    top: 0;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: min(100%, 1280px);
+    box-sizing: border-box;
+    margin: 0 auto;
+    padding: 10px 12px 0;
+  }
+
+  .menuButton {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--fitme-line);
+    border-radius: 14px;
+    background:
+      linear-gradient(135deg, rgba(139, 92, 246, 0.26), rgba(59, 130, 246, 0.12)),
+      rgba(5, 21, 15, 0.86);
+    color: var(--fitme-strong);
+    box-shadow: var(--fitme-glow);
+    backdrop-filter: blur(16px);
+    cursor: pointer;
+  }
+
+  .menuButton svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .mobileBar span {
+    color: var(--fitme-muted);
+    font-size: 13px;
+    font-weight: 900;
+  }
+
+  .body {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 12px 12px 20px;
+  }
+
+  .collapsed {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mobileOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    border: 0;
+    background: rgba(0, 0, 0, 0.58);
+    backdrop-filter: blur(6px);
+  }
+}

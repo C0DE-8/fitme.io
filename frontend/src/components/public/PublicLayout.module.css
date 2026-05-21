@@ -1,0 +1,9 @@
+.layout {
+  min-height: 100svh;
+  background: transparent;
+  color: var(--fitme-ink);
+}
+
+.main {
+  min-height: calc(100svh - 180px);
+}

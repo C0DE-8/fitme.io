@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>fitme.io — Bank Accounts</title>
+  <meta name="description" content="Manage bank accounts for fitme.io." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' rx='12' fill='%238b5cf6'/%3E%3Cpath d='M18 36c4 4 8 6 14 6 6 0 10-2 14-6' stroke='white' stroke-width='5' stroke-linecap='round' fill='none'/%3E%3Ccircle cx='24' cy='24' r='3' fill='white'/%3E%3Ccircle cx='40' cy='24' r='3' fill='white'/%3E%3C/svg%3E" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f5f3ff', 100: '#ede9fe', 200: '#ddd6fe', 300: '#c4b5fd',
+              400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9',
+              800: '#5b21b6', 900: '#4c1d95'
+            },
+            deep: { 900: '#071B13', 950: '#05150F' },
+            accent: { 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb' }
+          },
+          boxShadow: { glow: '0 0 80px 0 rgba(139,92,246,0.20)' }
+        }
+      }
+    }
+  </script>
+  <style>
+    html, body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  </style>
+</head>
+<body class="min-h-dvh bg-deep-950 text-neutral-100">
+  <!-- Background -->
+  <div class="pointer-events-none fixed inset-0 -z-10">
+    <div class="absolute inset-0 bg-[radial-gradient(70%_60%_at_50%_0%,rgba(139,92,246,0.10),rgba(59,130,246,0.10),rgba(0,0,0,0))]"></div>
+    <div class="absolute -top-24 -left-20 h-80 w-80 rounded-full bg-violet-700/20 blur-3xl"></div>
+    <div class="absolute -bottom-24 -right-32 h-96 w-96 rounded-full bg-blue-800/20 blur-3xl"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 bg-deep-950/60 backdrop-blur supports-[backdrop-filter]:bg-deep-950/60">
+    <nav class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
+      <div class="flex items-center gap-6">
+        <a href="index.html" class="flex items-center gap-3">
+          <div class="grid h-9 w-9 place-items-center rounded-xl bg-brand-500/20 ring-1 ring-inset ring-white/15">
+            <span class="text-lg font-black text-brand-300">F</span>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-lg font-semibold tracking-tight text-brand-300">fitme.io</span>
+            <span class="text-xs text-neutral-400">Bank Accounts</span>
+          </div>
+        </a>
+        
+        <!-- Navigation Links -->
+        <nav class="hidden md:flex items-center gap-1">
+          <a href="index.html" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-200 hover:bg-white/10">
+            Dashboard
+          </a>
+          <a href="users-management.html" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-200 hover:bg-white/10">
+            Users
+          </a>
+          <a href="subscription.html" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-200 hover:bg-white/10">
+            Subscriptions
+          </a>
+          <a href="plans.html" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-200 hover:bg-white/10">
+            Plans
+          </a>
+          <a href="accounts.html" class="rounded-lg bg-brand-500/10 border border-brand-500/30 px-3 py-2 text-sm text-brand-300 hover:bg-brand-500/20">
+            Accounts
+          </a>
+          <a href="food-management.html" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-200 hover:bg-white/10">
+            Foods
+          </a>
+        </nav>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <div class="hidden sm:flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-neutral-300">
+          <div class="h-2 w-2 rounded-full bg-brand-400"></div>
+          <span id="admin-name">Admin</span>
+        </div>
+        <button id="logout" class="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-neutral-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">
+          Log out
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Main Content -->
+  <main class="mx-auto w-full max-w-7xl px-4 py-10">
+    <!-- Header Section -->
+    <section class="mb-10">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-3xl font-bold tracking-tight bg-gradient-to-r from-brand-300 to-accent-300 bg-clip-text text-transparent mb-2">
+            Bank Accounts
+          </h1>
+          <p class="text-neutral-300">Manage payment destination accounts</p>
+        </div>
+        <button id="add-account-btn" class="rounded-xl bg-gradient-to-r from-brand-500 to-accent-500 px-4 py-3 font-semibold text-neutral-950 shadow-glow transition hover:from-brand-400 hover:to-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-400">
+          Add Bank Account
+        </button>
+      </div>
+    </section>
+
+    <!-- Alert Messages -->
+    <div id="alert" class="mb-6 hidden rounded-2xl border px-4 py-3 text-sm" role="alert" aria-live="polite"></div>
+
+    <!-- Accounts List -->
+    <section>
+      <div class="rounded-2xl border border-white/10 bg-white/[0.04] p-6">
+        <div id="accounts-container">
+          <div class="flex items-center justify-center py-12">
+            <div class="text-center">
+              <div class="h-12 w-12 mx-auto mb-3 animate-spin rounded-full border-4 border-brand-500/20 border-t-brand-500"></div>
+              <p class="text-neutral-400">Loading bank accounts...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Add/Edit Account Modal -->
+    <div id="account-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4">
+      <div class="w-full max-w-md rounded-3xl border border-white/10 bg-deep-950/95 p-6 backdrop-blur-xl max-h-[90vh] overflow-y-auto">
+        <div class="mb-4 flex items-center justify-between">
+          <h3 id="modal-title" class="text-xl font-semibold">Add Bank Account</h3>
+          <button id="close-modal" class="rounded-full p-2 text-neutral-400 hover:bg-white/10 hover:text-neutral-200" aria-label="Close">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <form id="account-form" class="space-y-4" enctype="multipart/form-data">
+          <input type="hidden" id="account-id" name="id" />
+
+          <div class="space-y-2">
+            <label for="bank-name" class="block text-sm font-medium text-neutral-300">Bank Name *</label>
+            <input
+              type="text"
+              id="bank-name"
+              name="bank_name"
+              required
+              class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-400 outline-none focus:border-brand-500/40 focus:ring-2 focus:ring-accent-400"
+              placeholder="e.g., First Bank, GTBank, Access Bank"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label for="account-name" class="block text-sm font-medium text-neutral-300">Account Name *</label>
+            <input
+              type="text"
+              id="account-name"
+              name="account_name"
+              required
+              class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-400 outline-none focus:border-brand-500/40 focus:ring-2 focus:ring-accent-400"
+              placeholder="Account holder name"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label for="account-number" class="block text-sm font-medium text-neutral-300">Account Number *</label>
+            <input
+              type="text"
+              id="account-number"
+              name="account_number"
+              required
+              pattern="[0-9]{10}"
+              maxlength="10"
+              class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-400 outline-none focus:border-brand-500/40 focus:ring-2 focus:ring-accent-400"
+              placeholder="10-digit account number"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label for="account-logo" class="block text-sm font-medium text-neutral-300">
+              Bank Logo *
+              <span id="logo-required" class="text-red-400"></span>
+              <span id="logo-optional" class="text-neutral-500 hidden">(optional - current logo will be kept)</span>
+            </label>
+            <div class="relative">
+              <input
+                type="file"
+                id="account-logo"
+                name="account_logo"
+                accept="image/*"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-100 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-500/20 file:px-3 file:py-1 file:text-xs file:text-brand-300 hover:file:bg-brand-500/30 outline-none focus:border-brand-500/40 focus:ring-2 focus:ring-accent-400"
+              />
+            </div>
+            <p class="text-xs text-neutral-500">Upload bank logo (PNG, JPG, GIF - max 5MB)</p>
+          </div>
+
+          <!-- Current Logo Preview -->
+          <div id="current-logo-preview" class="hidden space-y-2">
+            <label class="block text-sm font-medium text-neutral-300">Current Logo</label>
+            <div class="flex items-center gap-3 p-3 rounded-xl border border-white/10 bg-white/5">
+              <img id="current-logo-img" src="/placeholder.svg" alt="Current logo" class="h-12 w-12 rounded-lg object-cover" />
+              <span id="current-logo-name" class="text-sm text-neutral-300"></span>
+            </div>
+          </div>
+
+          <div class="flex gap-3 pt-4">
+            <button type="submit" class="flex-1 rounded-xl bg-gradient-to-r from-brand-500 to-accent-500 px-4 py-3 font-semibold text-neutral-950 shadow-glow transition hover:from-brand-400 hover:to-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-400">
+              Save Account
+            </button>
+            <button type="button" id="cancel-modal" class="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-neutral-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // API configuration
+    const API_BASE = "http://localhost:7005/api/admin";
+    const UPLOADS_BASE = "http://localhost:7005/uploads/account-logos";
+
+    // Authentication check
+    const token = localStorage.getItem('fitme_admin_token');
+    const userRaw = localStorage.getItem('fitme_admin_user');
+    const user = (() => { try { return JSON.parse(userRaw || 'null'); } catch { return null; } })();
+
+    if (!token || !user || !(user.role === 'admin' || user.is_admin === true || user.admin === true)) {
+      window.location.replace('../index.html');
+    }
+
+    // DOM elements
+    const accountsContainer = document.getElementById('accounts-container');
+    const accountModal = document.getElementById('account-modal');
+    const accountForm = document.getElementById('account-form');
+    const modalTitle = document.getElementById('modal-title');
+    const addAccountBtn = document.getElementById('add-account-btn');
+    const closeModalBtn = document.getElementById('close-modal');
+    const cancelModalBtn = document.getElementById('cancel-modal');
+    const alertBox = document.getElementById('alert');
+    const logoRequired = document.getElementById('logo-required');
+    const logoOptional = document.getElementById('logo-optional');
+    const currentLogoPreview = document.getElementById('current-logo-preview');
+    const currentLogoImg = document.getElementById('current-logo-img');
+    const currentLogoName = document.getElementById('current-logo-name');
+
+    // State
+    let allAccounts = [];
+
+    // Display admin name
+    document.getElementById('admin-name').textContent = user.username || user.email || 'Admin';
+
+    // Logout functionality
+    document.getElementById('logout').addEventListener('click', () => {
+      localStorage.removeItem('fitme_admin_token');
+      localStorage.removeItem('fitme_admin_user');
+      window.location.replace('../index.html');
+    });
+
+    // Alert system
+    function showAlert(msg, type = 'info') {
+      alertBox.textContent = msg;
+      alertBox.classList.remove('hidden');
+      alertBox.className = 'mb-6 rounded-2xl border px-4 py-3 text-sm';
+      if (type === 'error') {
+        alertBox.classList.add('border-red-500/40','text-red-200','bg-red-500/10');
+      } else if (type === 'success') {
+        alertBox.classList.add('border-brand-500/40','text-brand-200','bg-brand-500/10');
+      } else {
+        alertBox.classList.add('border-white/10','text-neutral-200','bg-white/5');
+      }
+    }
+
+    function hideAlert() {
+      alertBox.classList.add('hidden');
+      alertBox.textContent = '';
+    }
+
+    // API helper
+    async function api(path, options = {}) {
+      const headers = { 'Authorization': `Bearer ${token}` };
+      
+      // Don't set Content-Type for FormData
+      if (options.body && !(options.body instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
+        options.body = JSON.stringify(options.body);
+      }
+
+      const res = await fetch(API_BASE + path, {
+        ...options,
+        headers: { ...headers, ...(options.headers || {}) }
+      });
+
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || json?.message || 'Request failed');
+      return json;
+    }
+
+    // Load accounts
+    async function loadAccounts() {
+      try {
+        const response = await api('/accounts');
+        allAccounts = response.accounts || [];
+        renderAccounts();
+      } catch (err) {
+        console.error('Failed to load accounts:', err);
+        showAlert('Failed to load accounts: ' + err.message, 'error');
+      }
+    }
+
+    // Render accounts
+    function renderAccounts() {
+      if (allAccounts.length === 0) {
+        accountsContainer.innerHTML = `
+          <div class="text-center py-12">
+            <div class="h-16 w-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
+              <svg class="h-8 w-8 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2" stroke-width="2"/>
+                <line x1="1" y1="10" x2="23" y2="10" stroke-width="2"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-neutral-300 mb-2">No bank accounts found</h3>
+            <p class="text-neutral-400 mb-4">Add your first bank account to get started</p>
+            <button onclick="openModal()" class="rounded-xl bg-gradient-to-r from-brand-500 to-accent-500 px-4 py-2 font-semibold text-neutral-950 shadow-glow transition hover:from-brand-400 hover:to-accent-400">
+              Add Bank Account
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      accountsContainer.innerHTML = `
+        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          ${allAccounts.map(account => `
+            <div class="rounded-xl border border-white/10 bg-white/5 p-6 hover:bg-white/[0.08] transition">
+              <div class="flex items-start justify-between mb-4">
+                <div class="flex items-center gap-3">
+                  <div class="h-12 w-12 rounded-lg overflow-hidden bg-white/10 flex items-center justify-center">
+                    <img src="${UPLOADS_BASE}/${account.account_logo}" 
+                         alt="${escapeHtml(account.bank_name)} logo" 
+                         class="h-full w-full object-cover"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                    <div class="hidden h-full w-full items-center justify-center text-xs text-neutral-400">
+                      ${account.bank_name.charAt(0).toUpperCase()}
+                    </div>
+                  </div>
+                  <div>
+                    <h3 class="font-semibold text-neutral-100">${escapeHtml(account.bank_name)}</h3>
+                    <p class="text-sm text-neutral-400">${escapeHtml(account.account_name)}</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-1">
+                  <button onclick="editAccount(${account.id})" class="rounded-lg border border-white/10 bg-white/5 p-2 text-neutral-200 hover:bg-white/10" title="Edit Account">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                  </button>
+                  <button onclick="deleteAccount(${account.id})" class="rounded-lg border border-red-500/30 bg-red-500/10 p-2 text-red-300 hover:bg-red-500/20" title="Delete Account">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-neutral-400">Account Number:</span>
+                  <span class="text-neutral-300 font-mono">${account.account_number}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-neutral-400">Added:</span>
+                  <span class="text-neutral-300">${new Date(account.created_at).toLocaleDateString()}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-neutral-400">Status:</span>
+                  <span class="text-emerald-300">Active</span>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    // Modal functions
+    function openModal(account = null) {
+      hideAlert();
+      if (account) {
+        modalTitle.textContent = 'Edit Bank Account';
+        document.getElementById('account-id').value = account.id;
+        document.getElementById('bank-name').value = account.bank_name;
+        document.getElementById('account-name').value = account.account_name;
+        document.getElementById('account-number').value = account.account_number;
+        
+        // Show current logo
+        currentLogoPreview.classList.remove('hidden');
+        currentLogoImg.src = `${UPLOADS_BASE}/${account.account_logo}`;
+        currentLogoName.textContent = account.account_logo;
+        
+        // Make logo optional for editing
+        logoRequired.classList.add('hidden');
+        logoOptional.classList.remove('hidden');
+        document.getElementById('account-logo').removeAttribute('required');
+      } else {
+        modalTitle.textContent = 'Add Bank Account';
+        accountForm.reset();
+        currentLogoPreview.classList.add('hidden');
+        
+        // Make logo required for new accounts
+        logoRequired.classList.remove('hidden');
+        logoOptional.classList.add('hidden');
+        document.getElementById('account-logo').setAttribute('required', 'required');
+      }
+      accountModal.classList.remove('hidden');
+      accountModal.classList.add('flex');
+    }
+
+    function closeModal() {
+      accountModal.classList.add('hidden');
+      accountModal.classList.remove('flex');
+      accountForm.reset();
+      currentLogoPreview.classList.add('hidden');
+    }
+
+    // Edit account
+    function editAccount(id) {
+      const account = allAccounts.find(a => a.id === id);
+      if (account) {
+        openModal(account);
+      }
+    }
+
+    // Delete account
+    async function deleteAccount(id) {
+      const account = allAccounts.find(a => a.id === id);
+      if (!account) return;
+
+      if (!confirm(`Are you sure you want to delete the ${account.bank_name} account? This action cannot be undone.`)) {
+        return;
+      }
+
+      try {
+        await api(`/accounts/${id}`, { method: 'DELETE' });
+        showAlert('Bank account deleted successfully', 'success');
+        loadAccounts();
+      } catch (err) {
+        showAlert('Failed to delete account: ' + err.message, 'error');
+      }
+    }
+
+    // Form submission
+    accountForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideAlert();
+
+      const formData = new FormData(accountForm);
+      const accountId = formData.get('id');
+      const isEdit = accountId && accountId !== '';
+
+      try {
+        const submitBtn = accountForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = isEdit ? 'Updating...' : 'Creating...';
+        submitBtn.disabled = true;
+
+        if (isEdit) {
+          await api(`/accounts/${accountId}`, {
+            method: 'PUT',
+            body: formData
+          });
+          showAlert('Bank account updated successfully', 'success');
+        } else {
+          await api('/accounts', {
+            method: 'POST',
+            body: formData
+          });
+          showAlert('Bank account created successfully', 'success');
+        }
+
+        closeModal();
+        loadAccounts();
+
+      } catch (err) {
+        showAlert(err.message || 'Failed to save account', 'error');
+      } finally {
+        const submitBtn = accountForm.querySelector('button[type="submit"]');
+        submitBtn.textContent = 'Save Account';
+        submitBtn.disabled = false;
+      }
+    });
+
+    // Event listeners
+    addAccountBtn.addEventListener('click', () => openModal());
+    closeModalBtn.addEventListener('click', closeModal);
+    cancelModalBtn.addEventListener('click', closeModal);
+
+    accountModal.addEventListener('click', (e) => {
+      if (e.target === accountModal) closeModal();
+    });
+
+    // Account number formatting
+    document.getElementById('account-number').addEventListener('input', (e) => {
+      e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
+    });
+
+    // Utility functions
+    function escapeHtml(str) {
+      return (str || '').toString().replace(/[&<>"']/g, (m) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[m]));
+    }
+
+    // Make functions global for onclick handlers
+    window.editAccount = editAccount;
+    window.deleteAccount = deleteAccount;
+    window.openModal = openModal;
+
+    // Initialize
+    loadAccounts();
+  </script>
+</body>
+</html>

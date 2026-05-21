@@ -1,0 +1,1161 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>fitme.io — Dashboard</title>
+    <meta name="description" content="Your fitme.io dashboard: plan meals and get helpful insights." />
+       <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' rx='12' fill='%238b5cf6'/%3E%3Cpath d='M18 36c4 4 8 6 14 6 6 0 10-2 14-6' stroke='white' stroke-width='5' stroke-linecap='round' fill='none'/%3E%3Ccircle cx='24' cy='24' r='3' fill='white'/%3E%3Ccircle cx='40' cy='24' r='3' fill='white'/%3E%3C/svg%3E" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../css/app.css" />
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              // Purple brand
+              brand: {
+                50: '#f5f3ff', 100: '#ede9fe', 200: '#ddd6fe', 300: '#c4b5fd',
+                400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9',
+                800: '#5b21b6', 900: '#4c1d95'
+              },
+              // Deep background
+              deep: { 900: '#071B13', 950: '#05150F' },
+              // Blue accent
+              accent: { 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb' }
+            },
+            boxShadow: {
+              glow: '0 0 80px 0 rgba(139,92,246,0.20)'
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      html, body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+      
+      /* Image loading optimization */
+      .image-loading {
+        background: linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+      }
+      
+      @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
+      
+      .image-fade-in {
+        opacity: 0;
+        transition: opacity 0.3s ease-in-out;
+      }
+      
+      .image-fade-in.loaded {
+        opacity: 1;
+      }
+
+      .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      /* Modal styles */
+      .modal-backdrop {
+        backdrop-filter: blur(8px);
+        animation: fadeIn 0.2s ease-out;
+      }
+      
+      .modal-content {
+        animation: slideUp 0.3s ease-out;
+      }
+      
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      
+      @keyframes slideUp {
+        from { 
+          opacity: 0;
+          transform: translateY(20px) scale(0.95);
+        }
+        to { 
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+    </style>
+  </head>
+  <body class="fitme-app min-h-dvh bg-deep-950 text-neutral-100">
+    
+    <div class="pointer-events-none fixed inset-0 -z-10">
+      <div class="absolute inset-0 bg-[radial-gradient(70%_60%_at_50%_0%,rgba(139,92,246,0.10),rgba(59,130,246,0.10),rgba(0,0,0,0))]"></div>
+      <div class="absolute -top-24 -left-20 h-80 w-80 rounded-full bg-violet-700/20 blur-3xl"></div>
+      <div class="absolute -bottom-24 -right-32 h-96 w-96 rounded-full bg-blue-800/20 blur-3xl"></div>
+    </div>
+
+    
+    <div id="loading-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-deep-950">
+      <div class="text-center">
+        <div class="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-brand-500/20 border-t-brand-500 mx-auto"></div>
+        <div class="text-neutral-300">Loading dashboard...</div>
+      </div>
+    </div>
+
+    <!-- Storage Check Modal -->
+    <div id="storage-modal" class="fixed inset-0 z-50 hidden items-center justify-center modal-backdrop bg-black/50">
+      <div class="modal-content mx-4 w-full max-w-md rounded-3xl border border-white/10 bg-deep-950/95 backdrop-blur-xl p-6 shadow-2xl">
+        <div class="text-center">
+          <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brand-500/20">
+            <svg class="h-6 w-6 text-brand-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <rect x="3" y="7" width="18" height="10" rx="2" ry="2" stroke-width="2"/>
+              <path stroke-width="2" d="M3 10h18"/>
+            </svg>
+          </div>
+          <h3 class="mb-2 text-lg font-semibold text-neutral-100">Check Your Storage</h3>
+          <p class="mb-6 text-sm text-neutral-300">
+            Is your pantry storage up to date? Having current ingredients helps fitme AI give you better meal suggestions.
+          </p>
+          
+          <div class="grid gap-3">
+            <a href="storage.html" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-neutral-100 transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M12 5v14M5 12h16M5 18h8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Update My Storage
+            </a>
+            <button id="continue-anyway" class="rounded-2xl bg-gradient-to-r from-brand-500 to-accent-500 px-4 py-3 text-sm font-semibold text-neutral-950 shadow-glow transition hover:from-brand-400 hover:to-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-400">
+              My Storage is Up to Date
+            </button>
+          </div>
+          
+          <button id="close-modal" class="mt-4 text-xs text-neutral-400 hover:text-neutral-300 transition">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+ 
+    <header class="app-header-safe sticky top-0 z-40 border-b border-white/5 bg-deep-950/70 backdrop-blur-xl supports-[backdrop-filter]:bg-deep-950/60">
+      <nav class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:py-4">
+        <a href="../index.html" class="flex items-center gap-3">
+          <div class="grid h-9 w-9 place-items-center rounded-xl bg-brand-500/20 ring-1 ring-inset ring-white/15">
+            <span class="text-lg font-black text-brand-300">F</span>
+          </div>
+          <span class="text-lg font-semibold tracking-tight text-brand-300">fitme.io</span>
+        </a>
+        <div class="flex flex-wrap items-center justify-end gap-2">
+          <button id="ambient-toggle" class="min-h-[40px] rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-neutral-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400" aria-pressed="false">
+            <span class="inline-flex items-center gap-1">
+              <svg id="ambient-icon" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M9 9a3 3 0 000 6h6a3 3 0 000-6H9z"/>
+              </svg>
+              <span id="ambient-text">Ambient: Off</span>
+            </span>
+          </button>
+          <button id="logout" class="min-h-[40px] rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-neutral-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">Log out</button>
+        </div>
+      </nav>
+    </header>
+
+    <main class="app-main-pad mx-auto w-full max-w-6xl px-4 py-8 sm:py-10 md:py-14">
+      
+      <section class="mb-8">
+        <h1 class="text-2xl font-semibold tracking-tight sm:text-3xl bg-gradient-to-r from-brand-300 to-accent-300 bg-clip-text text-transparent">Good to see you, <span id="username">—</span> 👋</h1>
+        <p class="mt-2 max-w-2xl text-pretty text-sm text-neutral-300 sm:text-base">Chat with fitme AI to plan your next meal, tailored to what you have.</p>
+        <div id="session-alert" class="mt-4 hidden rounded-2xl border px-4 py-3 text-sm"></div>
+      </section>
+
+   
+      <section class="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
+         
+        <div class="rounded-3xl border border-white/10 bg-white/[0.06] p-5 backdrop-blur-xl md:col-span-1">
+          <div class="mb-3 flex items-center gap-2">
+            <div class="relative h-8 w-8">
+              <div class="absolute inset-0 rounded-full bg-gradient-to-br from-brand-500/30 to-accent-500/30 blur"></div>
+              <div class="relative grid h-8 w-8 place-items-center rounded-full border border-white/15 bg-white/5">
+                <span class="text-xs font-bold text-brand-300">AI</span>
+              </div>
+              <span class="absolute -right-0 -top-0 block h-2 w-2 animate-pulse rounded-full bg-brand-400 ring-2 ring-neutral-900"></span>
+            </div>
+            <h2 class="text-lg font-semibold">Ask fitme AI</h2>
+          </div>
+
+   
+          <div class="mb-4">
+            <p class="mb-2 text-sm text-neutral-300">Pick a style</p>
+            <div id="chips" class="flex flex-wrap gap-2">
+              <button type="button" data-type="rice" class="chip rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-neutral-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400 transition">
+                <span class="inline-flex items-center gap-2">
+                  <svg class="h-4 w-4 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9" stroke-width="2"></circle><path d="M7 13h10" stroke-width="2" /></svg>
+                  Rice
+                </span>
+              </button>
+              <button type="button" data-type="swallow" class="chip rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-neutral-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400 transition">
+                <span class="inline-flex items-center gap-2">
+                  <svg class="h-4 w-4 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12h18M4 18h16M6 6h12" stroke-width="2" stroke-linecap="round"/></svg>
+                  Swallow
+                </span>
+              </button>
+              <button type="button" data-type="junks" class="chip rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-neutral-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400 transition">
+                <span class="inline-flex items-center gap-2">
+                  <svg class="h-4 w-4 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="5" width="16" height="14" rx="2" stroke-width="2"></rect><path d="M8 9h8" stroke-width="2" /></svg>
+                  Junks
+                </span>
+              </button>
+            </div>
+          </div>
+
+          
+          <form id="plan-form" class="grid gap-3">
+            <button class="group mt-1 rounded-2xl bg-gradient-to-r from-brand-500 to-accent-500 px-4 py-3 font-semibold text-neutral-950 shadow-glow transition hover:from-brand-400 hover:to-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-400 disabled:opacity-50 disabled:cursor-not-allowed" type="submit" id="ask-ai-btn">
+              <span class="inline-flex items-center gap-2">
+                <svg class="h-4 w-4 transition group-hover:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M13 5l7 7-7 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span id="ask-ai-text">Ask fitme AI</span>
+              </span>
+            </button>
+            <button id="clear-suggestion" type="button" class="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-neutral-100 transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">
+              Clear response
+            </button>
+          </form>
+        </div>
+
+       
+        <div class="md:col-span-2">
+        
+          <div class="relative rounded-3xl p-[1.5px] bg-[conic-gradient(at_50%_50%,rgba(139,92,246,0.35),rgba(59,130,246,0.25),rgba(139,92,246,0.35))]">
+            <div class="rounded-[calc(1.5rem-2px)] border border-white/10 bg-white/[0.06] p-5 backdrop-blur-xl">
+              <div class="mb-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="grid h-8 w-8 place-items-center rounded-full border border-white/10 bg-white/5">
+                    <svg class="h-4 w-4 text-brand-300" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3v18M3 12h18" stroke-width="2" /></svg>
+                  </div>
+                  <h2 class="text-lg font-semibold">fitme AI suggestion</h2>
+                </div>
+                <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-neutral-300">
+                  <span class="h-2 w-2 animate-pulse rounded-full bg-brand-400"></span> Live
+                </div>
+              </div>
+
+              
+              <div id="suggestion-skeleton" class="hidden">
+                <div class="mb-3 h-4 w-1/2 animate-pulse rounded bg-white/10"></div>
+                <div class="mb-2 h-4 w-2/3 animate-pulse rounded bg-white/10"></div>
+                <div class="mb-4 h-4 w-1/3 animate-pulse rounded bg-white/10"></div>
+                <div class="grid gap-2">
+                  <div class="h-56 w-full animate-pulse rounded-2xl bg-white/10"></div>
+                  <div class="h-10 w-full animate-pulse rounded-xl bg-white/10"></div>
+                  <div class="h-8 w-2/3 animate-pulse rounded-xl bg-white/10"></div>
+                </div>
+              </div>
+
+              
+              <div id="spotlight" class="grid gap-4 text-sm text-neutral-200" aria-live="polite">
+                <div class="rounded-xl border border-white/10 bg-white/5 p-4 text-neutral-300">
+                  No suggestion yet. Choose a style and tap "Ask fitme AI".
+                </div>
+              </div>
+
+              
+              <div id="options-section" class="mt-6 hidden">
+                <div class="mb-2 flex items-center justify-between">
+                  <h3 id="options-title" class="text-base font-semibold">All options</h3>
+                  <div class="flex gap-2">
+                    <button id="slide-left" class="rounded-full border border-white/10 bg-white/5 p-2 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400" aria-label="Scroll left">
+                      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18l-6-6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <button id="slide-right" class="rounded-full border border-white/10 bg-white/5 p-2 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400" aria-label="Scroll right">
+                      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 6l6 6-6 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="relative">
+                  <div id="options-slider" class="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2">
+                     <!-- Cards injected here -->
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="pointer-events-none absolute inset-0 -z-10 rounded-3xl blur-2xl" style="background: radial-gradient(40% 40% at 50% 0%, rgba(139,92,246,0.12), rgba(0,0,0,0));"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+
+    <nav class="app-bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-deep-950/90 backdrop-blur-xl">
+      <div class="mx-auto max-w-6xl">
+        <ul class="grid grid-cols-3">
+          <li>
+            <a href="dashboard.html" data-tab="planMeal" class="flex flex-col items-center gap-1 px-3 py-2.5 text-xs text-neutral-300 hover:text-neutral-100 sm:px-4 sm:py-3">
+              <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12h16M4 6h16M4 18h8"/></svg>
+              <span>Plan Meal</span>
+            </a>
+          </li>
+          <li>
+            <a href="budget.html" data-tab="budget" class="flex flex-col items-center gap-1 px-3 py-2.5 text-xs text-neutral-300 hover:text-neutral-100 sm:px-4 sm:py-3">
+              <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-3.866 0-7 1.79-7 4s3.134 4 7 4 7-1.79 7-4-3.134-4-7-4z"/><path stroke-width="2" d="M5 12V8m14 4V8M5 16v-4m14 4v-4"/></svg>
+              <span>Budget</span>
+            </a>
+          </li>
+          <li>
+            <a href="storage.html" data-tab="storage" class="flex flex-col items-center gap-1 px-3 py-2.5 text-xs text-neutral-300 hover:text-neutral-100 sm:px-4 sm:py-3">
+              <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="7" width="18" height="10" rx="2" ry="2" stroke-width="2"/><path stroke-width="2" d="M3 10h18"/></svg>
+              <span>Storage</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Floating AI Chat Button -->
+    <div id="floating-ai-btn" class="app-fab-offset fixed right-4 z-50 cursor-move sm:right-6">
+      <button onclick="window.location.href='chat.html'" class="group relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-brand-500 to-accent-500 shadow-glow transition-all duration-300 hover:scale-110 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-brand-400/50">
+        <!-- AI Icon -->
+        <svg class="h-6 w-6 text-white transition-transform group-hover:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          <circle cx="9" cy="9" r="1" fill="currentColor"/>
+          <circle cx="15" cy="9" r="1" fill="currentColor"/>
+        </svg>
+        
+        <!-- Pulsing ring animation -->
+        <div class="absolute inset-0 rounded-full bg-gradient-to-r from-brand-500 to-accent-500 opacity-75 animate-ping"></div>
+        
+        <!-- Tooltip -->
+        <div class="absolute bottom-full right-0 mb-2 hidden group-hover:block">
+          <div class="rounded-lg bg-deep-950/90 backdrop-blur px-3 py-2 text-sm text-white shadow-lg border border-white/10">
+            Chat with AI
+            <div class="absolute top-full right-4 h-0 w-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-deep-950/90"></div>
+          </div>
+        </div>
+      </button>
+    </div>
+
+    <!-- Optimized Audio with better caching and offline support -->
+    <audio id="ambient-audio" preload="auto" crossorigin="anonymous" loop>
+      <source src="../assets/audio/ambient-soft.mp3" type="audio/mpeg">
+      <!-- Fallback for browsers that don't support MP3 -->
+      <source src="../assets/audio/ambient-soft.ogg" type="audio/ogg">
+      <!-- Fallback message for browsers that don't support audio -->
+      Your browser does not support the audio element.
+    </audio>
+
+    <script>
+      // API configuration
+      const API_BASE = "http://localhost:7005/api/user";
+      const API_ORIGIN = new URL(API_BASE).origin;
+      const CURRENCY = localStorage.getItem('fitme_currency') || '₦';
+
+      // Configure Axios defaults
+      axios.defaults.timeout = 10000;
+      axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('fitme_token')}`;
+      
+      // Add request interceptor for loading states
+      let activeRequests = 0;
+      axios.interceptors.request.use(config => {
+        activeRequests++;
+        return config;
+      });
+      
+      axios.interceptors.response.use(
+        response => {
+          activeRequests--;
+          return response;
+        },
+        error => {
+          activeRequests--;
+          return Promise.reject(error);
+        }
+      );
+
+      // Session validation
+      const token = localStorage.getItem('fitme_token');
+      const userRaw = localStorage.getItem('fitme_user');
+      const user = (() => { try { return JSON.parse(userRaw || 'null'); } catch { return null; } })();
+      if (!token || !user) { window.location.replace('../index.html'); }
+
+      // DOM refs
+      const loadingScreen = document.getElementById('loading-screen');
+      const storageModal = document.getElementById('storage-modal');
+      const continueAnywayBtn = document.getElementById('continue-anyway');
+      const closeModalBtn = document.getElementById('close-modal');
+      const ambientAudio = document.getElementById('ambient-audio');
+      const ambientToggle = document.getElementById('ambient-toggle');
+      const ambientIcon = document.getElementById('ambient-icon');
+      const ambientText = document.getElementById('ambient-text');
+      const chips = document.getElementById('chips');
+      const planForm = document.getElementById('plan-form');
+      const askAiBtn = document.getElementById('ask-ai-btn');
+      const askAiText = document.getElementById('ask-ai-text');
+      const skeleton = document.getElementById('suggestion-skeleton');
+      const spotlight = document.getElementById('spotlight');
+      const optsSection = document.getElementById('options-section');
+      const optsTitle = document.getElementById('options-title');
+      const clearSuggestionBtn = document.getElementById('clear-suggestion');
+      const floatingBtn = document.getElementById('floating-ai-btn');
+
+      // State for randomization
+      let currentFoods = [];
+      let currentTypeLabel = '';
+      let storageCheckPassed = false;
+
+      // Active tab styling
+      (function markActiveTab() {
+        const here = 'dashboard.html';
+        document.querySelectorAll('[data-tab]').forEach(a => {
+          const isActive = a.getAttribute('href').endsWith(here);
+          a.setAttribute('aria-current', isActive ? 'page' : 'false');
+        });
+      })();
+
+      // Storage Modal Functions
+      function showStorageModal() {
+        storageModal.classList.remove('hidden');
+        storageModal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function hideStorageModal() {
+        storageModal.classList.add('hidden');
+        storageModal.classList.remove('flex');
+        document.body.style.overflow = '';
+      }
+
+      // Modal event listeners
+      continueAnywayBtn.addEventListener('click', () => {
+        storageCheckPassed = true;
+        hideStorageModal();
+        // Trigger the AI suggestion flow
+        proceedWithAISuggestion();
+      });
+
+      closeModalBtn.addEventListener('click', hideStorageModal);
+
+      // Close modal when clicking backdrop
+      storageModal.addEventListener('click', (e) => {
+        if (e.target === storageModal) {
+          hideStorageModal();
+        }
+      });
+
+      // Enhanced Ambient Audio System with proper file loading and caching
+      class AmbientAudioManager {
+        constructor() {
+          this.audio = ambientAudio;
+          this.isLoaded = false;
+          this.isEnabled = localStorage.getItem('fitme_ambient_on') === 'true';
+          this.audioUrl = '../assets/audio/ambient-soft.mp3';
+          this.retryCount = 0;
+          this.maxRetries = 3;
+          
+          this.init();
+        }
+
+        async init() {
+          // Load the audio file
+          await this.loadAudio();
+          
+          // Set initial UI state
+          this.updateUI();
+          
+          // Setup event listeners
+          this.setupEventListeners();
+        }
+
+        async loadAudio() {
+          try {
+            // Set the audio source
+            this.audio.src = this.audioUrl;
+            this.audio.loop = true;
+            this.audio.preload = 'auto';
+            this.audio.crossOrigin = 'anonymous';
+            
+            // Wait for the audio to be ready
+            await new Promise((resolve, reject) => {
+              const timeout = setTimeout(() => {
+                reject(new Error('Audio loading timeout'));
+              }, 10000); // 10 second timeout
+
+              this.audio.addEventListener('canplaythrough', () => {
+                clearTimeout(timeout);
+                this.isLoaded = true;
+                resolve();
+              }, { once: true });
+
+              this.audio.addEventListener('error', (e) => {
+                clearTimeout(timeout);
+                reject(new Error(`Audio loading failed: ${e.message || 'Unknown error'}`));
+              }, { once: true });
+
+              // Start loading
+              this.audio.load();
+            });
+
+            console.log('Ambient audio loaded successfully');
+            
+          } catch (error) {
+            console.warn('Audio loading failed:', error);
+            
+            // Retry loading if we haven't exceeded max retries
+            if (this.retryCount < this.maxRetries) {
+              this.retryCount++;
+              console.log(`Retrying audio load (${this.retryCount}/${this.maxRetries})...`);
+              setTimeout(() => this.loadAudio(), 1000 * this.retryCount);
+              return;
+            }
+            
+            this.isLoaded = false;
+          }
+        }
+
+        setupEventListeners() {
+          // Handle audio events
+          this.audio.addEventListener('loadstart', () => {
+            console.log('Audio loading started');
+          });
+
+          this.audio.addEventListener('canplay', () => {
+            console.log('Audio can start playing');
+            this.isLoaded = true;
+            this.updateUI();
+            
+            // Auto-play if enabled
+            if (this.isEnabled) {
+              this.play();
+            }
+          });
+
+          this.audio.addEventListener('error', (e) => {
+            console.error('Audio error:', e);
+            this.isLoaded = false;
+            this.updateUI();
+          });
+
+          this.audio.addEventListener('ended', () => {
+            // This shouldn't happen with loop=true, but just in case
+            if (this.isEnabled && this.isLoaded) {
+              this.play();
+            }
+          });
+
+          // Handle visibility change to pause/resume audio
+          document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+              this.pause();
+            } else if (this.isEnabled && this.isLoaded) {
+              // Small delay to ensure page is fully visible
+              setTimeout(() => this.play(), 100);
+            }
+          });
+
+          // Handle page unload
+          window.addEventListener('beforeunload', () => {
+            this.cleanup();
+          });
+        }
+
+        async toggle() {
+          this.isEnabled = !this.isEnabled;
+          localStorage.setItem('fitme_ambient_on', String(this.isEnabled));
+          
+          if (this.isEnabled) {
+            await this.play();
+          } else {
+            this.pause();
+          }
+          
+          this.updateUI();
+        }
+
+        async play() {
+          if (!this.isLoaded || !this.isEnabled) {
+            console.log('Cannot play audio:', { isLoaded: this.isLoaded, isEnabled: this.isEnabled });
+            return;
+          }
+          
+          try {
+            // Set volume to a comfortable level
+            this.audio.volume = 0.08;
+            
+            // Play the audio
+            const playPromise = this.audio.play();
+            
+            if (playPromise !== undefined) {
+              await playPromise;
+              console.log('Audio playing successfully');
+            }
+            
+          } catch (error) {
+            console.warn('Audio play failed:', error);
+            
+            // If autoplay is blocked, we'll need user interaction
+            if (error.name === 'NotAllowedError') {
+              console.log('Autoplay blocked - waiting for user interaction');
+              // The audio will play when user clicks the toggle button
+            }
+          }
+        }
+
+        pause() {
+          try {
+            if (!this.audio.paused) {
+              this.audio.pause();
+              console.log('Audio paused');
+            }
+          } catch (error) {
+            console.warn('Audio pause failed:', error);
+          }
+        }
+
+        updateUI() {
+          const isOn = this.isEnabled && this.isLoaded;
+          ambientText.textContent = isOn ? 'Ambient: On' : 'Ambient: Off';
+          ambientToggle.setAttribute('aria-pressed', isOn ? 'true' : 'false');
+          
+          // Update icon and styling based on state
+          if (isOn) {
+            ambientIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M9 9a3 3 0 000 6h6a3 3 0 000-6H9z"/>';
+            ambientToggle.classList.add('bg-brand-500/10', 'border-brand-500/30', 'text-brand-300');
+            ambientToggle.classList.remove('bg-white/5', 'border-white/10', 'text-neutral-100');
+          } else {
+            ambientIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>';
+            ambientToggle.classList.remove('bg-brand-500/10', 'border-brand-500/30', 'text-brand-300');
+            ambientToggle.classList.add('bg-white/5', 'border-white/10', 'text-neutral-100');
+          }
+
+          // Show loading state if audio is not loaded
+          if (!this.isLoaded && this.retryCount > 0) {
+            ambientText.textContent = 'Loading...';
+          }
+        }
+
+        cleanup() {
+          this.pause();
+          // Don't need to clean up URLs since we're using a static file path
+        }
+      }
+
+      // Initialize ambient audio manager
+      const ambientManager = new AmbientAudioManager();
+
+      // Setup ambient toggle
+      ambientToggle.addEventListener('click', () => {
+        ambientManager.toggle();
+      });
+
+      // Enhanced API helper with Axios
+      async function api(path, data = null, method = 'GET') {
+        try {
+          const config = {
+            method,
+            url: API_BASE + path,
+            headers: { 'Authorization': `Bearer ${token}` }
+          };
+          
+          if (data) {
+            config.data = data;
+            config.headers['Content-Type'] = 'application/json';
+          }
+          
+          const response = await axios(config);
+          return response.data;
+        } catch (error) {
+          const message = error.response?.data?.error || 
+                          error.response?.data?.message || 
+                          error.message || 
+                          'Request failed';
+          throw new Error(message);
+        }
+      }
+
+      // Image loading optimization
+      function createOptimizedImage(src, alt, className = '', onLoad = null) {
+        const container = document.createElement('div');
+        container.className = `${className} image-loading`;
+        
+        const img = document.createElement('img');
+        img.className = 'image-fade-in w-full h-full object-cover';
+        img.alt = alt;
+        img.loading = 'lazy'; // Native lazy loading
+        
+        // Preload critical images
+        if (src.includes('uploads')) {
+          const link = document.createElement('link');
+          link.rel = 'preload';
+          link.as = 'image';
+          link.href = src;
+          document.head.appendChild(link);
+        }
+        
+        img.onload = () => {
+          container.classList.remove('image-loading');
+          img.classList.add('loaded');
+          if (onLoad) onLoad();
+        };
+        
+        img.onerror = () => {
+          container.classList.remove('image-loading');
+          img.src = '/placeholder.svg?height=224&width=224';
+          img.classList.add('loaded');
+        };
+        
+        img.src = src;
+        container.appendChild(img);
+        
+        return container;
+      }
+
+      // Subscription gate (simplified - no status display)
+      async function checkSubscription() {
+        console.log("[v0] Checking subscription status...");
+        
+        // Skip subscription check for local development
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          console.log("[v0] Local development detected, skipping subscription check");
+          return true;
+        }
+        
+        try {
+          const response = await api('/subscription/status');
+          console.log("[v0] Subscription response:", response);
+          
+          if (!response.subscribed) {
+            console.log("[v0] User not subscribed, redirecting to subscription page");
+            sessionStorage.setItem('fitme_sub_hint_reason', response.reason || '');
+            if (response.expiry_date) {
+              sessionStorage.setItem('fitme_sub_hint_exp', String(response.expiry_date));
+            }
+            const q = new URLSearchParams();
+            if (response.reason) q.set('reason', response.reason);
+            if (response.expiry_date) q.set('exp', String(response.expiry_date));
+            window.location.replace(
+              'subscription.html' + (q.toString() ? '?' + q : '')
+            );
+            return false;
+          }
+          
+          console.log("[v0] Subscription check passed");
+          return true;
+        } catch (error) {
+          console.error("[v0] Subscription check failed:", error);
+          
+          // Check if we're already being redirected to avoid loops
+          if (window.location.pathname.includes('subscription.html')) {
+            console.log("[v0] Already on subscription page, avoiding redirect loop");
+            return false;
+          }
+          
+          // Add a delay to prevent rapid redirects
+          setTimeout(() => {
+            window.location.replace('subscription.html');
+          }, 1000);
+          
+          return false;
+        }
+      }
+
+      // Utils
+      function escapeHtml(str){ return (str || '').toString().replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+      function fmtMoney(n){ const v = Number(n||0); return CURRENCY + v.toFixed(0); }
+      function cap(s){ s = String(s||''); return s.charAt(0).toUpperCase() + s.slice(1); }
+
+      // Randomization utility
+      function shuffleArray(array) {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+      }
+
+      function getRandomFood(foods) {
+        if (!foods || foods.length === 0) return null;
+        const randomIndex = Math.floor(Math.random() * foods.length);
+        return foods[randomIndex];
+      }
+
+      // Chips
+      let selectedType = 'rice';
+      function updateChipUI() {
+        chips.querySelectorAll('button[data-type]').forEach(btn => {
+          const on = btn.getAttribute('data-type') === selectedType;
+          btn.classList.toggle('ring-2', on);
+          btn.classList.toggle('ring-accent-400', on);
+          btn.classList.toggle('bg-gradient-to-r', on);
+          btn.classList.toggle('from-brand-500', on);
+          btn.classList.toggle('to-accent-500', on);
+          btn.classList.toggle('text-neutral-950', on);
+          btn.classList.toggle('shadow-glow', on);
+        });
+      }
+      chips.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-type]');
+        if (!btn) return;
+        selectedType = btn.getAttribute('data-type');
+        updateChipUI();
+      });
+      updateChipUI();
+
+      // Spotlight renderer with simplified display (no cost or date information)
+      function renderSpotlightCard(food, typeLabel) {
+        const title = escapeHtml(food.name || 'Suggested Meal');
+        const imageUrl = food.image_url || (food.image ? `${API_ORIGIN}/uploads/${food.image}` : '');
+        const pkg = escapeHtml(food.package || '');
+        const prepared = food.prepared;
+        const message = escapeHtml(
+          food.message || 'Ready to prepare this delicious meal!'
+        );
+
+        spotlight.innerHTML = `
+          <article class="rounded-3xl border border-white/10 bg-white/[0.06] backdrop-blur-xl p-4 md:p-5 shadow-glow">
+            <div class="grid gap-4 md:grid-cols-5">
+              <div class="md:col-span-2">
+                <div id="spotlight-image-container" class="h-56 w-full rounded-2xl ring-1 ring-inset ring-white/10"></div>
+              </div>
+              <div class="md:col-span-3 flex flex-col">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs">${cap(typeLabel)}</span>
+                  ${pkg ? `<span class="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs">${pkg}</span>` : ''}
+                  <span class="rounded-full border border-brand-500/30 bg-brand-500/10 px-2.5 py-1 text-xs text-brand-300">${prepared ? 'Prepared' : 'Cook'}</span>
+                </div>
+                <h3 class="mt-3 text-xl font-semibold">${title}</h3>
+                <div class="mt-1 text-sm text-neutral-300">${message}</div>
+
+                <div class="mt-6 flex items-center justify-center">
+                  <a href="food.html?type=${encodeURIComponent(typeLabel)}&id=${encodeURIComponent(food.id)}" class="rounded-xl bg-gradient-to-r from-brand-500 to-accent-500 px-6 py-2.5 text-sm font-medium text-neutral-950 hover:from-brand-400 hover:to-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-400 transition shadow-glow">
+                    View Details
+                  </a>
+                </div>
+              </div>
+            </div>
+          </article>
+        `;
+
+        // Add optimized image
+        const imageContainer = document.getElementById('spotlight-image-container');
+        if (imageUrl) {
+          const optimizedImage = createOptimizedImage(imageUrl, title, 'h-56 w-full rounded-2xl ring-1 ring-inset ring-white/10');
+          imageContainer.replaceWith(optimizedImage);
+        } else {
+          imageContainer.className = 'h-56 w-full rounded-2xl bg-gradient-to-br from-white/10 to-white/5 ring-1 ring-inset ring-white/10';
+        }
+      }
+
+      // Slider renderer with optimized images and better error handling
+      function renderOptionsSlider(typeLabel, foods) {
+        if (!foods || foods.length === 0) {
+          optsSection.classList.add('hidden');
+          const slider = document.getElementById('options-slider');
+          if (slider) slider.innerHTML = '';
+          return;
+        }
+        
+        // Shuffle the foods for variety in the slider
+        const shuffledFoods = shuffleArray(foods);
+        
+        optsTitle.textContent = `${cap(typeLabel)} options · ${shuffledFoods.length}`;
+        optsSection.classList.remove('hidden');
+
+        const slider = document.getElementById('options-slider');
+        if (!slider) return;
+
+        slider.innerHTML = shuffledFoods.map((f, index) => {
+          const title = escapeHtml(f.name || 'Meal');
+          const imageUrl = f.image_url || (f.image ? `${API_ORIGIN}/uploads/${f.image}` : '');
+
+          return `
+            <div class="snap-start min-w-[240px] max-w-[260px]">
+              <article class="h-full rounded-2xl border border-white/10 bg-white/[0.06] p-3 backdrop-blur-xl hover:bg-white/[0.08] transition">
+                <div class="h-36 w-full rounded-2xl bg-gradient-to-br from-white/10 to-white/5 ring-1 ring-inset ring-white/10 overflow-hidden relative" id="card-image-container-${index}">
+                  ${imageUrl ? `
+                    <img 
+                      src="${imageUrl}" 
+                      alt="${title}" 
+                      class="w-full h-full object-cover transition-opacity duration-300 opacity-0"
+                      onload="this.style.opacity='1'; this.parentElement.classList.remove('image-loading')"
+                      onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'w-full h-full flex items-center justify-center text-2xl text-neutral-400\\'>${title.charAt(0).toUpperCase()}</div>'"
+                      loading="lazy"
+                    />
+                  ` : `
+                    <div class="w-full h-full flex items-center justify-center text-2xl text-neutral-400">
+                      ${title.charAt(0).toUpperCase()}
+                    </div>
+                  `}
+                </div>
+                <div class="mt-3">
+                  <h4 class="line-clamp-2 text-sm font-semibold">${title}</h4>
+                </div>
+                <div class="mt-3">
+                  <button class="card-details w-full rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-xs hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400" data-id="${String(f.id)}" data-type="${String(f.type || typeLabel)}">
+                    Details
+                  </button>
+                </div>
+              </article>
+            </div>
+          `;
+        }).join('');
+
+        // Setup scroll buttons
+        setupSliderControls();
+        
+        // Setup card click handlers
+        setupCardClickHandlers(typeLabel);
+      }
+
+      // Separate function to setup slider controls
+      function setupSliderControls() {
+        const leftBtn = document.getElementById('slide-left');
+        const rightBtn = document.getElementById('slide-right');
+        const slider = document.getElementById('options-slider');
+        
+        if (!leftBtn || !rightBtn || !slider) return;
+        
+        const step = 280;
+        
+        // Remove existing listeners
+        leftBtn.replaceWith(leftBtn.cloneNode(true));
+        rightBtn.replaceWith(rightBtn.cloneNode(true));
+        
+        // Add new listeners
+        document.getElementById('slide-left').onclick = () => slider.scrollBy({ left: -step, behavior: 'smooth' });
+        document.getElementById('slide-right').onclick = () => slider.scrollBy({ left: step, behavior: 'smooth' });
+      }
+
+      // Separate function to setup card click handlers
+      function setupCardClickHandlers(typeLabel) {
+        const slider = document.getElementById('options-slider');
+        if (!slider) return;
+        
+        // Remove existing listener by cloning
+        const newSlider = slider.cloneNode(true);
+        const parent = slider.parentNode;
+        if (parent) {
+          parent.replaceChild(newSlider, slider);
+          
+          // Add new listener to the new slider
+          newSlider.addEventListener('click', async (e) => {
+            const el = e.target.closest('.card-details');
+            if (!el) return;
+            
+            const id = el.getAttribute('data-id');
+            const type = (el.getAttribute('data-type') || typeLabel).toLowerCase();
+            
+            try {
+              await loadFoodDetails(type, id, false);
+              document.getElementById('spotlight').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } catch (error) {
+              console.error('Failed to load food details:', error);
+            }
+          });
+        }
+      }
+
+      // Data fetchers with Axios
+      async function fetchSuggestions(type) {
+        try {
+          const response = await axios.get(`${API_BASE}/foods/suggest/${encodeURIComponent(type)}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          return response.data;
+        } catch (error) {
+          const message = error.response?.data?.message || error.message || 'Failed to fetch suggestions';
+          throw new Error(message);
+        }
+      }
+
+      async function fetchFoodDetails(type, id) {
+        try {
+          const response = await axios.get(`${API_BASE}/foods/suggest/${encodeURIComponent(type)}/${encodeURIComponent(id)}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          return response.data;
+        } catch (error) {
+          const message = error.response?.data?.message || error.message || 'Failed to fetch food';
+          throw new Error(message);
+        }
+      }
+
+      // Load a specific food and update spotlight
+      async function loadFoodDetails(type, id, showPrepared) {
+        spotlight.innerHTML = '';
+        skeleton.classList.remove('hidden');
+        
+        try {
+          const food = await fetchFoodDetails(type, id);
+          renderSpotlightCard(food, food.type || type);
+        } catch (err) {
+          spotlight.innerHTML = `<div class="rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-red-200">Error: ${escapeHtml(err.message)}</div>`;
+        } finally {
+          skeleton.classList.add('hidden');
+        }
+      }
+
+      // Proceed with AI suggestion (called after storage check)
+      async function proceedWithAISuggestion() {
+        // Update button state
+        askAiBtn.disabled = true;
+        askAiText.textContent = 'Thinking...';
+        skeleton.classList.remove('hidden');
+        
+        try {
+          const data = await fetchSuggestions(selectedType);
+          const foods = Array.isArray(data.foods) ? data.foods : [];
+          
+          // Store current foods for randomization
+          currentFoods = foods;
+          currentTypeLabel = data.type || selectedType;
+          
+          if (!foods.length) {
+            spotlight.innerHTML = `<div class="rounded-xl border border-white/10 bg-white/5 p-4 text-neutral-300">${escapeHtml(data.message || 'No foods found for this type.')}</div>`;
+            renderOptionsSlider(selectedType, []);
+            return;
+          }
+          
+          // Get a random food for the spotlight instead of always the first one
+          const randomFood = getRandomFood(foods);
+          renderSpotlightCard(randomFood, currentTypeLabel);
+          renderOptionsSlider(currentTypeLabel, foods);
+          
+        } catch (err) {
+          spotlight.innerHTML = `<div class="rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-red-200">Error: ${escapeHtml(err.message)}</div>`;
+          renderOptionsSlider(selectedType, []);
+          currentFoods = [];
+        } finally {
+          skeleton.classList.add('hidden');
+          askAiBtn.disabled = false;
+          askAiText.textContent = 'Ask fitme AI';
+          storageCheckPassed = false; // Reset for next time
+        }
+      }
+
+      // Handle main form with storage check
+      planForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // Check if storage verification has been passed
+        if (!storageCheckPassed) {
+          showStorageModal();
+          return;
+        }
+        
+        // If storage check passed, proceed directly
+        await proceedWithAISuggestion();
+      });
+
+      // Clear with proper cleanup
+      clearSuggestionBtn.addEventListener('click', () => {
+        spotlight.innerHTML = `<div class="rounded-xl border border-white/10 bg-white/5 p-4 text-neutral-300">No suggestion yet. Choose a style and tap "Ask fitme AI".</div>`;
+        renderOptionsSlider(selectedType, []);
+        currentFoods = [];
+        storageCheckPassed = false; // Reset storage check
+      });
+
+      // Logout
+      document.getElementById('logout').addEventListener('click', () => {
+        localStorage.removeItem('fitme_token'); 
+        localStorage.removeItem('fitme_user'); 
+        window.location.replace('../index.html');
+      });
+
+      // Floating AI Button Drag Functionality
+      // Drag functionality
+        let isDragging = false;
+        let dragOffset = { x: 0, y: 0 };
+
+        floatingBtn.addEventListener('mousedown', startDrag);
+        floatingBtn.addEventListener('touchstart', startDrag);
+
+        function startDrag(e) {
+            isDragging = true;
+            const rect = floatingBtn.getBoundingClientRect();
+            const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+            
+            dragOffset.x = clientX - rect.left;
+            dragOffset.y = clientY - rect.top;
+            
+            floatingBtn.style.transition = 'none';
+            e.preventDefault();
+        }
+
+        function handleDrag(e) {
+            if (!isDragging) return;
+            
+            const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+            
+            let newX = clientX - dragOffset.x;
+            let newY = clientY - dragOffset.y;
+            
+            const btnRect = floatingBtn.getBoundingClientRect();
+            const maxX = window.innerWidth - btnRect.width;
+            const maxY = window.innerHeight - btnRect.height;
+            
+            newX = Math.max(0, Math.min(newX, maxX));
+            newY = Math.max(0, Math.min(newY, maxY));
+            
+            floatingBtn.style.left = newX + 'px';
+            floatingBtn.style.top = newY + 'px';
+            floatingBtn.style.right = 'auto';
+            floatingBtn.style.bottom = 'auto';
+        }
+
+        function endDrag() {
+            if (!isDragging) return;
+            isDragging = false;
+            
+            const rect = floatingBtn.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const screenCenter = window.innerWidth / 2;
+            
+            floatingBtn.style.transition = 'all 0.3s ease';
+            
+            if (centerX < screenCenter) {
+                // Snap to left
+                floatingBtn.style.left = '20px';
+                floatingBtn.style.right = 'auto';
+            } else {
+                // Snap to right
+                floatingBtn.style.right = '20px';
+                floatingBtn.style.left = 'auto';
+            }
+            // Keep current vertical position
+            floatingBtn.style.top = rect.top + 'px';
+            floatingBtn.style.bottom = 'auto';
+        }
+
+      // Init
+      (async function initDashboard() {
+        try {
+          console.log("[v0] Initializing dashboard...");
+          const ok = await checkSubscription();
+          if (!ok) {
+            console.log("[v0] Subscription check failed, stopping initialization");
+            return;
+          }
+          
+          console.log("[v0] Dashboard initialization successful");
+          loadingScreen.classList.add('hidden');
+          document.getElementById('username').textContent = user?.username || 'there';
+
+        } catch (error) {
+          console.error('Dashboard initialization failed:', error);
+          loadingScreen.classList.add('hidden');
+        }
+      })();
+    </script>
+  </body>
+</html>

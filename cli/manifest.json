@@ -1,0 +1,55 @@
+{
+  "name": "fitme.io - AI Nutrition & Habit Companion",
+  "short_name": "fitme.io",
+  "description": "Log meals in seconds, understand your habits, and feel better with AI-powered nutrition insights.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#05150F",
+  "theme_color": "#8b5cf6",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["health", "lifestyle", "productivity"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='192' height='192'%3E%3Crect width='192' height='192' rx='24' fill='%238b5cf6'/%3E%3Cpath d='M54 108c12 12 24 18 42 18 18 0 30-6 42-18' stroke='white' stroke-width='15' stroke-linecap='round' fill='none'/%3E%3Ccircle cx='72' cy='72' r='9' fill='white'/%3E%3Ccircle cx='120' cy='72' r='9' fill='white'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512'%3E%3Crect width='512' height='512' rx='64' fill='%238b5cf6'/%3E%3Cpath d='M144 288c32 32 64 48 112 48 48 0 80-16 112-48' stroke='white' stroke-width='40' stroke-linecap='round' fill='none'/%3E%3Ccircle cx='192' cy='192' r='24' fill='white'/%3E%3Ccircle cx='320' cy='192' r='24' fill='white'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "View your nutrition dashboard",
+      "url": "/pages/dashboard.html",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Crect width='96' height='96' rx='12' fill='%238b5cf6'/%3E%3Cpath d='M24 48h48M24 32h32M24 64h40' stroke='white' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Log Meal",
+      "short_name": "Log Meal",
+      "description": "Quickly log a new meal",
+      "url": "/pages/storage.html",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Crect width='96' height='96' rx='12' fill='%238b5cf6'/%3E%3Ccircle cx='48' cy='48' r='20' stroke='white' stroke-width='4' fill='none'/%3E%3Cpath d='M48 32v32M32 48h32' stroke='white' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ]
+}

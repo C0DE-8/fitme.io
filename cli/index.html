@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>fitme.io — AI nutrition & habit companion</title>
+    <meta name="description" content="fitme.io helps you log meals, track habits, and get insights with AI—beautifully and privately." />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#8b5cf6" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="fitme.io" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="fitme.io" />
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' rx='12' fill='%238b5cf6'/%3E%3Cpath d='M18 36c4 4 8 6 14 6 6 0 10-2 14-6' stroke='white' stroke-width='5' stroke-linecap='round' fill='none'/%3E%3Ccircle cx='24' cy='24' r='3' fill='white'/%3E%3Ccircle cx='40' cy='24' r='3' fill='white'/%3E%3C/svg%3E" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="./manifest.json" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./css/app.css" />
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: '#f5f3ff', 100: '#ede9fe', 200: '#ddd6fe', 300: '#c4b5fd',
+                400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9',
+                800: '#5b21b6', 900: '#4c1d95'
+              },
+              deep: { 900: '#071B13', 950: '#05150F' },
+              accent: { 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb' }
+            },
+            boxShadow: {
+              glow: '0 0 80px 0 rgba(139,92,246,0.20)',
+              glass: '0 20px 50px -20px rgba(0,0,0,0.6)'
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      html, body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    </style>
+  </head>
+  <body class="fitme-app min-h-dvh bg-deep-950 text-neutral-100">
+    <!-- PWA Install Banner -->
+    <div id="pwa-install-banner" class="fixed top-0 left-0 right-0 z-50 hidden bg-gradient-to-r from-brand-600 to-accent-600 p-3 text-center text-white shadow-lg pt-[max(0.75rem,env(safe-area-inset-top))]">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between max-w-6xl mx-auto px-1">
+        <div class="flex items-center gap-3">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+          </svg>
+          <span class="text-sm font-medium">Install fitme.io for the best experience</span>
+        </div>
+        <div class="flex shrink-0 items-center justify-center gap-2 sm:justify-end">
+          <button id="pwa-install-btn" class="rounded-lg bg-white/20 px-4 py-2 text-xs font-medium hover:bg-white/30 transition-colors min-h-[44px] min-w-[88px]">
+            Install
+          </button>
+          <button id="pwa-dismiss-btn" class="rounded-lg bg-white/10 px-4 py-2 text-xs font-medium hover:bg-white/20 transition-colors min-h-[44px]">
+            Dismiss
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Background gradient and blur effects -->
+    <div class="pointer-events-none fixed inset-0 -z-10">
+      <div class="absolute inset-0 bg-[radial-gradient(70%_60%_at_50%_0%,rgba(139,92,246,0.10),rgba(59,130,246,0.10),rgba(0,0,0,0))]"></div>
+      <div class="absolute -top-24 -left-20 h-80 w-80 rounded-full bg-violet-700/20 blur-3xl"></div>
+      <div class="absolute -bottom-24 -right-32 h-96 w-96 rounded-full bg-blue-800/20 blur-3xl"></div>
+    </div>
+
+    <!-- Navigation header -->
+    <header class="app-header-safe sticky top-0 z-40 border-b border-white/5 bg-deep-950/70 backdrop-blur-xl supports-[backdrop-filter]:bg-deep-950/60">
+      <nav class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:py-4">
+        <a href="/" class="flex items-center gap-3">
+          <div class="grid h-9 w-9 place-items-center rounded-xl bg-brand-500/20 ring-1 ring-inset ring-white/15">
+            <span class="text-lg font-black text-brand-300">F</span>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-lg font-semibold tracking-tight text-brand-300">fitme.io</span>
+            <span class="text-xs text-neutral-400">AI nutrition & habits</span>
+          </div>
+        </a>
+        <div class="hidden items-center gap-2 sm:flex">
+          <button data-open="login" class="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-neutral-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">
+            Log in
+          </button>
+          <button data-open="register" class="rounded-full bg-gradient-to-r from-brand-500 to-accent-500 px-4 py-2 text-sm font-semibold text-neutral-950 shadow-glow transition hover:from-brand-400 hover:to-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-400">
+            Get started
+          </button>
+        </div>
+      </nav>
+    </header>
+
+    <main class="mx-auto grid w-full max-w-6xl grid-cols-1 gap-10 px-4 py-8 sm:py-10 md:grid-cols-2 md:gap-12 md:py-16">
+      <!-- Hero section -->
+      <section class="flex flex-col justify-center gap-6">
+        <div class="inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-neutral-300 backdrop-blur">
+          <span class="h-2 w-2 animate-pulse rounded-full bg-brand-400"></span>
+          AI-powered insights for real life
+        </div>
+
+        <h1 class="text-balance text-4xl font-semibold tracking-tight md:text-5xl bg-gradient-to-r from-brand-300 to-accent-300 bg-clip-text text-transparent">
+          Log meals in seconds. Understand your habits. Feel better.
+        </h1>
+        <p class="text-pretty text-neutral-300 md:text-lg">
+          fitme.io turns quick notes into nutrition data and gentle guidance—no spreadsheets, no hassle. Private by default, delightful to use.
+        </p>
+
+        <ul class="mt-1 grid gap-3 text-neutral-200">
+          <li class="flex items-center gap-3">
+            <span class="grid h-6 w-6 place-items-center rounded-full bg-brand-500/20 text-brand-300">✓</span>
+            Natural language logging: "salmon bowl with rice and greens"
+          </li>
+          <li class="flex items-center gap-3">
+            <span class="grid h-6 w-6 place-items-center rounded-full bg-brand-500/20 text-brand-300">✓</span>
+            Smart daily summaries and gentle course-corrections
+          </li>
+          <li class="flex items-center gap-3">
+            <span class="grid h-6 w-6 place-items-center rounded-full bg-brand-500/20 text-brand-300">✓</span>
+            Secure sign up with email verification
+          </li>
+        </ul>
+
+        <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <button data-open="register" class="min-h-[48px] rounded-full bg-gradient-to-r from-brand-500 to-accent-500 px-5 py-3 text-center font-semibold text-neutral-950 shadow-glow transition hover:from-brand-400 hover:to-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-400">
+            Create free account
+          </button>
+          <button data-open="login" class="min-h-[48px] rounded-full border border-white/10 bg-white/5 px-5 py-3 text-center font-medium text-neutral-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">
+            I already have an account
+          </button>
+        </div>
+      </section>
+
+      <!-- Authentication card -->
+      <section aria-labelledby="auth-title" class="relative">
+        <div class="rounded-3xl border border-white/10 bg-white/[0.06] p-6 shadow-2xl shadow-black/40 backdrop-blur-xl md:p-8">
+          <div class="mb-6 flex items-center justify-between">
+            <h2 id="auth-title" class="text-xl font-semibold">Welcome</h2>
+            <span class="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-xs text-neutral-300">Secure sign in</span>
+          </div>
+
+          <!-- Tab switcher -->
+          <div class="mb-4 grid grid-cols-2 overflow-hidden rounded-full border border-white/10 bg-white/5 p-1 text-sm backdrop-blur">
+            <button id="tab-login" class="rounded-full px-4 py-2 font-medium text-neutral-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">Log in</button>
+            <button id="tab-register" class="rounded-full px-4 py-2 font-medium text-neutral-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">Register</button>
+          </div>
+
+          <!-- Alert messages -->
+          <div id="auth-alert" class="mb-4 hidden rounded-2xl border px-4 py-3 text-sm" role="alert" aria-live="polite"></div>
+
+          <!-- Login form -->
+          <form id="login-form" class="grid gap-4" novalidate>
+            <label class="grid gap-2">
+              <span class="text-sm text-neutral-300">Username or Email</span>
+              <input name="identifier" type="text" required placeholder="you@domain.com or username"
+                class="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-neutral-100 placeholder-neutral-400 outline-none ring-accent-400 transition focus:ring-2" />
+            </label>
+            <label class="grid gap-2">
+              <span class="text-sm text-neutral-300">Password</span>
+              <input name="password" type="password" required placeholder="••••••••"
+                class="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-neutral-100 placeholder-neutral-400 outline-none ring-accent-400 transition focus:ring-2" />
+            </label>
+            <button type="submit" class="mt-2 rounded-xl bg-gradient-to-r from-brand-500 to-accent-500 px-4 py-3 font-semibold text-neutral-950 shadow-glow transition hover:from-brand-400 hover:to-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-400">
+              Log in
+            </button>
+          </form>
+
+          <!-- Registration form -->
+          <form id="register-form" class="grid hidden gap-4" novalidate>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <label class="grid gap-2">
+                <span class="text-sm text-neutral-300">Username</span>
+                <input name="username" required placeholder="yourname"
+                  class="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-neutral-100 placeholder-neutral-400 outline-none ring-accent-400 transition focus:ring-2" />
+              </label>
+              <label class="grid gap-2">
+                <span class="text-sm text-neutral-300">Email</span>
+                <input name="email" type="email" required placeholder="you@domain.com"
+                  class="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-neutral-100 placeholder-neutral-400 outline-none ring-accent-400 transition focus:ring-2" />
+              </label>
+            </div>
+            <label class="grid gap-2">
+              <span class="text-sm text-neutral-300">Bio (optional)</span>
+              <input name="bio" placeholder="Goals, preferences, etc."
+                class="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-neutral-100 placeholder-neutral-400 outline-none ring-accent-400 transition focus:ring-2" />
+            </label>
+            <label class="grid gap-2">
+              <span class="text-sm text-neutral-300">Password</span>
+              <input name="password" type="password" required placeholder="Create a strong password"
+                class="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-neutral-100 placeholder-neutral-400 outline-none ring-accent-400 transition focus:ring-2" />
+            </label>
+            <button type="submit" class="mt-2 rounded-xl bg-gradient-to-r from-brand-500 to-accent-500 px-4 py-3 font-semibold text-neutral-950 shadow-glow transition hover:from-brand-400 hover:to-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-400">
+              Create account
+            </button>
+            <p class="text-xs text-neutral-400">We'll email a one-time code to verify your address.</p>
+          </form>
+
+          <!-- OTP verification form -->
+          <form id="otp-form" class="mt-2 hidden grid gap-4" novalidate>
+            <p class="text-sm text-neutral-300">
+              Enter the code we sent to <span id="otp-email" class="font-medium text-neutral-100"></span>.
+            </p>
+            <label class="grid gap-2">
+              <span class="text-sm text-neutral-300">One-time code</span>
+              <input name="otp" inputmode="numeric" pattern="[0-9]*" maxlength="6" required placeholder="123456"
+                class="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-center tracking-[0.3em] text-neutral-100 placeholder-neutral-400 outline-none ring-accent-400 transition focus:ring-2" />
+            </label>
+            <div class="flex items-center gap-3">
+              <button type="submit" class="rounded-xl bg-gradient-to-r from-brand-500 to-accent-500 px-4 py-3 font-semibold text-neutral-950 shadow-glow transition hover:from-brand-400 hover:to-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-400">
+                Verify email
+              </button>
+              <button type="button" id="otp-back" class="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-neutral-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">
+                Back
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <footer class="mx-auto w-full max-w-6xl px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))]">
+      <div class="rounded-2xl border border-white/10 bg-white/5 p-5 text-sm text-neutral-300 backdrop-blur">
+        <div class="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+          <p>© <span id="year"></span> fitme.io. All rights reserved.</p>
+          <div class="flex items-center gap-4 text-neutral-400">
+            <a href="#" class="hover:text-neutral-200">Privacy</a>
+            <a href="#" class="hover:text-neutral-200">Terms</a>
+            <a href="#" class="hover:text-neutral-200">Contact</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // API configuration
+      const API_BASE = "http://localhost:7005/api/auth";
+
+      // PWA Variables
+      let deferredPrompt;
+      let swRegistration;
+
+      // DOM elements
+      const tabLogin = document.getElementById('tab-login');
+      const tabRegister = document.getElementById('tab-register');
+      const loginForm = document.getElementById('login-form');
+      const registerForm = document.getElementById('register-form');
+      const otpForm = document.getElementById('otp-form');
+      const otpEmail = document.getElementById('otp-email');
+      const otpBack = document.getElementById('otp-back');
+      const alertBox = document.getElementById('auth-alert');
+      const pwaInstallBanner = document.getElementById('pwa-install-banner');
+      const pwaInstallBtn = document.getElementById('pwa-install-btn');
+      const pwaDismissBtn = document.getElementById('pwa-dismiss-btn');
+
+      // Initialize PWA functionality
+      document.addEventListener('DOMContentLoaded', () => {
+        initializePWA();
+      });
+
+      // PWA Initialization
+      async function initializePWA() {
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+          try {
+            swRegistration = await navigator.serviceWorker.register('./sw.js');
+            console.log('SW registered successfully:', swRegistration.scope);
+            
+            // Listen for service worker updates
+            swRegistration.addEventListener('updatefound', () => {
+              const newWorker = swRegistration.installing;
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  showUpdateNotification();
+                }
+              });
+            });
+          } catch (error) {
+            console.error('SW registration failed:', error);
+          }
+        }
+
+        // Handle install prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+          e.preventDefault();
+          deferredPrompt = e;
+          showInstallBanner();
+        });
+
+        // Handle app installed
+        window.addEventListener('appinstalled', () => {
+          console.log('PWA installed successfully');
+          hideInstallBanner();
+          deferredPrompt = null;
+        });
+      }
+
+      // Show install banner
+      function showInstallBanner() {
+        // Don't show if already dismissed or in standalone mode
+        if (localStorage.getItem('pwa-install-dismissed') || 
+            window.matchMedia('(display-mode: standalone)').matches) {
+          return;
+        }
+        
+        pwaInstallBanner.classList.remove('hidden');
+      }
+
+      // Hide install banner
+      function hideInstallBanner() {
+        pwaInstallBanner.classList.add('hidden');
+      }
+
+      // Handle install button click
+      pwaInstallBtn.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        
+        console.log('Install prompt result:', outcome);
+        deferredPrompt = null;
+        hideInstallBanner();
+      });
+
+      // Handle dismiss button click
+      pwaDismissBtn.addEventListener('click', () => {
+        localStorage.setItem('pwa-install-dismissed', 'true');
+        hideInstallBanner();
+      });
+
+      // Show update notification
+      function showUpdateNotification() {
+        showAlert('A new version is available! Refresh to update.', 'info');
+      }
+
+      // Header CTA buttons
+      document.querySelectorAll('[data-open="login"]').forEach(el => el.addEventListener('click', () => setTab('login')));
+      document.querySelectorAll('[data-open="register"]').forEach(el => el.addEventListener('click', () => setTab('register')));
+
+      // Tab switching
+      tabLogin.addEventListener('click', () => setTab('login'));
+      tabRegister.addEventListener('click', () => setTab('register'));
+      function setTab(which) {
+        hideAlert();
+        const activeClass = 'bg-white/10';
+        if (which === 'login') {
+          loginForm.classList.remove('hidden');
+          registerForm.classList.add('hidden');
+          otpForm.classList.add('hidden');
+          tabLogin.classList.add(activeClass);
+          tabRegister.classList.remove(activeClass);
+        } else {
+          loginForm.classList.add('hidden');
+          registerForm.classList.remove('hidden');
+          otpForm.classList.add('hidden');
+          tabRegister.classList.add(activeClass);
+          tabLogin.classList.remove(activeClass);
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      // Alert system
+      function showAlert(msg, type = 'info') {
+        alertBox.textContent = msg;
+        alertBox.classList.remove('hidden');
+        alertBox.className = 'mb-4 rounded-2xl border px-4 py-3 text-sm'; // reset
+        if (type === 'error') {
+          alertBox.classList.add('border-red-500/40','text-red-200','bg-red-500/10');
+        } else if (type === 'success') {
+          alertBox.classList.add('border-brand-500/40','text-brand-200','bg-brand-500/10');
+        } else {
+          alertBox.classList.add('border-white/10','text-neutral-200','bg-white/5');
+        }
+      }
+      function hideAlert() {
+        alertBox.classList.add('hidden');
+        alertBox.textContent = '';
+      }
+
+      // API helper function
+      async function api(path, data) {
+        const res = await fetch(API_BASE + path, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data || {})
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json?.message || 'Request failed');
+        return json;
+      }
+
+      // Registration handler
+      registerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideAlert();
+        const f = new FormData(registerForm);
+        const payload = {
+          username: String(f.get('username') || '').trim(),
+          email: String(f.get('email') || '').trim(),
+          bio: String(f.get('bio') || ''),
+          password: String(f.get('password') || '')
+        };
+        try {
+          const out = await api('/register', payload);
+          showAlert(out.message || 'Registered. Check your email for the code.', 'success');
+          otpEmail.textContent = payload.email;
+          registerForm.classList.add('hidden');
+          otpForm.classList.remove('hidden');
+        } catch (err) {
+          showAlert(err.message || 'Registration failed', 'error');
+        }
+      });
+
+      // OTP verification handler
+      otpForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideAlert();
+        const f = new FormData(otpForm);
+        const payload = {
+          email: otpEmail.textContent,
+          otp: String(f.get('otp') || '').trim()
+        };
+        try {
+          const out = await api('/verify-otp', payload);
+          showAlert(out.message || 'Email verified successfully', 'success');
+          setTimeout(() => setTab('login'), 800);
+        } catch (err) {
+          showAlert(err.message || 'Verification failed', 'error');
+        }
+      });
+      otpBack.addEventListener('click', () => {
+        hideAlert();
+        otpForm.classList.add('hidden');
+        registerForm.classList.remove('hidden');
+      });
+
+      // Login handler
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideAlert();
+        const f = new FormData(loginForm);
+        const payload = {
+          identifier: String(f.get('identifier') || '').trim(),
+          password: String(f.get('password') || '')
+        };
+        try {
+          const out = await api('/login', payload);
+          const user = out.user || {};
+
+          if (user.role === 'admin' || user.is_admin === true || user.admin === true) {
+            localStorage.removeItem('fitme_token');
+            localStorage.removeItem('fitme_user');
+            localStorage.setItem('fitme_admin_token', out.token);
+            localStorage.setItem('fitme_admin_user', JSON.stringify(user));
+            window.location.href = 'admin/index.html';
+          } else {
+            localStorage.removeItem('fitme_admin_token');
+            localStorage.removeItem('fitme_admin_user');
+            localStorage.setItem('fitme_token', out.token);
+            localStorage.setItem('fitme_user', JSON.stringify(user));
+            window.location.href = 'pages/dashboard.html';
+          }
+        } catch (err) {
+          showAlert(err.message || 'Login failed', 'error');
+        }
+      });
+
+      // Set current year in footer
+      document.getElementById('year').textContent = new Date().getFullYear();
+
+      // Initialize with register tab active
+      setTab('register');
+    </script>
+  </body>
+</html>

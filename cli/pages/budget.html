@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>fitme.io — Budget</title>
+  <meta name="description" content="Get the best food suggestion within your budget." />
+  <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' rx='12' fill='%238b5cf6'/%3E%3Cpath d='M18 36c4 4 8 6 14 6 6 0 10-2 14-6' stroke='white' stroke-width='5' stroke-linecap='round' fill='none'/%3E%3Ccircle cx='24' cy='24' r='3' fill='white'/%3E%3Ccircle cx='40' cy='24' r='3' fill='white'/%3E%3C/svg%3E" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/app.css" />
+    
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f5f3ff', 100: '#ede9fe', 200: '#ddd6fe', 300: '#c4b5fd',
+              400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9',
+              800: '#5b21b6', 900: '#4c1d95'
+            },
+            deep: { 900: '#071B13', 950: '#05150F' },
+            accent: { 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb' }
+          },
+          boxShadow: { glow: '0 0 80px 0 rgba(139,92,246,0.20)' }
+        }
+      }
+    }
+  </script>
+  <style>
+    html, body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  </style>
+</head>
+<body class="fitme-app min-h-dvh bg-deep-950 text-neutral-100">
+  <div class="pointer-events-none fixed inset-0 -z-10">
+    <div class="absolute inset-0 bg-[radial-gradient(70%_60%_at_50%_0%,rgba(139,92,246,0.10),rgba(59,130,246,0.10),rgba(0,0,0,0))]"></div>
+    <div class="absolute -top-24 -left-20 h-80 w-80 rounded-full bg-violet-700/20 blur-3xl"></div>
+    <div class="absolute -bottom-24 -right-32 h-96 w-96 rounded-full bg-blue-800/20 blur-3xl"></div>
+  </div>
+
+  <header class="app-header-safe sticky top-0 z-40 border-b border-white/5 bg-deep-950/70 backdrop-blur-xl supports-[backdrop-filter]:bg-deep-950/60">
+    <nav class="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-2 px-4 py-3">
+      <a href="dashboard.html" class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm hover:bg-white/10 transition-colors">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18l-6-6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="hidden sm:inline">Back</span>
+      </a>
+      <div class="text-sm font-semibold tracking-wide text-brand-300">fitme.io</div>
+      <button id="ambient-toggle" class="rounded-full border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-neutral-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400 transition-colors" aria-pressed="false">
+        <span class="hidden sm:inline">Ambient: </span><span id="ambient-status">Off</span>
+      </button>
+    </nav>
+  </header>
+
+  <main class="app-main-pad mx-auto w-full max-w-3xl px-3 sm:px-4">
+    <section class="pt-8">
+      <div class="mx-auto max-w-2xl text-center">
+        <h1 class="text-2xl font-bold tracking-tight sm:text-3xl bg-gradient-to-r from-brand-300 to-accent-300 bg-clip-text text-transparent">Plan with a budget</h1>
+        <p class="mt-2 text-sm text-neutral-300">Pick a type, set your budget, and we'll suggest the best match.</p>
+      </div>
+    </section>
+
+    <section class="mx-auto mt-6 max-w-2xl rounded-2xl border border-white/10 bg-white/[0.04] p-4 sm:p-5 sm:rounded-3xl">
+      <form id="budget-form" class="grid gap-4">
+        <div>
+          <div class="mb-2 text-xs font-semibold tracking-widest text-brand-200">TYPE</div>
+          <div class="inline-flex rounded-full border border-white/10 bg-white/5 p-1">
+            <button type="button" data-type="rice" class="type-chip selected rounded-full px-3 py-1.5 text-xs font-medium text-neutral-100 bg-gradient-to-r from-brand-500 to-accent-500">Rice</button>
+            <button type="button" data-type="swallow" class="type-chip rounded-full px-3 py-1.5 text-xs font-medium text-neutral-200 hover:text-neutral-100">Swallow</button>
+            <button type="button" data-type="junks" class="type-chip rounded-full px-3 py-1.5 text-xs font-medium text-neutral-200 hover:text-neutral-100">Junks</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="mb-2 text-xs font-semibold tracking-widest text-brand-200">BUDGET</div>
+          <div class="flex items-center gap-2">
+            <span id="currency" class="rounded-xl border border-white/10 bg-white/5 px-2.5 py-2 text-sm text-neutral-200 sm:px-3">₦</span>
+            <input id="budget-input" inputmode="numeric" type="number" min="1" step="1" placeholder="Enter amount"
+                   class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-400 outline-none focus:border-brand-500/40 focus:ring-2 focus:ring-accent-400" required />
+          </div>
+          <p class="mt-2 text-xs text-neutral-400">Tip: Try a round number for better matches.</p>
+        </div>
+
+        <div class="flex items-center justify-between gap-3">
+          <button id="submit-btn" type="submit"
+                  class="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-500 to-accent-500 px-4 py-2.5 text-sm font-semibold text-neutral-950 shadow-glow transition hover:from-brand-400 hover:to-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-400 w-full sm:w-auto">
+            <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M13 5l7 7-7 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            <span class="hidden sm:inline">Suggest within budget</span>
+            <span class="sm:hidden">Suggest</span>
+          </button>
+          <button id="reset-btn" type="button"
+                  class="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-neutral-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-brand-500/50">
+            Reset
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section id="message-banner" class="mx-auto mt-4 hidden max-w-2xl rounded-2xl border border-white/10 bg-white/5 p-3">
+      <div class="flex items-start gap-2 text-sm">
+        <div class="mt-0.5 h-2.5 w-2.5 rounded-full bg-gradient-to-r from-brand-400 to-accent-400"></div>
+        <p id="banner-text" class="text-neutral-200"></p>
+      </div>
+    </section>
+
+    <section id="result" class="mx-auto mt-6 hidden max-w-2xl">
+      <div class="rounded-3xl border border-white/10 bg-white/[0.04] p-5">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-semibold tracking-widest text-brand-200">TOP PICK</h2>
+          <a id="view-detail" href="#" class="hidden rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-neutral-200 hover:bg-white/10">View details</a>
+        </div>
+
+        <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-[112px_1fr]">
+          <div class="overflow-hidden rounded-2xl ring-1 ring-inset ring-white/15">
+            <img id="food-img" src="/placeholder.svg?height=224&width=224" alt="Food image" class="h-28 w-full object-cover sm:h-full" />
+          </div>
+
+          <div>
+            <h3 id="food-name" class="text-lg font-semibold">—</h3>
+            <p id="food-meta" class="mt-0.5 text-xs text-neutral-300">—</p>
+
+            <div class="mt-3 text-3xl font-semibold">
+              <span id="food-price" class="bg-gradient-to-r from-brand-300 to-accent-300 bg-clip-text text-transparent">—</span>
+            </div>
+
+            <div class="mt-4 grid grid-cols-2 gap-2">
+              <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div class="text-[11px] font-semibold tracking-widest text-brand-200">BUDGET USED</div>
+                <div id="budget-used" class="mt-1 text-sm text-neutral-100">—</div>
+              </div>
+              <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div class="text-[11px] font-semibold tracking-widest text-brand-200">SAVED</div>
+                <div id="amount-saved" class="mt-1 text-sm">
+                  <span class="bg-gradient-to-r from-accent-300 to-brand-300 bg-clip-text text-transparent">—</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Price Tiers Section -->
+      <div id="tiers-section" class="mt-4 hidden rounded-3xl border border-white/10 bg-white/[0.04] p-5">
+        <h3 class="mb-4 text-sm font-semibold tracking-widest text-brand-200">ALL OPTIONS</h3>
+        <div id="tiers-container" class="space-y-3"></div>
+      </div>
+
+      <div class="mt-4 rounded-3xl border border-white/10 bg-white/[0.05] p-5">
+        <div class="mb-2 flex items-center gap-2">
+          <div class="relative h-7 w-7">
+            <div class="absolute inset-0 rounded-full bg-gradient-to-br from-brand-500/30 to-accent-500/30 blur"></div>
+            <div class="relative grid h-7 w-7 place-items-center rounded-full border border-white/15 bg-white/5">
+              <span class="text-[10px] font-bold text-brand-300">AI</span>
+            </div>
+          </div>
+          <h3 class="text-sm font-semibold tracking-widest text-brand-200">MESSAGE</h3>
+        </div>
+        <p id="bot-message" class="text-sm text-neutral-200">—</p>
+      </div>
+    </section>
+
+    <section id="empty" class="mx-auto mt-10 max-w-2xl text-center text-sm text-neutral-400">
+      Enter a budget and we'll suggest a matching meal.
+    </section>
+  </main>
+
+  <nav class="app-bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-deep-950/90 backdrop-blur-xl">
+    <div class="mx-auto max-w-3xl">
+      <ul class="grid grid-cols-3">
+        <li>
+          <a href="dashboard.html" data-tab="planMeal" class="flex flex-col items-center gap-1 px-3 py-2.5 text-xs text-neutral-300 hover:text-neutral-100 sm:px-4 sm:py-3">
+            <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12h16M4 6h16M4 18h8"/></svg>
+            <span>Plan Meal</span>
+          </a>
+        </li>
+        <li>
+          <a href="budget.html" data-tab="budget" class="flex flex-col items-center gap-1 px-3 py-2.5 text-xs text-neutral-300 hover:text-neutral-100 sm:px-4 sm:py-3">
+            <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-3.866 0-7 1.79-7 4s3.134 4 7 4 7-1.79 7-4-3.134-4-7-4z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12V8m14 4V8M5 16v-4m14 4v-4"/>
+            </svg>
+            <span>Budget</span>
+          </a>
+        </li>
+        <li>
+          <a href="storage.html" data-tab="storage" class="flex flex-col items-center gap-1 px-3 py-2.5 text-xs text-neutral-300 hover:text-neutral-100 sm:px-4 sm:py-3">
+            <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="7" width="18" height="10" rx="2" ry="2" stroke-width="2"/><path stroke-width="2" d="M3 10h18"/></svg>
+            <span>Storage</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <audio id="ambient-audio" src="../assets/audio/ambient-soft.mp3" loop preload="auto"></audio>
+
+  <script>
+    const API_BASE = "http://localhost:7005/api/user";
+    const API_ORIGIN = new URL(API_BASE).origin;
+    const CURRENCY = localStorage.getItem('fitme_currency') || '₦';
+
+    const token = localStorage.getItem('fitme_token');
+    const userRaw = localStorage.getItem('fitme_user');
+    const user = (() => { try { return JSON.parse(userRaw || 'null'); } catch { return null; } })();
+    if (!token || !user) { window.location.replace('../index.html'); }
+
+    (function markActiveTab() {
+      const here = 'budget.html';
+      document.querySelectorAll('[data-tab]').forEach(a => {
+        const isActive = a.getAttribute('href').endsWith(here);
+        a.setAttribute('aria-current', isActive ? 'page' : 'false');
+      });
+    })();
+
+    // Configure Axios defaults
+    axios.defaults.baseURL = API_BASE;
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    axios.defaults.timeout = 30000;
+
+    // Axios interceptors for better error handling
+    axios.interceptors.response.use(
+      response => response,
+      error => {
+        if (error.response?.status === 401) {
+          localStorage.removeItem('fitme_token');
+          localStorage.removeItem('fitme_user');
+          window.location.replace('../index.html');
+          return Promise.reject(error);
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    const ambientAudio = document.getElementById('ambient-audio');
+    const ambientToggle = document.getElementById('ambient-toggle');
+
+    const form = document.getElementById('budget-form');
+    const currencyEl = document.getElementById('currency');
+    const budgetInput = document.getElementById('budget-input');
+    const submitBtn = document.getElementById('submit-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const chips = Array.from(document.querySelectorAll('.type-chip'));
+
+    const banner = document.getElementById('message-banner');
+    const bannerText = document.getElementById('banner-text');
+    const result = document.getElementById('result');
+    const empty = document.getElementById('empty');
+
+    const foodImg = document.getElementById('food-img');
+    const foodName = document.getElementById('food-name');
+    const foodMeta = document.getElementById('food-meta');
+    const foodPrice = document.getElementById('food-price');
+    const budgetUsed = document.getElementById('budget-used');
+    const amountSaved = document.getElementById('amount-saved').querySelector('span');
+    const botMessage = document.getElementById('bot-message');
+    const viewDetail = document.getElementById('view-detail');
+    const tiersSection = document.getElementById('tiers-section');
+    const tiersContainer = document.getElementById('tiers-container');
+
+    // Enhanced ambient audio system
+    let audioContext = null;
+    let gainNode = null;
+    let audioBuffer = null;
+    let audioSource = null;
+    let isAudioLoaded = false;
+
+    async function initAudioContext() {
+      if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        gainNode = audioContext.createGain();
+        gainNode.connect(audioContext.destination);
+        gainNode.gain.value = 0.08;
+      }
+      if (audioContext.state === 'suspended') {
+        await audioContext.resume();
+      }
+    }
+
+    async function loadAudioBuffer() {
+      if (isAudioLoaded || !audioContext) return;
+      
+      try {
+        const response = await axios.get('../assets/audio/ambient-soft.mp3', { 
+          responseType: 'arraybuffer',
+          timeout: 10000
+        });
+        audioBuffer = await audioContext.decodeAudioData(response.data);
+        isAudioLoaded = true;
+        console.log('Audio buffer loaded successfully');
+      } catch (error) {
+        console.warn('Failed to load audio buffer:', error);
+        // Fallback to HTML audio element
+        ambientAudio.volume = 0.08;
+      }
+    }
+
+    async function playAmbientAudio() {
+      try {
+        await initAudioContext();
+        
+        if (audioBuffer && isAudioLoaded) {
+          // Stop current source if playing
+          if (audioSource) {
+            audioSource.stop();
+            audioSource.disconnect();
+          }
+          
+          // Create new source
+          audioSource = audioContext.createBufferSource();
+          audioSource.buffer = audioBuffer;
+          audioSource.loop = true;
+          audioSource.connect(gainNode);
+          audioSource.start(0);
+        } else {
+          // Fallback to HTML audio
+          await ambientAudio.play();
+        }
+      } catch (error) {
+        console.warn('Audio playback failed:', error);
+        // Final fallback
+        try {
+          await ambientAudio.play();
+        } catch (fallbackError) {
+          console.warn('Fallback audio also failed:', fallbackError);
+        }
+      }
+    }
+
+    function stopAmbientAudio() {
+      if (audioSource) {
+        audioSource.stop();
+        audioSource.disconnect();
+        audioSource = null;
+      }
+      ambientAudio.pause();
+    }
+
+    function setAmbientUI(on) {
+      const statusSpan = document.getElementById('ambient-status');
+      statusSpan.textContent = on ? 'On' : 'Off';
+      ambientToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+
+    // Initialize audio on first user interaction
+    let audioInitialized = false;
+    const initAudioOnInteraction = async () => {
+      if (!audioInitialized) {
+        await initAudioContext();
+        await loadAudioBuffer();
+        audioInitialized = true;
+        
+        // Auto-play if enabled
+        if (localStorage.getItem('fitme_ambient_on') === 'true') {
+          await playAmbientAudio();
+        }
+      }
+    };
+
+    // Ambient toggle
+    ambientToggle.addEventListener('click', async () => {
+      await initAudioOnInteraction();
+      
+      const on = localStorage.getItem('fitme_ambient_on') === 'true';
+      const next = !on;
+      localStorage.setItem('fitme_ambient_on', String(next));
+      setAmbientUI(next);
+      
+      if (next) {
+        await playAmbientAudio();
+      } else {
+        stopAmbientAudio();
+      }
+    });
+
+    // Initialize ambient state
+    setAmbientUI(localStorage.getItem('fitme_ambient_on') === 'true');
+
+    // Auto-initialize on first interaction
+    ['click', 'touchstart', 'keydown'].forEach(event => {
+      document.addEventListener(event, initAudioOnInteraction, { once: true });
+    });
+
+    // Helpers
+    function money(n){ const v = Number(n||0); return CURRENCY + v.toFixed(0); }
+    function escapeHtml(str){ return (str || '').toString().replace(/[&<>"']/g, (m)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+    async function apiPostBudget(type, budget) {
+      try {
+        const response = await axios.post(`/foods/suggest-budget/${encodeURIComponent(type)}`, {
+          budget: Number(budget)
+        });
+        return response.data;
+      } catch (error) {
+        const message = error.response?.data?.message || error.message || 'Request failed';
+        throw new Error(message);
+      }
+    }
+
+    // Subscription gate
+    (async function gate() {
+      try {
+        const response = await axios.get('/subscription/status');
+        const s = response.data;
+        if (!s.subscribed) {
+          sessionStorage.setItem('fitme_sub_hint_reason', s.reason || '');
+          if (s.expiry_date) sessionStorage.setItem('fitme_sub_hint_exp', String(s.expiry_date));
+          const q = new URLSearchParams();
+          if (s.reason) q.set('reason', s.reason);
+          if (s.expiry_date) q.set('exp', String(s.expiry_date));
+          return window.location.replace(
+            'subscription.html' + (q.toString() ? '?' + q : '')
+          );
+        }
+      } catch (error) {
+        console.error('Subscription check failed:', error);
+        return window.location.replace('subscription.html');
+      }
+    })();
+
+    // State
+    let currentType = 'rice';
+    currencyEl.textContent = CURRENCY;
+
+    function selectType(type) {
+      currentType = type;
+      chips.forEach(btn => {
+        const on = btn.dataset.type === type;
+        btn.className = on
+          ? 'type-chip selected rounded-full px-3 py-1.5 text-xs font-medium text-neutral-100 bg-gradient-to-r from-brand-500 to-accent-500'
+          : 'type-chip rounded-full px-3 py-1.5 text-xs font-medium text-neutral-200 hover:text-neutral-100';
+      });
+    }
+    chips.forEach(btn => btn.addEventListener('click', () => selectType(btn.dataset.type)));
+    selectType('rice');
+
+    const last = Number(localStorage.getItem('fitme_last_budget') || '');
+    if (last > 0) budgetInput.value = String(last);
+
+    resetBtn.addEventListener('click', () => {
+      budgetInput.value = '';
+      localStorage.removeItem('fitme_last_budget');
+      banner.classList.add('hidden');
+      result.classList.add('hidden');
+      tiersSection.classList.add('hidden');
+      empty.classList.remove('hidden');
+    });
+
+    // Render tiers
+    function renderTiers(tiers) {
+      if (!tiers || !tiers.length) {
+        tiersSection.classList.add('hidden');
+        return;
+      }
+
+      tiersContainer.innerHTML = '';
+      
+      tiers.forEach((tier, index) => {
+        const tierDiv = document.createElement('div');
+        tierDiv.className = 'rounded-2xl border border-white/10 bg-white/5 p-4';
+        
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'mb-3 flex items-center justify-between';
+        
+        const priceSpan = document.createElement('span');
+        priceSpan.className = 'text-sm font-semibold text-brand-300';
+        priceSpan.textContent = `${money(tier.price)} Options`;
+        
+        const countSpan = document.createElement('span');
+        countSpan.className = 'text-xs text-neutral-400';
+        countSpan.textContent = `${tier.count} item${tier.count !== 1 ? 's' : ''}`;
+        
+        headerDiv.appendChild(priceSpan);
+        headerDiv.appendChild(countSpan);
+        
+        const foodsGrid = document.createElement('div');
+        foodsGrid.className = 'grid gap-2';
+        
+        tier.foods.slice(0, 3).forEach(food => {
+          const foodDiv = document.createElement('div');
+          foodDiv.className = 'flex items-center gap-3 rounded-xl border border-white/5 bg-white/5 p-3 hover:bg-white/10 cursor-pointer transition-colors';
+          
+          const img = document.createElement('img');
+          const imageUrl = food.image_url || (food.image ? `${API_ORIGIN}/uploads/${food.image}` : '');
+          img.src = imageUrl || '/placeholder.svg?height=40&width=40';
+          img.alt = food.name || 'Food';
+          img.className = 'h-10 w-10 rounded-lg object-cover';
+          img.onerror = () => {
+            img.onerror = null;
+            img.src = '/placeholder.svg?height=40&width=40';
+          };
+          
+          const infoDiv = document.createElement('div');
+          infoDiv.className = 'flex-1 min-w-0';
+          
+          const nameP = document.createElement('p');
+          nameP.className = 'text-sm font-medium text-neutral-100 truncate';
+          nameP.textContent = food.name || 'Unnamed Food';
+          
+          const metaP = document.createElement('p');
+          metaP.className = 'text-xs text-neutral-400';
+          metaP.textContent = food.package || 'No package info';
+          
+          infoDiv.appendChild(nameP);
+          infoDiv.appendChild(metaP);
+          
+          foodDiv.appendChild(img);
+          foodDiv.appendChild(infoDiv);
+          
+          // Click handler to view details
+          foodDiv.addEventListener('click', () => {
+            window.location.href = `food.html?type=${encodeURIComponent(currentType)}&id=${encodeURIComponent(food.id)}`;
+          });
+          
+          foodsGrid.appendChild(foodDiv);
+        });
+        
+        // Show more link if there are more items
+        if (tier.foods.length > 3) {
+          const showMoreDiv = document.createElement('div');
+          showMoreDiv.className = 'mt-2 text-center';
+          
+          const showMoreBtn = document.createElement('button');
+          showMoreBtn.className = 'text-xs text-brand-300 hover:text-brand-200';
+          showMoreBtn.textContent = `+${tier.foods.length - 3} more`;
+          showMoreBtn.addEventListener('click', () => {
+            // Could expand to show all items or navigate to a full list
+            console.log('Show more items for tier:', tier.price);
+          });
+          
+          showMoreDiv.appendChild(showMoreBtn);
+          tierDiv.appendChild(showMoreDiv);
+        }
+        
+        tierDiv.appendChild(headerDiv);
+        tierDiv.appendChild(foodsGrid);
+        tiersContainer.appendChild(tierDiv);
+      });
+      
+      tiersSection.classList.remove('hidden');
+    }
+
+    // Render response
+    function renderResponse(data) {
+      const topPick = data?.topPick || null;
+      const tiers = data?.tiers || [];
+      const budget = data?.budget || 0;
+      const amountUsedValue = data?.amountUsed || 0;
+      const amountSavedValue = data?.amountSaved || 0;
+
+      // Show message banner
+      const message = tiers.length > 0 
+        ? `Found ${tiers.length} price tier${tiers.length !== 1 ? 's' : ''} within your budget of ${money(budget)}`
+        : 'No foods found within your budget.';
+      
+      bannerText.textContent = message;
+      banner.classList.remove('hidden');
+
+      if (!topPick) {
+        result.classList.add('hidden');
+        tiersSection.classList.add('hidden');
+        empty.classList.remove('hidden');
+        return;
+      }
+
+      // Render top pick
+      const name = topPick.name || 'Meal';
+      const created = topPick.created_at || '';
+      const cost = topPick.estimated_cost != null ? money(topPick.estimated_cost) : '—';
+      const id = topPick.id;
+      const imageUrl = topPick.image_url || (topPick.image ? `${API_ORIGIN}/uploads/${topPick.image}` : '');
+
+      if (imageUrl) {
+        foodImg.src = imageUrl;
+        foodImg.alt = name;
+      } else {
+        foodImg.src = '/placeholder.svg?height=224&width=224';
+        foodImg.alt = 'Placeholder';
+      }
+      
+      foodImg.onerror = () => {
+        foodImg.onerror = null;
+        foodImg.src = '/placeholder.svg?height=224&width=224';
+      };
+
+      foodName.textContent = name;
+      foodMeta.textContent = created ? `Added ${created}` : (topPick.package || '—');
+      foodPrice.textContent = cost;
+
+      budgetUsed.textContent = money(amountUsedValue);
+      amountSaved.textContent = money(amountSavedValue);
+
+      if (id) {
+        viewDetail.classList.remove('hidden');
+        viewDetail.href = `food.html?type=${encodeURIComponent(currentType)}&id=${encodeURIComponent(id)}`;
+      } else {
+        viewDetail.classList.add('hidden');
+        viewDetail.href = '#';
+      }
+
+      // Bot message
+      const botMsg = amountSavedValue > 0 
+        ? `Great choice! This meal uses ${money(amountUsedValue)} of your ${money(budget)} budget, saving you ${money(amountSavedValue)}.`
+        : `Perfect match! This meal uses your full budget of ${money(budget)}.`;
+      
+      botMessage.textContent = botMsg;
+
+      // Render tiers
+      renderTiers(tiers);
+
+      empty.classList.add('hidden');
+      result.classList.remove('hidden');
+    }
+
+    // Submit handler
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const amount = Number(budgetInput.value || 0);
+      if (!amount || amount <= 0) return;
+
+      submitBtn.disabled = true;
+      submitBtn.classList.add('opacity-60', 'cursor-not-allowed');
+      submitBtn.innerHTML = `
+        <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <circle cx="12" cy="12" r="9" stroke-width="2" class="opacity-25"></circle>
+          <path d="M12 3a9 9 0 0 1 9 9" stroke-width="2" class="opacity-75"></path>
+        </svg>
+        <span>Suggesting…</span>
+      `;
+
+      try {
+        const data = await apiPostBudget(currentType, amount);
+        localStorage.setItem('fitme_last_budget', String(amount));
+        renderResponse(data);
+      } catch (err) {
+        bannerText.textContent = err?.message || 'Failed to fetch suggestion.';
+        banner.classList.remove('hidden');
+        result.classList.add('hidden');
+        tiersSection.classList.add('hidden');
+        empty.classList.remove('hidden');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+        submitBtn.innerHTML = `
+          <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M13 5l7 7-7 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          <span class="hidden sm:inline">Suggest within budget</span>
+          <span class="sm:hidden">Suggest</span>
+        `;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>fitme.io — Subscription Management</title>
+  <meta name="description" content="Manage subscriptions for fitme.io." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' rx='12' fill='%238b5cf6'/%3E%3Cpath d='M18 36c4 4 8 6 14 6 6 0 10-2 14-6' stroke='white' stroke-width='5' stroke-linecap='round' fill='none'/%3E%3Ccircle cx='24' cy='24' r='3' fill='white'/%3E%3Ccircle cx='40' cy='24' r='3' fill='white'/%3E%3C/svg%3E" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f5f3ff', 100: '#ede9fe', 200: '#ddd6fe', 300: '#c4b5fd',
+              400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9',
+              800: '#5b21b6', 900: '#4c1d95'
+            },
+            deep: { 900: '#071B13', 950: '#05150F' },
+            accent: { 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb' }
+          },
+          boxShadow: { glow: '0 0 80px 0 rgba(139,92,246,0.20)' }
+        }
+      }
+    }
+  </script>
+  <style>
+    html, body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  </style>
+</head>
+<body class="min-h-dvh bg-deep-950 text-neutral-100">
+  <!-- Background -->
+  <div class="pointer-events-none fixed inset-0 -z-10">
+    <div class="absolute inset-0 bg-[radial-gradient(70%_60%_at_50%_0%,rgba(139,92,246,0.10),rgba(59,130,246,0.10),rgba(0,0,0,0))]"></div>
+    <div class="absolute -top-24 -left-20 h-80 w-80 rounded-full bg-violet-700/20 blur-3xl"></div>
+    <div class="absolute -bottom-24 -right-32 h-96 w-96 rounded-full bg-blue-800/20 blur-3xl"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 bg-deep-950/60 backdrop-blur supports-[backdrop-filter]:bg-deep-950/60">
+    <nav class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
+      <div class="flex items-center gap-6">
+        <a href="index.html" class="flex items-center gap-3">
+          <div class="grid h-9 w-9 place-items-center rounded-xl bg-brand-500/20 ring-1 ring-inset ring-white/15">
+            <span class="text-lg font-black text-brand-300">F</span>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-lg font-semibold tracking-tight text-brand-300">fitme.io</span>
+            <span class="text-xs text-neutral-400">Subscription Management</span>
+          </div>
+        </a>
+        
+        <!-- Navigation Links -->
+        <nav class="hidden md:flex items-center gap-1">
+          <a href="index.html" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-200 hover:bg-white/10">
+            Dashboard
+          </a>
+          <a href="users-management.html" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-200 hover:bg-white/10">
+            Users
+          </a>
+          <a href="subscription.html" class="rounded-lg bg-brand-500/10 border border-brand-500/30 px-3 py-2 text-sm text-brand-300 hover:bg-brand-500/20">
+            Subscriptions
+          </a>
+          <a href="plans.html" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-200 hover:bg-white/10">
+            Plans
+          </a>
+          <a href="accounts.html" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-200 hover:bg-white/10">
+            Accounts
+          </a>
+          <a href="food-management.html" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-200 hover:bg-white/10">
+            Foods
+          </a>
+        </nav>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <div class="hidden sm:flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-neutral-300">
+          <div class="h-2 w-2 rounded-full bg-brand-400"></div>
+          <span id="admin-name">Admin</span>
+        </div>
+        <button id="logout" class="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-neutral-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">
+          Log out
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Main Content -->
+  <main class="mx-auto w-full max-w-7xl px-4 py-10">
+    <!-- Header Section -->
+    <section class="mb-10">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-3xl font-bold tracking-tight bg-gradient-to-r from-brand-300 to-accent-300 bg-clip-text text-transparent mb-2">
+            Pending Subscriptions
+          </h1>
+          <p class="text-neutral-300">Review and approve subscription requests</p>
+        </div>
+        
+        <button id="refresh-btn" class="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-neutral-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">
+          <svg class="h-4 w-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          Refresh
+        </button>
+      </div>
+    </section>
+
+    <!-- Alert Messages -->
+    <div id="alert" class="mb-6 hidden rounded-2xl border px-4 py-3 text-sm" role="alert" aria-live="polite"></div>
+
+    <!-- Subscriptions List -->
+    <section>
+      <div class="rounded-2xl border border-white/10 bg-white/[0.04] p-6">
+        <div id="subscriptions-container">
+          <div class="flex items-center justify-center py-12">
+            <div class="text-center">
+              <div class="h-12 w-12 mx-auto mb-3 animate-spin rounded-full border-4 border-brand-500/20 border-t-brand-500"></div>
+              <p class="text-neutral-400">Loading pending subscriptions...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Subscription Details Modal -->
+    <div id="subscription-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4">
+      <div class="w-full max-w-3xl rounded-3xl border border-white/10 bg-deep-950/95 p-6 backdrop-blur-xl max-h-[90vh] overflow-y-auto">
+        <div class="mb-4 flex items-center justify-between">
+          <h3 id="modal-title" class="text-xl font-semibold">Subscription Details</h3>
+          <button id="close-modal" class="rounded-full p-2 text-neutral-400 hover:bg-white/10 hover:text-neutral-200" aria-label="Close">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div id="subscription-details" class="space-y-6">
+          <!-- Details will be populated here -->
+        </div>
+
+        <div class="flex gap-3 mt-6">
+          <button id="confirm-btn" class="flex-1 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-3 font-semibold text-neutral-100 shadow-glow transition hover:from-emerald-400 hover:to-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-400">
+            Confirm Subscription
+          </button>
+          <button id="reject-btn" class="flex-1 rounded-xl bg-gradient-to-r from-red-500 to-red-600 px-4 py-3 font-semibold text-neutral-100 shadow-glow transition hover:from-red-400 hover:to-red-500 focus:outline-none focus:ring-2 focus:ring-red-400">
+            Reject Subscription
+          </button>
+          <button id="close-details" class="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-neutral-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // API configuration
+    const API_BASE = "http://localhost:7005/api/admin";
+
+    // Authentication check
+    const token = localStorage.getItem('fitme_admin_token');
+    const userRaw = localStorage.getItem('fitme_admin_user');
+    const user = (() => { try { return JSON.parse(userRaw || 'null'); } catch { return null; } })();
+
+    if (!token || !user || !(user.role === 'admin' || user.is_admin === true || user.admin === true)) {
+      window.location.replace('../index.html');
+    }
+
+    // DOM elements
+    const subscriptionsContainer = document.getElementById('subscriptions-container');
+    const subscriptionModal = document.getElementById('subscription-modal');
+    const subscriptionDetails = document.getElementById('subscription-details');
+    const closeModalBtn = document.getElementById('close-modal');
+    const closeDetailsBtn = document.getElementById('close-details');
+    const confirmBtn = document.getElementById('confirm-btn');
+    const rejectBtn = document.getElementById('reject-btn');
+    const refreshBtn = document.getElementById('refresh-btn');
+    const alertBox = document.getElementById('alert');
+
+    // State
+    let currentSubscription = null;
+    let pendingSubscriptions = [];
+
+    // Display admin name
+    document.getElementById('admin-name').textContent = user.username || user.email || 'Admin';
+
+    // Logout functionality
+    document.getElementById('logout').addEventListener('click', () => {
+      localStorage.removeItem('fitme_admin_token');
+      localStorage.removeItem('fitme_admin_user');
+      window.location.replace('../index.html');
+    });
+
+    // Alert system
+    function showAlert(msg, type = 'info') {
+      alertBox.textContent = msg;
+      alertBox.classList.remove('hidden');
+      alertBox.className = 'mb-6 rounded-2xl border px-4 py-3 text-sm';
+      if (type === 'error') {
+        alertBox.classList.add('border-red-500/40','text-red-200','bg-red-500/10');
+      } else if (type === 'success') {
+        alertBox.classList.add('border-brand-500/40','text-brand-200','bg-brand-500/10');
+      } else {
+        alertBox.classList.add('border-white/10','text-neutral-200','bg-white/5');
+      }
+    }
+
+    function hideAlert() {
+      alertBox.classList.add('hidden');
+      alertBox.textContent = '';
+    }
+
+    // API helper
+    async function api(path, options = {}) {
+      const headers = { 'Authorization': `Bearer ${token}` };
+      
+      if (options.body && !(options.body instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
+        options.body = JSON.stringify(options.body);
+      }
+
+      const res = await fetch(API_BASE + path, {
+        ...options,
+        headers: { ...headers, ...(options.headers || {}) }
+      });
+
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || json?.message || 'Request failed');
+      return json;
+    }
+
+    // Load pending subscriptions
+    async function loadPendingSubscriptions() {
+      try {
+        const response = await api('/subscriptions/pending');
+        pendingSubscriptions = response.pendingSubscriptions || [];
+        renderSubscriptions();
+      } catch (err) {
+        console.error('Failed to load pending subscriptions:', err);
+        showAlert('Failed to load pending subscriptions: ' + err.message, 'error');
+      }
+    }
+
+    // Render subscriptions
+    function renderSubscriptions() {
+      if (pendingSubscriptions.length === 0) {
+        subscriptionsContainer.innerHTML = `
+          <div class="text-center py-12">
+            <div class="h-16 w-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
+              <svg class="h-8 w-8 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-neutral-300 mb-2">No pending subscriptions</h3>
+            <p class="text-neutral-400">All subscription requests have been processed</p>
+          </div>
+        `;
+        return;
+      }
+
+      subscriptionsContainer.innerHTML = `
+        <div class="space-y-4">
+          ${pendingSubscriptions.map(subscription => `
+            <div class="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/[0.08] transition">
+              <div class="flex items-center gap-4">
+                <div class="h-12 w-12 rounded-full bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center ring-1 ring-white/10">
+                  <span class="text-sm font-semibold text-amber-300">${subscription.username.charAt(0).toUpperCase()}</span>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <div class="font-medium text-neutral-100">${escapeHtml(subscription.username)}</div>
+                    <span class="rounded-full bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 text-xs text-amber-300">Pending</span>
+                  </div>
+                  <div class="text-sm text-neutral-400">${escapeHtml(subscription.email)}</div>
+                  <div class="text-xs text-neutral-500">
+                    Plan: ${escapeHtml(subscription.plan_name)} • 
+                    Submitted: ${new Date(subscription.start_date).toLocaleDateString()}
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="viewSubscription(${subscription.id})" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-200 hover:bg-white/10">
+                  Review
+                </button>
+                <button onclick="quickConfirm(${subscription.id})" class="rounded-lg bg-emerald-500/10 border border-emerald-500/30 px-3 py-2 text-sm text-emerald-300 hover:bg-emerald-500/20">
+                  Quick Approve
+                </button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    // View subscription details
+    async function viewSubscription(id) {
+      const subscription = pendingSubscriptions.find(sub => sub.id === id);
+      if (!subscription) {
+        showAlert('Subscription not found', 'error');
+        return;
+      }
+
+      currentSubscription = subscription;
+      
+      subscriptionDetails.innerHTML = `
+        <div class="grid gap-6">
+          <!-- User Information -->
+          <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+            <h4 class="font-semibold mb-3">User Information</h4>
+            <div class="grid gap-2 text-sm">
+              <div><span class="text-neutral-400">Username:</span> ${escapeHtml(subscription.username)}</div>
+              <div><span class="text-neutral-400">Email:</span> ${escapeHtml(subscription.email)}</div>
+              <div><span class="text-neutral-400">User ID:</span> ${subscription.user_id}</div>
+            </div>
+          </div>
+
+          <!-- Subscription Details -->
+          <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+            <h4 class="font-semibold mb-3">Subscription Details</h4>
+            <div class="grid gap-2 text-sm">
+              <div><span class="text-neutral-400">Plan:</span> ${escapeHtml(subscription.plan_name)}</div>
+              <div><span class="text-neutral-400">Start Date:</span> ${new Date(subscription.start_date).toLocaleDateString()}</div>
+              <div><span class="text-neutral-400">Expiry Date:</span> ${new Date(subscription.expiry_date).toLocaleDateString()}</div>
+              <div><span class="text-neutral-400">Subscription ID:</span> ${subscription.id}</div>
+            </div>
+          </div>
+
+          <!-- Payment Information -->
+          <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+            <h4 class="font-semibold mb-3">Payment Information</h4>
+            <div class="grid gap-2 text-sm">
+              <div><span class="text-neutral-400">Bank Name:</span> ${escapeHtml(subscription.payer_bank_name || 'Not provided')}</div>
+              <div><span class="text-neutral-400">Account Name:</span> ${escapeHtml(subscription.payer_account_name || 'Not provided')}</div>
+              <div><span class="text-neutral-400">Account Number:</span> ${escapeHtml(subscription.payer_account_number || 'Not provided')}</div>
+            </div>
+            
+            ${subscription.payment_proof_url ? `
+              <div class="mt-4">
+                <span class="text-neutral-400 text-sm">Payment Proof:</span>
+                <div class="mt-2">
+                  <img src="${subscription.payment_proof_url}" alt="Payment Proof" 
+                       class="max-w-full h-auto rounded-lg border border-white/10 cursor-pointer"
+                       onclick="window.open('${subscription.payment_proof_url}', '_blank')" />
+                  <p class="text-xs text-neutral-500 mt-1">Click to view full size</p>
+                </div>
+              </div>
+            ` : `
+              <div class="mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                <p class="text-amber-300 text-sm">⚠️ No payment proof uploaded</p>
+              </div>
+            `}
+          </div>
+        </div>
+      `;
+
+      subscriptionModal.classList.remove('hidden');
+      subscriptionModal.classList.add('flex');
+    }
+
+    // Quick confirm subscription
+    async function quickConfirm(id) {
+      if (!confirm('Are you sure you want to approve this subscription?')) {
+        return;
+      }
+
+      try {
+        await api(`/subscriptions/${id}/confirm`, { method: 'POST' });
+        showAlert('Subscription confirmed successfully', 'success');
+        loadPendingSubscriptions();
+      } catch (err) {
+        showAlert('Failed to confirm subscription: ' + err.message, 'error');
+      }
+    }
+
+    // Confirm subscription
+    async function confirmSubscription() {
+      if (!currentSubscription) return;
+      
+      if (!confirm(`Are you sure you want to confirm the subscription for ${currentSubscription.username}?`)) {
+        return;
+      }
+
+      try {
+        confirmBtn.textContent = 'Confirming...';
+        confirmBtn.disabled = true;
+
+        await api(`/subscriptions/${currentSubscription.id}/confirm`, { method: 'POST' });
+        showAlert('Subscription confirmed and activated successfully', 'success');
+        closeModal();
+        loadPendingSubscriptions();
+      } catch (err) {
+        showAlert('Failed to confirm subscription: ' + err.message, 'error');
+      } finally {
+        confirmBtn.textContent = 'Confirm Subscription';
+        confirmBtn.disabled = false;
+      }
+    }
+
+    // Reject subscription
+    async function rejectSubscription() {
+      if (!currentSubscription) return;
+      
+      if (!confirm(`Are you sure you want to reject the subscription for ${currentSubscription.username}? This action cannot be undone.`)) {
+        return;
+      }
+
+      try {
+        rejectBtn.textContent = 'Rejecting...';
+        rejectBtn.disabled = true;
+
+        await api(`/subscriptions/${currentSubscription.id}/reject`, { method: 'POST' });
+        showAlert('Subscription rejected successfully', 'success');
+        closeModal();
+        loadPendingSubscriptions();
+      } catch (err) {
+        showAlert('Failed to reject subscription: ' + err.message, 'error');
+      } finally {
+        rejectBtn.textContent = 'Reject Subscription';
+        rejectBtn.disabled = false;
+      }
+    }
+
+    // Modal functions
+    function closeModal() {
+      subscriptionModal.classList.add('hidden');
+      subscriptionModal.classList.remove('flex');
+      currentSubscription = null;
+    }
+
+    // Utility functions
+    function escapeHtml(str) {
+      return (str || '').toString().replace(/[&<>"']/g, (m) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[m]));
+    }
+
+    // Event listeners
+    refreshBtn.addEventListener('click', loadPendingSubscriptions);
+    closeModalBtn.addEventListener('click', closeModal);
+    closeDetailsBtn.addEventListener('click', closeModal);
+    confirmBtn.addEventListener('click', confirmSubscription);
+    rejectBtn.addEventListener('click', rejectSubscription);
+
+    subscriptionModal.addEventListener('click', (e) => {
+      if (e.target === subscriptionModal) closeModal();
+    });
+
+    // Make functions global for onclick handlers
+    window.viewSubscription = viewSubscription;
+    window.quickConfirm = quickConfirm;
+
+    // Initialize
+    loadPendingSubscriptions();
+  </script>
+</body>
+</html>

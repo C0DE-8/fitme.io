@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>fitme.io — Users Management</title>
+  <meta name="description" content="Manage users for fitme.io." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' rx='12' fill='%238b5cf6'/%3E%3Cpath d='M18 36c4 4 8 6 14 6 6 0 10-2 14-6' stroke='white' stroke-width='5' stroke-linecap='round' fill='none'/%3E%3Ccircle cx='24' cy='24' r='3' fill='white'/%3E%3Ccircle cx='40' cy='24' r='3' fill='white'/%3E%3C/svg%3E" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f5f3ff', 100: '#ede9fe', 200: '#ddd6fe', 300: '#c4b5fd',
+              400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9',
+              800: '#5b21b6', 900: '#4c1d95'
+            },
+            deep: { 900: '#071B13', 950: '#05150F' },
+            accent: { 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb' }
+          },
+          boxShadow: { glow: '0 0 80px 0 rgba(139,92,246,0.20)' }
+        }
+      }
+    }
+  </script>
+  <style>
+    html, body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  </style>
+</head>
+<body class="min-h-dvh bg-deep-950 text-neutral-100">
+  <!-- Background -->
+  <div class="pointer-events-none fixed inset-0 -z-10">
+    <div class="absolute inset-0 bg-[radial-gradient(70%_60%_at_50%_0%,rgba(139,92,246,0.10),rgba(59,130,246,0.10),rgba(0,0,0,0))]"></div>
+    <div class="absolute -top-24 -left-20 h-80 w-80 rounded-full bg-violet-700/20 blur-3xl"></div>
+    <div class="absolute -bottom-24 -right-32 h-96 w-96 rounded-full bg-blue-800/20 blur-3xl"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 bg-deep-950/60 backdrop-blur supports-[backdrop-filter]:bg-deep-950/60">
+    <nav class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
+      <div class="flex items-center gap-6">
+        <a href="index.html" class="flex items-center gap-3">
+          <div class="grid h-9 w-9 place-items-center rounded-xl bg-brand-500/20 ring-1 ring-inset ring-white/15">
+            <span class="text-lg font-black text-brand-300">F</span>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-lg font-semibold tracking-tight text-brand-300">fitme.io</span>
+            <span class="text-xs text-neutral-400">Users Management</span>
+          </div>
+        </a>
+        
+        <!-- Navigation Links -->
+        <nav class="hidden md:flex items-center gap-1">
+          <a href="index.html" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-200 hover:bg-white/10">
+            Dashboard
+          </a>
+          <a href="users-management.html" class="rounded-lg bg-brand-500/10 border border-brand-500/30 px-3 py-2 text-sm text-brand-300 hover:bg-brand-500/20">
+            Users
+          </a>
+          <a href="subscription.html" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-200 hover:bg-white/10">
+            Subscriptions
+          </a>
+          <a href="plans.html" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-200 hover:bg-white/10">
+            Plans
+          </a>
+          <a href="accounts.html" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-200 hover:bg-white/10">
+            Accounts
+          </a>
+          <a href="food-management.html" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-200 hover:bg-white/10">
+            Foods
+          </a>
+        </nav>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <div class="hidden sm:flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-neutral-300">
+          <div class="h-2 w-2 rounded-full bg-brand-400"></div>
+          <span id="admin-name">Admin</span>
+        </div>
+        <button id="logout" class="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-neutral-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">
+          Log out
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Main Content -->
+  <main class="mx-auto w-full max-w-7xl px-4 py-10">
+    <!-- Header Section -->
+    <section class="mb-10">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-3xl font-bold tracking-tight bg-gradient-to-r from-brand-300 to-accent-300 bg-clip-text text-transparent mb-2">
+            Users Management
+          </h1>
+          <p class="text-neutral-300">View and manage user accounts</p>
+        </div>
+        
+        <!-- Search -->
+        <div class="relative">
+          <input id="search-input" type="text" placeholder="Search users..." 
+                 class="w-64 rounded-xl border border-white/10 bg-white/5 px-4 py-3 pr-10 text-sm text-neutral-100 placeholder:text-neutral-400 outline-none focus:border-brand-500/40 focus:ring-2 focus:ring-accent-400" />
+          <svg class="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="11" cy="11" r="8" stroke-width="2"/>
+            <path d="M21 21l-4.35-4.35" stroke-width="2"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Filter Tabs -->
+      <div class="flex items-center gap-1 rounded-full border border-white/10 bg-white/5 p-1 w-fit">
+        <button id="filter-all" class="rounded-full px-4 py-2 text-sm font-medium text-neutral-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">
+          All Users
+        </button>
+        <button id="filter-verified" class="rounded-full px-4 py-2 text-sm font-medium text-neutral-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">
+          Verified
+        </button>
+        <button id="filter-unverified" class="rounded-full px-4 py-2 text-sm font-medium text-neutral-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">
+          Unverified
+        </button>
+        <button id="filter-admins" class="rounded-full px-4 py-2 text-sm font-medium text-neutral-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">
+          Admins
+        </button>
+      </div>
+    </section>
+
+    <!-- Alert Messages -->
+    <div id="alert" class="mb-6 hidden rounded-2xl border px-4 py-3 text-sm" role="alert" aria-live="polite"></div>
+
+    <!-- Users List -->
+    <section>
+      <div class="rounded-2xl border border-white/10 bg-white/[0.04] p-6">
+        <div id="users-container">
+          <div class="flex items-center justify-center py-12">
+            <div class="text-center">
+              <div class="h-12 w-12 mx-auto mb-3 animate-spin rounded-full border-4 border-brand-500/20 border-t-brand-500"></div>
+              <p class="text-neutral-400">Loading users...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- User Details Modal -->
+    <div id="user-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4">
+      <div class="w-full max-w-2xl rounded-3xl border border-white/10 bg-deep-950/95 p-6 backdrop-blur-xl max-h-[90vh] overflow-y-auto">
+        <div class="mb-4 flex items-center justify-between">
+          <h3 id="modal-title" class="text-xl font-semibold">User Details</h3>
+          <button id="close-modal" class="rounded-full p-2 text-neutral-400 hover:bg-white/10 hover:text-neutral-200" aria-label="Close">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div id="user-details" class="space-y-6">
+          <!-- Details will be populated here -->
+        </div>
+
+        <div class="flex gap-3 mt-6">
+          <button id="toggle-admin-btn" class="hidden rounded-xl bg-gradient-to-r from-brand-500 to-accent-500 px-4 py-3 font-semibold text-neutral-950 shadow-glow transition hover:from-brand-400 hover:to-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-400">
+            Make Admin
+          </button>
+          <button id="ban-user-btn" class="hidden rounded-xl bg-gradient-to-r from-red-500 to-red-600 px-4 py-3 font-semibold text-neutral-100 shadow-glow transition hover:from-red-400 hover:to-red-500 focus:outline-none focus:ring-2 focus:ring-red-400">
+            Ban User
+          </button>
+          <button id="close-details" class="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-medium text-neutral-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // API configuration - Updated to use admin routes
+    const API_BASE = "http://localhost:7005/api/admin";
+
+    // Authentication check
+    const token = localStorage.getItem('fitme_admin_token');
+    const userRaw = localStorage.getItem('fitme_admin_user');
+    const user = (() => { try { return JSON.parse(userRaw || 'null'); } catch { return null; } })();
+
+    if (!token || !user || !(user.role === 'admin' || user.is_admin === true || user.admin === true)) {
+      window.location.replace('../index.html');
+    }
+
+    // DOM elements
+    const usersContainer = document.getElementById('users-container');
+    const userModal = document.getElementById('user-modal');
+    const userDetails = document.getElementById('user-details');
+    const closeModalBtn = document.getElementById('close-modal');
+    const closeDetailsBtn = document.getElementById('close-details');
+    const toggleAdminBtn = document.getElementById('toggle-admin-btn');
+    const banUserBtn = document.getElementById('ban-user-btn');
+    const alertBox = document.getElementById('alert');
+    const searchInput = document.getElementById('search-input');
+
+    // Filter buttons
+    const filterAll = document.getElementById('filter-all');
+    const filterVerified = document.getElementById('filter-verified');
+    const filterUnverified = document.getElementById('filter-unverified');
+    const filterAdmins = document.getElementById('filter-admins');
+
+    // State
+    let currentFilter = 'all';
+    let currentUser = null;
+    let allUsers = [];
+    let filteredUsers = [];
+
+    // Display admin name
+    document.getElementById('admin-name').textContent = user.username || user.email || 'Admin';
+
+    // Logout functionality
+    document.getElementById('logout').addEventListener('click', () => {
+      localStorage.removeItem('fitme_admin_token');
+      localStorage.removeItem('fitme_admin_user');
+      window.location.replace('../index.html');
+    });
+
+    // Alert system
+    function showAlert(msg, type = 'info') {
+      alertBox.textContent = msg;
+      alertBox.classList.remove('hidden');
+      alertBox.className = 'mb-6 rounded-2xl border px-4 py-3 text-sm';
+      if (type === 'error') {
+        alertBox.classList.add('border-red-500/40','text-red-200','bg-red-500/10');
+      } else if (type === 'success') {
+        alertBox.classList.add('border-brand-500/40','text-brand-200','bg-brand-500/10');
+      } else {
+        alertBox.classList.add('border-white/10','text-neutral-200','bg-white/5');
+      }
+    }
+
+    function hideAlert() {
+      alertBox.classList.add('hidden');
+      alertBox.textContent = '';
+    }
+
+    // API helper
+    async function api(path, options = {}) {
+      const headers = { 'Authorization': `Bearer ${token}` };
+      
+      if (options.body && !(options.body instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
+        options.body = JSON.stringify(options.body);
+      }
+
+      const res = await fetch(API_BASE + path, {
+        ...options,
+        headers: { ...headers, ...(options.headers || {}) }
+      });
+
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || json?.message || 'Request failed');
+      return json;
+    }
+
+    // Filter functions
+    function setFilter(filter) {
+      currentFilter = filter;
+      
+      // Update button states
+      [filterAll, filterVerified, filterUnverified, filterAdmins].forEach(btn => {
+        btn.classList.remove('bg-white/10');
+      });
+      
+      const activeBtn = {
+        'all': filterAll,
+        'verified': filterVerified,
+        'unverified': filterUnverified,
+        'admins': filterAdmins
+      }[filter];
+      
+      activeBtn.classList.add('bg-white/10');
+      
+      filterUsers();
+    }
+
+    // Filter and search users
+    function filterUsers() {
+      const searchTerm = searchInput.value.toLowerCase().trim();
+
+      filteredUsers = allUsers.filter(user => {
+        const matchesSearch = !searchTerm || 
+          user.username.toLowerCase().includes(searchTerm) ||
+          user.email.toLowerCase().includes(searchTerm) ||
+          (user.bio && user.bio.toLowerCase().includes(searchTerm));
+        
+        let matchesFilter = true;
+        if (currentFilter === 'verified') {
+          matchesFilter = user.verified;
+        } else if (currentFilter === 'unverified') {
+          matchesFilter = !user.verified;
+        } else if (currentFilter === 'admins') {
+          matchesFilter = user.role === 'admin';
+        }
+        
+        return matchesSearch && matchesFilter;
+      });
+
+      renderUsers();
+    }
+
+    // Load users
+    async function loadUsers() {
+      try {
+        const response = await api('/users');
+        allUsers = response.users || [];
+        filterUsers();
+      } catch (err) {
+        console.error('Failed to load users:', err);
+        showAlert('Failed to load users: ' + err.message, 'error');
+      }
+    }
+
+    // Render users
+    function renderUsers() {
+      if (filteredUsers.length === 0) {
+        usersContainer.innerHTML = `
+          <div class="text-center py-12">
+            <div class="h-16 w-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
+              <svg class="h-8 w-8 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke-width="2"/>
+                <circle cx="9" cy="7" r="4" stroke-width="2"/>
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87" stroke-width="2"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke-width="2"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-neutral-300 mb-2">No users found</h3>
+            <p class="text-neutral-400">No users match your current filter or search</p>
+          </div>
+        `;
+        return;
+      }
+
+      usersContainer.innerHTML = `
+        <div class="space-y-4">
+          ${filteredUsers.map(user => {
+            const isAdmin = user.role === 'admin';
+            
+            return `
+              <div class="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/[0.08] transition">
+                <div class="flex items-center gap-4">
+                  <div class="h-12 w-12 rounded-full bg-gradient-to-br from-brand-500/20 to-accent-500/20 flex items-center justify-center ring-1 ring-white/10">
+                    <span class="text-sm font-semibold text-brand-300">${user.username.charAt(0).toUpperCase()}</span>
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <div class="font-medium text-neutral-100">${escapeHtml(user.username)}</div>
+                      ${user.verified 
+                        ? '<span class="rounded-full bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 text-xs text-emerald-300">Verified</span>'
+                        : '<span class="rounded-full bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 text-xs text-amber-300">Unverified</span>'
+                      }
+                      ${isAdmin 
+                        ? '<span class="rounded-full bg-brand-500/10 border border-brand-500/30 px-2 py-0.5 text-xs text-brand-300">Admin</span>'
+                        : ''
+                      }
+                    </div>
+                    <div class="text-sm text-neutral-400">${escapeHtml(user.email)}</div>
+                    <div class="text-xs text-neutral-500">Joined: ${new Date(user.created_at).toLocaleDateString()}</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button onclick="viewUser(${user.id})" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-200 hover:bg-white/10">
+                    View Details
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    // View user details
+    async function viewUser(id) {
+      try {
+        const response = await api(`/users/${id}`);
+        currentUser = response.user;
+        
+        const isAdmin = currentUser.role === 'admin';
+        const isCurrentAdmin = currentUser.id === user.id;
+        
+        userDetails.innerHTML = `
+          <div class="grid gap-6">
+            <!-- Basic Information -->
+            <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+              <h4 class="font-semibold mb-3">Basic Information</h4>
+              <div class="grid gap-2 text-sm">
+                <div><span class="text-neutral-400">Username:</span> ${escapeHtml(currentUser.username)}</div>
+                <div><span class="text-neutral-400">Email:</span> ${escapeHtml(currentUser.email)}</div>
+                <div><span class="text-neutral-400">User ID:</span> ${currentUser.id}</div>
+                <div><span class="text-neutral-400">Email Verified:</span> 
+                  <span class="${currentUser.verified ? 'text-emerald-300' : 'text-amber-300'}">${currentUser.verified ? 'Yes' : 'No'}</span>
+                </div>
+                <div><span class="text-neutral-400">Role:</span> 
+                  <span class="${isAdmin ? 'text-brand-300' : 'text-neutral-300'}">${isAdmin ? 'Admin' : 'User'}</span>
+                </div>
+                <div><span class="text-neutral-400">Joined:</span> ${new Date(currentUser.created_at).toLocaleString()}</div>
+                <div><span class="text-neutral-400">Updated:</span> ${new Date(currentUser.updated_at).toLocaleString()}</div>
+                ${currentUser.bio ? `<div><span class="text-neutral-400">Bio:</span> ${escapeHtml(currentUser.bio)}</div>` : ''}
+              </div>
+            </div>
+
+            <!-- Account Status -->
+            <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+              <h4 class="font-semibold mb-3">Account Status</h4>
+              <div class="grid gap-2 text-sm">
+                <div><span class="text-neutral-400">Status:</span> 
+                  <span class="text-emerald-300">Active</span>
+                </div>
+                <div><span class="text-neutral-400">Account Type:</span> 
+                  <span class="${isAdmin ? 'text-brand-300' : 'text-neutral-300'}">${isAdmin ? 'Administrator' : 'Regular User'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // Show/hide action buttons
+        toggleAdminBtn.classList.toggle('hidden', isCurrentAdmin);
+        toggleAdminBtn.textContent = isAdmin ? 'Remove Admin' : 'Make Admin';
+        banUserBtn.classList.toggle('hidden', isCurrentAdmin);
+
+        userModal.classList.remove('hidden');
+        userModal.classList.add('flex');
+      } catch (err) {
+        showAlert('Failed to load user details: ' + err.message, 'error');
+      }
+    }
+
+    // Toggle admin status
+    async function toggleAdminStatus() {
+      if (!currentUser) return;
+
+      const isAdmin = currentUser.role === 'admin';
+      const action = isAdmin ? 'remove admin privileges from' : 'grant admin privileges to';
+      
+      if (!confirm(`Are you sure you want to ${action} ${currentUser.username}?`)) {
+        return;
+      }
+
+      try {
+        await api(`/users/${currentUser.id}/toggle-admin`, { method: 'POST' });
+        showAlert(`User ${isAdmin ? 'admin privileges removed' : 'promoted to admin'} successfully`, 'success');
+        closeModal();
+        loadUsers();
+      } catch (err) {
+        showAlert('Failed to update user role: ' + err.message, 'error');
+      }
+    }
+
+    // Ban user
+    async function banUser() {
+      if (!currentUser) return;
+      
+      if (!confirm(`Are you sure you want to ban ${currentUser.username}? This will disable their account.`)) {
+        return;
+      }
+
+      try {
+        await api(`/users/${currentUser.id}/ban`, { method: 'POST' });
+        showAlert('User banned successfully', 'success');
+        closeModal();
+        loadUsers();
+      } catch (err) {
+        showAlert('Failed to ban user: ' + err.message, 'error');
+      }
+    }
+
+    // Modal functions
+    function closeModal() {
+      userModal.classList.add('hidden');
+      userModal.classList.remove('flex');
+      currentUser = null;
+    }
+
+    // Utility functions
+    function escapeHtml(str) {
+      return (str || '').toString().replace(/[&<>"']/g, (m) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[m]));
+    }
+
+    function getStatusTextColor(status) {
+      const colors = {
+        'pending': 'text-amber-300',
+        'active': 'text-emerald-300',
+        'cancelled': 'text-red-300',
+        'expired': 'text-neutral-400'
+      };
+      return colors[status] || 'text-neutral-300';
+    }
+
+    // Event listeners
+    filterAll.addEventListener('click', () => setFilter('all'));
+    filterVerified.addEventListener('click', () => setFilter('verified'));
+    filterUnverified.addEventListener('click', () => setFilter('unverified'));
+    filterAdmins.addEventListener('click', () => setFilter('admins'));
+
+    searchInput.addEventListener('input', filterUsers);
+
+    closeModalBtn.addEventListener('click', closeModal);
+    closeDetailsBtn.addEventListener('click', closeModal);
+    toggleAdminBtn.addEventListener('click', toggleAdminStatus);
+    banUserBtn.addEventListener('click', banUser);
+
+    userModal.addEventListener('click', (e) => {
+      if (e.target === userModal) closeModal();
+    });
+
+    // Make functions global for onclick handlers
+    window.viewUser = viewUser;
+
+    // Initialize
+    setFilter('all');
+    loadUsers();
+  </script>
+</body>
+</html>

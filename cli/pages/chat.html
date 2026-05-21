@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Fitme.io — Chat</title>
+    <meta name="theme-color" content="#05150F" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../css/app.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-purple': '#8B5CF6',
+                        'brand-blue': '#3B82F6',
+                        'dark-bg': '#0F0F23',
+                        'dark-card': '#1A1A2E',
+                        'dark-border': '#16213E',
+                        deep: { 900: '#071B13', 950: '#05150F' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #8B5CF6 0%, #3B82F6 100%);
+        }
+        .glow {
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+        }
+        .chat-bubble-user {
+            background: linear-gradient(135deg, #8B5CF6 0%, #3B82F6 100%);
+        }
+        .chat-bubble-ai {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .typing-indicator {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+        .scroll-smooth {
+            scroll-behavior: smooth;
+        }
+        
+        /* Outer: position only (JS sets left/top). Inner: flowing motion + chrome. */
+        .music-nav {
+            position: fixed;
+            z-index: 1000;
+            touch-action: manipulation;
+            user-select: none;
+        }
+
+        .music-nav-surface {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 10px 12px;
+            border-radius: 22px;
+            background: linear-gradient(160deg, rgba(139, 92, 246, 0.18), rgba(59, 130, 246, 0.12));
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.45),
+                0 0 0 1px rgba(139, 92, 246, 0.12) inset;
+            animation: musicNavFloat 5s ease-in-out infinite;
+        }
+
+        .music-nav.is-dragging .music-nav-surface {
+            animation: none;
+            opacity: 0.95;
+            box-shadow: 0 16px 48px rgba(139, 92, 246, 0.35);
+        }
+
+        @keyframes musicNavFloat {
+            0%, 100% {
+                transform: translateY(0);
+                box-shadow:
+                    0 8px 32px rgba(0, 0, 0, 0.45),
+                    0 0 28px rgba(139, 92, 246, 0.15);
+            }
+            50% {
+                transform: translateY(-8px);
+                box-shadow:
+                    0 14px 40px rgba(0, 0, 0, 0.5),
+                    0 0 36px rgba(59, 130, 246, 0.2);
+            }
+        }
+
+        .music-drag-handle {
+            width: 100%;
+            padding: 4px 0 2px;
+            margin: -2px 0 2px;
+            border: none;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.45);
+            font-size: 11px;
+            letter-spacing: 2px;
+            cursor: grab;
+            line-height: 1;
+            border-radius: 8px;
+            transition: color 0.2s;
+        }
+
+        .music-drag-handle:hover {
+            color: rgba(196, 181, 253, 0.9);
+        }
+
+        .music-nav.is-dragging .music-drag-handle {
+            cursor: grabbing;
+        }
+
+        .music-play-wrap {
+            position: relative;
+            display: grid;
+            place-items: center;
+            width: 48px;
+            height: 48px;
+        }
+
+        .music-pulse-ring {
+            position: absolute;
+            inset: -5px;
+            border-radius: 50%;
+            border: 2px solid rgba(139, 92, 246, 0.45);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.25);
+            animation: musicRingPulse 2.4s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        .music-nav.music-playing .music-pulse-ring {
+            animation: musicRingPulse 1.2s ease-in-out infinite;
+        }
+
+        @keyframes musicRingPulse {
+            0%, 100% { transform: scale(1); opacity: 0.75; }
+            50% { transform: scale(1.08); opacity: 1; }
+        }
+
+        .music-btn {
+            position: relative;
+            z-index: 1;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(145deg, #8B5CF6 0%, #3B82F6 100%);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            box-shadow: 0 4px 16px rgba(139, 92, 246, 0.45);
+        }
+
+        .music-btn:hover {
+            transform: scale(1.06);
+            box-shadow: 0 6px 24px rgba(139, 92, 246, 0.55);
+        }
+
+        .music-btn:active {
+            transform: scale(0.96);
+        }
+
+        .volume-slider {
+            writing-mode: bt-lr;
+            -webkit-appearance: slider-vertical;
+            appearance: slider-vertical;
+            width: 36px;
+            height: 64px;
+            background: rgba(22, 33, 62, 0.8);
+            border-radius: 8px;
+            cursor: pointer;
+            touch-action: pan-y;
+        }
+        
+        .music-note {
+            position: fixed;
+            pointer-events: none;
+            z-index: 999;
+            opacity: 0;
+            font-size: 20px;
+        }
+        
+        @keyframes floatNote {
+            0% {
+                opacity: 0;
+                transform: translateY(0) rotate(0deg) scale(0.5);
+            }
+            20% {
+                opacity: 1;
+            }
+            80% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100px) rotate(360deg) scale(1.2);
+            }
+        }
+        
+        .music-note.animate {
+            animation: floatNote 3s ease-out forwards;
+        }
+        
+        @media (prefers-reduced-motion: reduce) {
+            .music-nav-surface,
+            .music-pulse-ring {
+                animation: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="fitme-app flex min-h-dvh flex-col bg-deep-950 text-neutral-100">
+    <!-- Draggable floating music orb (position saved in localStorage) -->
+    <div class="music-nav" id="musicNav" role="region" aria-label="Ambient music">
+        <div class="music-nav-surface">
+        <button type="button" class="music-drag-handle" id="musicDragHandle" title="Drag to move">⠿</button>
+        <div class="music-play-wrap">
+            <span class="music-pulse-ring" aria-hidden="true"></span>
+            <button type="button" class="music-btn" id="playPauseBtn" onclick="toggleMusic()" title="Play/Pause Music">
+                <svg id="playIcon" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>
+                </svg>
+                <svg id="pauseIcon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                </svg>
+            </button>
+        </div>
+
+        <input
+            type="range"
+            class="volume-slider"
+            id="volumeSlider"
+            min="0"
+            max="100"
+            value="50"
+            title="Volume"
+            onchange="setVolume(this.value)"
+        />
+
+        <div class="text-[10px] text-center text-neutral-500">🎵</div>
+        </div>
+    </div>
+
+    <!-- Added audio element for background music -->
+    <audio id="backgroundMusic" loop preload="auto">
+        <source src="../assets/audio/ambient-soft.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <!-- Header -->
+    <header class="app-header-safe sticky top-0 z-30 shrink-0 border-b border-white/10 bg-deep-950/85 backdrop-blur-xl">
+        <div class="max-w-4xl mx-auto flex flex-wrap items-center justify-between gap-3 p-4">
+            <div class="flex items-center space-x-3">
+                <button type="button" onclick="goBack()" class="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 p-2 hover:bg-white/10 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                </button>
+                <div class="flex items-center space-x-2">
+                    <div class="w-10 h-10 bg-gradient-to-r from-brand-purple to-brand-blue rounded-full flex items-center justify-center">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold gradient-bg bg-clip-text text-transparent">Fitme.io Chef 🇳🇬</h1>
+                        <p class="text-xs text-neutral-400 sm:text-sm">Your Nigerian meal & fitness companion</p>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <div id="userInfo" class="min-w-0 text-right">
+                    <p class="truncate text-sm font-medium" id="username">Loading...</p>
+                    <p class="text-xs text-neutral-500" id="userStatus">Ready to cook! 🍽️</p>
+                </div>
+                <div class="w-8 h-8 bg-gradient-to-r from-brand-purple to-brand-blue rounded-full flex items-center justify-center">
+                    <span class="text-sm font-bold" id="userInitial">?</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Chat Container -->
+    <main class="mx-auto flex min-h-0 w-full max-w-4xl flex-1 flex-col pb-[env(safe-area-inset-bottom)]">
+        <!-- Chat Messages -->
+        <div id="chatContainer" class="min-h-0 flex-1 space-y-4 overflow-y-auto scroll-smooth p-4">
+            <!-- Welcome Message -->
+            <div class="chat-bubble-ai p-4 rounded-lg max-w-md">
+                <div class="flex items-start space-x-3">
+                    <div class="w-8 h-8 bg-gradient-to-r from-brand-purple to-brand-blue rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="font-medium text-brand-purple mb-1">Fitme.io Chef 👨‍🍳</p>
+                        <p class="text-neutral-300">Sannu! Welcome to Fitme.io! 🇳🇬 I'm your personal Nigerian meal and fitness companion. I can help you:</p>
+                        <ul class="mt-2 space-y-1 text-sm text-neutral-300">
+                            <li>🍲 Plan delicious Nigerian meals within your budget</li>
+                            <li>📦 Manage your food storage and ingredients</li>
+                            <li>🥗 Suggest healthy recipes with local ingredients</li>
+                            <li>💪 Track your fitness goals alongside your nutrition</li>
+                            <li>💰 Find budget-friendly meal options</li>
+                        </ul>
+                        <p class="mt-2 text-neutral-300">What would you like to cook today? 😊</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Typing Indicator -->
+        <div id="typingIndicator" class="px-4 hidden">
+            <div class="chat-bubble-ai p-4 rounded-lg max-w-md">
+                <div class="flex items-start space-x-3">
+                    <div class="w-8 h-8 bg-gradient-to-r from-brand-purple to-brand-blue rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="font-medium text-brand-purple mb-1">Fitme.io Chef is thinking...</p>
+                        <div class="flex space-x-1">
+                            <div class="w-2 h-2 bg-brand-purple rounded-full typing-indicator"></div>
+                            <div class="w-2 h-2 bg-brand-purple rounded-full typing-indicator" style="animation-delay: 0.2s;"></div>
+                            <div class="w-2 h-2 bg-brand-purple rounded-full typing-indicator" style="animation-delay: 0.4s;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Message Input -->
+        <div class="border-t border-white/10 bg-deep-900/90 p-4 backdrop-blur-xl">
+            <form id="chatForm" class="flex space-x-3">
+                <div class="flex-1 relative">
+                    <input 
+                        type="text" 
+                        id="messageInput" 
+                        placeholder="Ask me about Jollof rice, Egusi, meal planning, or fitness tips... 🍛"
+                        class="min-h-[48px] w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-neutral-100 placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                        autocomplete="off"
+                    >
+                    <div class="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <button type="button" onclick="showQuickCommands()" class="text-gray-400 hover:text-brand-purple transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <button 
+                    type="submit" 
+                    id="sendButton"
+                    class="gradient-bg min-h-[48px] shrink-0 rounded-xl px-5 py-3 font-semibold text-white hover:opacity-90 transition-opacity glow disabled:opacity-50 disabled:cursor-not-allowed sm:px-6"
+                >
+                    Send 🚀
+                </button>
+            </form>
+            
+            <!-- Quick Commands -->
+            <div id="quickCommands" class="hidden mt-3 flex flex-wrap gap-2">
+                <button type="button" onclick="sendQuickMessage('Show my food storage')" class="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-200 transition-colors hover:border-violet-500/40 hover:bg-white/10">
+                    🏪 My Storage
+                </button>
+                <button type="button" onclick="sendQuickMessage('Suggest a healthy Nigerian meal for today')" class="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-200 transition-colors hover:border-violet-500/40 hover:bg-white/10">
+                    🍲 Healthy Meals
+                </button>
+                <button type="button" onclick="sendQuickMessage('What Nigerian dish can I make with what I have?')" class="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-200 transition-colors hover:border-violet-500/40 hover:bg-white/10">
+                    👨‍🍳 Cook Now
+                </button>
+                <button type="button" onclick="sendQuickMessage('Budget-friendly meal ideas under ₦2000')" class="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-200 transition-colors hover:border-violet-500/40 hover:bg-white/10">
+                    💰 Budget Meals
+                </button>
+                <button type="button" onclick="sendQuickMessage('How to make perfect Jollof rice')" class="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-200 transition-colors hover:border-violet-500/40 hover:bg-white/10">
+                    🍛 Jollof Recipe
+                </button>
+                <button type="button" onclick="sendQuickMessage('Fitness tips for Nigerian food lovers')" class="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-200 transition-colors hover:border-violet-500/40 hover:bg-white/10">
+                    💪 Fitness Tips
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = 'http://localhost:7005/api';
+        const CHAT_URL = `${API_BASE}/chat`;
+        const USER_URL = `${API_BASE}/user`;
+        
+        let currentUser = null;
+        let isLoading = false;
+        
+        let musicPlaying = false;
+        let musicNoteInterval = null;
+        const musicNotes = ['🎵', '🎶', '♪', '♫', '🎼'];
+        const MUSIC_NAV_STORAGE_KEY = 'fitme_chat_music_nav';
+
+        function clampMusicNavPosition(nav) {
+            const pad = 8;
+            const w = nav.offsetWidth;
+            const h = nav.offsetHeight;
+            let left = parseInt(nav.style.left, 10);
+            let top = parseInt(nav.style.top, 10);
+            if (Number.isNaN(left)) left = pad;
+            if (Number.isNaN(top)) top = pad;
+            const maxX = Math.max(pad, window.innerWidth - w - pad);
+            const maxY = Math.max(pad, window.innerHeight - h - pad);
+            nav.style.left = Math.min(Math.max(pad, left), maxX) + 'px';
+            nav.style.top = Math.min(Math.max(pad, top), maxY) + 'px';
+            nav.style.right = 'auto';
+            nav.style.bottom = 'auto';
+        }
+
+        function applyDefaultMusicNavPosition() {
+            const nav = document.getElementById('musicNav');
+            const pad = 12;
+            const bottomGap = window.innerWidth <= 768 ? 128 : 112;
+            const w = nav.offsetWidth || 72;
+            const h = nav.offsetHeight || 160;
+            nav.style.left = window.innerWidth - w - pad + 'px';
+            nav.style.top = window.innerHeight - h - bottomGap + 'px';
+            nav.style.right = 'auto';
+            nav.style.bottom = 'auto';
+        }
+
+        function loadMusicNavPosition() {
+            const nav = document.getElementById('musicNav');
+            const raw = localStorage.getItem(MUSIC_NAV_STORAGE_KEY);
+            if (raw) {
+                try {
+                    const { left, top } = JSON.parse(raw);
+                    if (typeof left === 'number' && typeof top === 'number') {
+                        nav.style.left = left + 'px';
+                        nav.style.top = top + 'px';
+                        nav.style.right = 'auto';
+                        nav.style.bottom = 'auto';
+                        clampMusicNavPosition(nav);
+                        return;
+                    }
+                } catch (_) {}
+            }
+            applyDefaultMusicNavPosition();
+        }
+
+        function saveMusicNavPosition() {
+            const nav = document.getElementById('musicNav');
+            const r = nav.getBoundingClientRect();
+            localStorage.setItem(
+                MUSIC_NAV_STORAGE_KEY,
+                JSON.stringify({ left: Math.round(r.left), top: Math.round(r.top) })
+            );
+        }
+
+        function initMusicNavDrag() {
+            const nav = document.getElementById('musicNav');
+            const handle = document.getElementById('musicDragHandle');
+            let dragging = false;
+            let offsetX = 0;
+            let offsetY = 0;
+
+            function onPointerMove(clientX, clientY) {
+                if (!dragging) return;
+                let x = clientX - offsetX;
+                let y = clientY - offsetY;
+                nav.style.left = x + 'px';
+                nav.style.top = y + 'px';
+                nav.style.right = 'auto';
+                nav.style.bottom = 'auto';
+                clampMusicNavPosition(nav);
+            }
+
+            function endDrag() {
+                if (!dragging) return;
+                dragging = false;
+                nav.classList.remove('is-dragging');
+                saveMusicNavPosition();
+            }
+
+            handle.addEventListener('mousedown', (e) => {
+                dragging = true;
+                nav.classList.add('is-dragging');
+                const r = nav.getBoundingClientRect();
+                offsetX = e.clientX - r.left;
+                offsetY = e.clientY - r.top;
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                onPointerMove(e.clientX, e.clientY);
+            });
+            document.addEventListener('mouseup', endDrag);
+
+            handle.addEventListener(
+                'touchstart',
+                (e) => {
+                    const t = e.touches[0];
+                    dragging = true;
+                    nav.classList.add('is-dragging');
+                    const r = nav.getBoundingClientRect();
+                    offsetX = t.clientX - r.left;
+                    offsetY = t.clientY - r.top;
+                },
+                { passive: true }
+            );
+            document.addEventListener(
+                'touchmove',
+                (e) => {
+                    if (!dragging) return;
+                    const t = e.touches[0];
+                    onPointerMove(t.clientX, t.clientY);
+                },
+                { passive: true }
+            );
+            document.addEventListener('touchend', endDrag);
+            document.addEventListener('touchcancel', endDrag);
+
+            window.addEventListener('resize', () => clampMusicNavPosition(nav));
+        }
+
+        function parseMarkdown(text) {
+            return text
+                // Headers
+                .replace(/^### (.*$)/gim, '<h3 class="text-lg font-semibold text-brand-purple mt-4 mb-2">$1</h3>')
+                .replace(/^## (.*$)/gim, '<h2 class="text-xl font-semibold text-brand-purple mt-4 mb-2">$1</h2>')
+                .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold text-brand-purple mt-4 mb-3">$1</h1>')
+                
+                // Bold text
+                .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>')
+                
+                // Italic text
+                .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>')
+                
+                // Unordered lists
+                .replace(/^\s*[-•*]\s+(.*$)/gim, '<li class="ml-4 mb-1 flex items-start"><span class="text-brand-purple mr-2 mt-1">•</span><span>$1</span></li>')
+                
+                // Numbered lists
+                .replace(/^\s*(\d+)\.\s+(.*$)/gim, '<li class="ml-4 mb-1 flex items-start"><span class="text-brand-purple mr-2 font-medium">$1.</span><span>$2</span></li>')
+                
+                // Code blocks (inline)
+                .replace(/`([^`]+)`/g, '<code class="bg-dark-bg px-2 py-1 rounded text-sm font-mono text-brand-blue">$1</code>')
+                
+                // Line breaks
+                .replace(/\n\n/g, '</p><p class="mb-2">')
+                .replace(/\n/g, '<br>');
+        }
+
+        function formatAIResponse(content) {
+            let formatted = parseMarkdown(content);
+            
+            // Wrap consecutive list items in ul tags
+            formatted = formatted.replace(/(<li[^>]*>.*?<\/li>)(\s*<li[^>]*>.*?<\/li>)*/gs, function(match) {
+                return '<ul class="space-y-1 mb-3">' + match + '</ul>';
+            });
+            
+            // Wrap content in paragraphs if not already wrapped
+            if (!formatted.includes('<p>') && !formatted.includes('<h') && !formatted.includes('<ul>')) {
+                formatted = '<p class="mb-2">' + formatted + '</p>';
+            } else if (!formatted.startsWith('<')) {
+                formatted = '<p class="mb-2">' + formatted;
+            }
+            
+            return formatted;
+        }
+
+        // Initialize chat
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadUserInfo();
+            await loadChatHistory();
+
+            requestAnimationFrame(() => {
+                loadMusicNavPosition();
+                initMusicNavDrag();
+            });
+
+            document.getElementById('messageInput').focus();
+
+            const audio = document.getElementById('backgroundMusic');
+            audio.volume = 0.5;
+        });
+
+        // Load user information
+        async function loadUserInfo() {
+            try {
+                const token = localStorage.getItem('fitme_token');
+                const userRaw = localStorage.getItem('fitme_user');
+                const user = (() => { try { return JSON.parse(userRaw || 'null'); } catch { return null; } })();
+                
+                if (!token || !user) {
+                    window.location.replace('../index.html');
+                    return;
+                }
+
+                const subRes = await fetch(`${USER_URL}/subscription/status`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const subData = await subRes.json().catch(() => ({}));
+                if (!subData.subscribed) {
+                    sessionStorage.setItem('fitme_sub_hint_reason', subData.reason || '');
+                    if (subData.expiry_date) {
+                        sessionStorage.setItem('fitme_sub_hint_exp', String(subData.expiry_date));
+                    }
+                    const q = new URLSearchParams();
+                    if (subData.reason) q.set('reason', subData.reason);
+                    if (subData.expiry_date) q.set('exp', String(subData.expiry_date));
+                    window.location.replace(
+                        'subscription.html' + (q.toString() ? '?' + q : '')
+                    );
+                    return;
+                }
+
+                currentUser = user;
+                document.getElementById('username').textContent = currentUser.username || currentUser.name || 'Chef';
+                document.getElementById('userInitial').textContent = (currentUser.username || currentUser.name || 'C').charAt(0).toUpperCase();
+                document.getElementById('userStatus').textContent = 'Ready to cook! 🍽️';
+            } catch (error) {
+                console.error('Error loading user info:', error);
+                localStorage.removeItem('fitme_token');
+                localStorage.removeItem('fitme_user');
+                window.location.replace('../index.html');
+            }
+        }
+
+        // Load chat history
+        async function loadChatHistory() {
+            try {
+                const token = localStorage.getItem('fitme_token');
+                const response = await fetch(`${CHAT_URL}/history`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const chatContainer = document.getElementById('chatContainer');
+                    
+                    // Clear existing messages except welcome
+                    const welcomeMessage = chatContainer.firstElementChild;
+                    chatContainer.innerHTML = '';
+                    chatContainer.appendChild(welcomeMessage);
+                    
+                    // Add chat history
+                    data.messages.forEach(message => {
+                        if (message.role !== 'system') {
+                            addMessageToChat(message.content, message.role === 'user', message.sender);
+                        }
+                    });
+                    
+                    scrollToBottom();
+                }
+            } catch (error) {
+                console.error('Error loading chat history:', error);
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('chatForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+            
+            if (!message || isLoading) return;
+            
+            // Add user message to chat
+            addMessageToChat(message, true, currentUser?.username);
+            messageInput.value = '';
+            
+            // Show typing indicator
+            showTypingIndicator();
+            
+            try {
+                await sendMessage(message);
+            } catch (error) {
+                hideTypingIndicator();
+                const msg =
+                    error && error.message
+                        ? error.message
+                        : 'Sorry, something went wrong. Please try again.';
+                addErrorBubble(msg);
+            }
+        });
+
+        // Send message to API
+        async function sendMessage(message) {
+            isLoading = true;
+            document.getElementById('sendButton').disabled = true;
+            
+            try {
+                const token = localStorage.getItem('fitme_token');
+                const controller = new AbortController();
+                const t = setTimeout(() => controller.abort(), 130000);
+                let response;
+                try {
+                    response = await fetch(CHAT_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ message }),
+                        signal: controller.signal
+                    });
+                } finally {
+                    clearTimeout(t);
+                }
+
+                const data = await response.json().catch(() => ({}));
+
+                if (response.ok) {
+                    hideTypingIndicator();
+                    const reply = (data.reply || '').trim() || 'No reply from AI.';
+                    addMessageToChat(reply, false, 'Fitme.io Chef 👨‍🍳');
+                    return;
+                }
+
+                const errMsg =
+                    data.error ||
+                    data.message ||
+                    (response.status === 503 || response.status === 504
+                        ? 'AI service is unreachable or timed out. Check your connection and try again.'
+                        : `Request failed (${response.status})`);
+                throw new Error(errMsg);
+            } catch (e) {
+                if (e.name === 'AbortError') {
+                    throw new Error(
+                        'Request timed out. The server may be slow or the AI service unreachable — try again.'
+                    );
+                }
+                throw e;
+            } finally {
+                isLoading = false;
+                document.getElementById('sendButton').disabled = false;
+                hideTypingIndicator();
+            }
+        }
+
+        function addErrorBubble(text) {
+            const chatContainer = document.getElementById('chatContainer');
+            const row = document.createElement('div');
+            row.className = 'flex justify-start';
+            const bubble = document.createElement('div');
+            bubble.className =
+                'max-w-[min(100%,28rem)] rounded-2xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-100';
+            bubble.setAttribute('role', 'alert');
+            bubble.textContent = text;
+            row.appendChild(bubble);
+            chatContainer.appendChild(row);
+            scrollToBottom();
+        }
+
+        function addMessageToChat(message, isUser, sender) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            
+            if (isUser) {
+                messageDiv.className = 'flex justify-end';
+                messageDiv.innerHTML = `
+                    <div class="chat-bubble-user p-4 rounded-lg max-w-md text-right">
+                        <p class="font-medium mb-1">${sender} 👤</p>
+                        <p class="text-white">${message}</p>
+                    </div>
+                `;
+            } else {
+                messageDiv.className = 'chat-bubble-ai p-4 rounded-lg max-w-2xl';
+                const formattedMessage = formatAIResponse(message);
+                messageDiv.innerHTML = `
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 bg-gradient-to-r from-brand-purple to-brand-blue rounded-full flex items-center justify-center flex-shrink-0">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+                            </svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-medium text-brand-purple mb-2">Fitme.io Chef 👨‍🍳</p>
+                            <div class="text-gray-300 prose prose-sm max-w-none">
+                                ${formattedMessage}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            chatContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        // Show/hide typing indicator
+        function showTypingIndicator() {
+            document.getElementById('typingIndicator').classList.remove('hidden');
+            scrollToBottom();
+        }
+
+        function hideTypingIndicator() {
+            document.getElementById('typingIndicator').classList.add('hidden');
+        }
+
+        // Scroll to bottom
+        function scrollToBottom() {
+            const chatContainer = document.getElementById('chatContainer');
+            setTimeout(() => {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }, 100);
+        }
+
+        // Quick commands
+        function showQuickCommands() {
+            const quickCommands = document.getElementById('quickCommands');
+            quickCommands.classList.toggle('hidden');
+        }
+
+        function sendQuickMessage(message) {
+            document.getElementById('messageInput').value = message;
+            document.getElementById('quickCommands').classList.add('hidden');
+            document.getElementById('chatForm').dispatchEvent(new Event('submit'));
+        }
+
+        // Go back to dashboard
+        function goBack() {
+            window.location.href = 'dashboard.html';
+        }
+
+        // Handle Enter key
+        document.getElementById('messageInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.getElementById('chatForm').dispatchEvent(new Event('submit'));
+            }
+        });
+
+        function toggleMusic() {
+            const audio = document.getElementById('backgroundMusic');
+            const playIcon = document.getElementById('playIcon');
+            const pauseIcon = document.getElementById('pauseIcon');
+            
+            const nav = document.getElementById('musicNav');
+            if (musicPlaying) {
+                audio.pause();
+                playIcon.classList.remove('hidden');
+                pauseIcon.classList.add('hidden');
+                stopMusicNotes();
+                musicPlaying = false;
+                nav.classList.remove('music-playing');
+            } else {
+                audio.play().then(() => {
+                    playIcon.classList.add('hidden');
+                    pauseIcon.classList.remove('hidden');
+                    startMusicNotes();
+                    musicPlaying = true;
+                    nav.classList.add('music-playing');
+                }).catch(error => {
+                    console.log('Audio play failed:', error);
+                });
+            }
+        }
+        
+        function setVolume(value) {
+            const audio = document.getElementById('backgroundMusic');
+            audio.volume = value / 100;
+        }
+        
+        function startMusicNotes() {
+            if (musicNoteInterval) return;
+            
+            musicNoteInterval = setInterval(() => {
+                createFloatingNote();
+            }, 2000);
+        }
+        
+        function stopMusicNotes() {
+            if (musicNoteInterval) {
+                clearInterval(musicNoteInterval);
+                musicNoteInterval = null;
+            }
+        }
+        
+        function createFloatingNote() {
+            const note = document.createElement('div');
+            note.className = 'music-note';
+            note.textContent = musicNotes[Math.floor(Math.random() * musicNotes.length)];
+            
+            // Random position around the music nav
+            const musicNav = document.getElementById('musicNav');
+            const rect = musicNav.getBoundingClientRect();
+            note.style.left = (rect.left + Math.random() * 60 - 30) + 'px';
+            note.style.top = (rect.top + Math.random() * 60) + 'px';
+            
+            document.body.appendChild(note);
+            
+            // Trigger animation
+            setTimeout(() => {
+                note.classList.add('animate');
+            }, 10);
+            
+            // Remove after animation
+            setTimeout(() => {
+                if (note.parentNode) {
+                    note.parentNode.removeChild(note);
+                }
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

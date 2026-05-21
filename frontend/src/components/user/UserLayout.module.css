@@ -1,0 +1,9 @@
+.layout {
+  min-height: 100svh;
+  color: var(--fitme-ink);
+}
+
+.main {
+  min-height: calc(100svh - 68px);
+  padding-bottom: 116px;
+}

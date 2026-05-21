@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>fitme.io — Shared Storage</title>
+  <meta name="description" content="View shared pantry items from fitme.io users." />
+  <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' rx='12' fill='%238b5cf6'/%3E%3Cpath d='M18 36c4 4 8 6 14 6 6 0 10-2 14-6' stroke='white' stroke-width='5' stroke-linecap='round' fill='none'/%3E%3Ccircle cx='24' cy='24' r='3' fill='white'/%3E%3Ccircle cx='40' cy='24' r='3' fill='white'/%3E%3C/svg%3E" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/app.css" />
+    
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f5f3ff', 100: '#ede9fe', 200: '#ddd6fe', 300: '#c4b5fd',
+              400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9',
+              800: '#5b21b6', 900: '#4c1d95'
+            },
+            deep: { 900: '#071B13', 950: '#05150F' },
+            accent: { 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb' }
+          },
+          boxShadow: { glow: '0 0 80px 0 rgba(139,92,246,0.20)' }
+        }
+      }
+    }
+  </script>
+  <style>
+    html, body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    .animate-fade-in { animation: fadeIn 0.6s ease-out; }
+    .animate-slide-up { animation: slideUp 0.8s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    /* Custom scrollbar for card slider */
+    .card-slider::-webkit-scrollbar {
+      height: 4px;
+    }
+    .card-slider::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 2px;
+    }
+    .card-slider::-webkit-scrollbar-thumb {
+      background: linear-gradient(to right, #8b5cf6, #3b82f6);
+      border-radius: 2px;
+    }
+    .card-slider::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(to right, #7c3aed, #2563eb);
+    }
+
+    /* Smooth scroll behavior */
+    .card-slider {
+      scroll-behavior: smooth;
+    }
+
+    /* Card animation */
+    .storage-card {
+      transition: all 0.2s ease;
+    }
+    .storage-card:hover {
+      transform: translateY(-2px);
+    }
+
+    /* Staggered animation for cards */
+    .storage-card {
+      animation: slideInCard 0.6s ease-out forwards;
+      opacity: 0;
+    }
+    @keyframes slideInCard {
+      from { opacity: 0; transform: translateY(20px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+  </style>
+</head>
+<body class="fitme-app min-h-dvh bg-deep-950 text-neutral-100">
+  <!-- Background -->
+  <div class="pointer-events-none fixed inset-0 -z-10">
+    <div class="absolute inset-0 bg-[radial-gradient(70%_60%_at_50%_0%,rgba(139,92,246,0.10),rgba(59,130,246,0.10),rgba(0,0,0,0))]"></div>
+    <div class="absolute -top-24 -left-20 h-80 w-80 rounded-full bg-violet-700/20 blur-3xl"></div>
+    <div class="absolute -bottom-24 -right-32 h-96 w-96 rounded-full bg-blue-800/20 blur-3xl"></div>
+  </div>
+
+  <!-- Loading Screen -->
+  <div id="loading-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-deep-950">
+    <div class="text-center animate-fade-in">
+      <div class="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-brand-500/20 border-t-brand-500 mx-auto"></div>
+      <div class="text-neutral-300">Loading shared storage...</div>
+    </div>
+  </div>
+
+  <!-- Error Screen -->
+  <div id="error-screen" class="fixed inset-0 z-50 hidden flex-col items-center justify-center bg-deep-950 p-4">
+    <div class="text-center max-w-md animate-slide-up">
+      <div class="mb-6 mx-auto h-16 w-16 rounded-full bg-red-500/10 flex items-center justify-center">
+        <svg class="h-8 w-8 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <circle cx="12" cy="12" r="10" stroke-width="2"/>
+          <line x1="15" y1="9" x2="9" y2="15" stroke-width="2"/>
+          <line x1="9" y1="9" x2="15" y2="15" stroke-width="2"/>
+        </svg>
+      </div>
+      <h1 class="text-2xl font-bold text-red-300 mb-2">Oops!</h1>
+      <p id="error-message" class="text-neutral-300 mb-6">Something went wrong loading this shared storage.</p>
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <button id="retry-btn" class="rounded-2xl bg-gradient-to-r from-brand-500 to-accent-500 px-6 py-3 text-sm font-semibold text-neutral-950 shadow-glow transition hover:from-brand-400 hover:to-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-400">
+          Try Again
+        </button>
+        <a href="../index.html" class="rounded-2xl border border-white/10 bg-white/5 px-6 py-3 text-sm font-medium text-neutral-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400 text-center">
+          Go to fitme.io
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="app-header-safe sticky top-0 z-40 border-b border-white/5 bg-deep-950/70 backdrop-blur-xl supports-[backdrop-filter]:bg-deep-950/60">
+    <nav class="mx-auto flex max-w-4xl items-center justify-between px-4 py-4">
+      <a href="../index.html" class="flex items-center gap-3">
+        <div class="grid h-9 w-9 place-items-center rounded-xl bg-brand-500/20 ring-1 ring-inset ring-white/15">
+          <span class="text-lg font-black text-brand-300">F</span>
+        </div>
+        <span class="text-lg font-semibold tracking-tight text-brand-300">fitme.io</span>
+      </a>
+      <div class="flex items-center gap-3">
+        <div class="hidden sm:flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-neutral-300">
+          <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" stroke-width="2"/>
+            <path d="M16 6l-4-4-4 4" stroke-width="2"/>
+            <path d="M12 2v13" stroke-width="2"/>
+          </svg>
+          Shared Storage
+        </div>
+        <a href="../index.html" class="rounded-2xl bg-gradient-to-r from-brand-500 to-accent-500 px-4 py-2 text-sm font-semibold text-neutral-950 shadow-glow transition hover:from-brand-400 hover:to-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-400">
+          Get fitme.io
+        </a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Main Content -->
+  <main id="main-content" class="hidden mx-auto w-full max-w-4xl px-4 py-10 md:py-16">
+    <!-- Hero Section -->
+    <section class="text-center mb-12 animate-fade-in">
+      <div class="mb-4 flex items-center justify-center gap-3">
+        <div class="h-12 w-12 rounded-full bg-gradient-to-br from-brand-500/30 to-accent-500/30 flex items-center justify-center ring-1 ring-white/10">
+          <svg class="h-6 w-6 text-brand-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="3" y="7" width="18" height="10" rx="2" ry="2" stroke-width="2"/>
+            <path stroke-width="2" d="M3 10h18"/>
+          </svg>
+        </div>
+        <div class="text-left">
+          <h1 class="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-brand-300 to-accent-300 bg-clip-text text-transparent">
+            <span id="username-display">User</span>'s Storage
+          </h1>
+          <p class="text-sm text-neutral-400">Shared pantry items</p>
+        </div>
+      </div>
+      <p class="text-neutral-300 max-w-2xl mx-auto">
+        This user has shared their pantry items with you. These are the ingredients they currently have available for meal planning.
+      </p>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="mb-8 animate-slide-up">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-center">
+          <div class="text-2xl font-bold bg-gradient-to-r from-brand-300 to-accent-300 bg-clip-text text-transparent" id="total-items">0</div>
+          <div class="text-sm text-neutral-400">Total Items</div>
+        </div>
+        <div class="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-center">
+          <div class="text-2xl font-bold text-brand-300">✨</div>
+          <div class="text-sm text-neutral-400">Fresh & Ready</div>
+        </div>
+        <div class="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-center">
+          <div class="text-2xl font-bold text-accent-300" id="filtered-count">0</div>
+          <div class="text-sm text-neutral-400">Showing</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Storage Items -->
+    <section class="animate-slide-up">
+      <div class="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <h2 class="text-xl font-semibold">Storage Items</h2>
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <div class="relative flex-1 sm:flex-initial">
+            <input id="search-input" type="text" placeholder="Search items..." 
+                   class="w-full sm:w-48 rounded-xl border border-white/10 bg-white/5 px-3 py-2 pr-10 text-sm text-neutral-100 placeholder:text-neutral-400 outline-none focus:border-brand-500/40 focus:ring-2 focus:ring-accent-400" />
+            <svg class="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <circle cx="11" cy="11" r="8" stroke-width="2"/>
+              <path d="M21 21l-4.35-4.35" stroke-width="2"/>
+            </svg>
+          </div>
+          <button id="clear-search" class="hidden rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-neutral-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">
+            Clear
+          </button>
+        </div>
+      </div>
+
+      <!-- Card Slider Container -->
+      <div class="relative">
+        <!-- Scroll buttons -->
+        <button id="scroll-left" class="absolute left-0 top-1/2 z-10 -translate-y-1/2 -translate-x-2 hidden rounded-full border border-white/10 bg-deep-950/80 backdrop-blur p-2 text-neutral-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M15 18l-6-6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button id="scroll-right" class="absolute right-0 top-1/2 z-10 -translate-y-1/2 translate-x-2 hidden rounded-full border border-white/10 bg-deep-950/80 backdrop-blur p-2 text-neutral-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M9 18l6-6-6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <!-- Card Slider -->
+        <div id="card-slider" class="card-slider flex gap-4 overflow-x-auto pb-4">
+          <!-- Cards will be populated here -->
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div id="empty-state" class="hidden text-center py-12">
+        <div class="mb-4 mx-auto h-16 w-16 rounded-full bg-white/5 flex items-center justify-center">
+          <svg class="h-8 w-8 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="3" y="7" width="18" height="10" rx="2" ry="2" stroke-width="2"/>
+            <path stroke-width="2" d="M3 10h18"/>
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-neutral-300 mb-2">No items found</h3>
+        <p class="text-neutral-400" id="empty-message">This storage appears to be empty or your search didn't match any items.</p>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="mt-16 text-center animate-slide-up">
+      <div class="rounded-3xl border border-white/10 bg-white/[0.04] p-8">
+        <h3 class="text-xl font-semibold mb-3">Want to create your own storage list?</h3>
+        <p class="text-neutral-300 mb-6 max-w-md mx-auto">
+          Join fitme.io to manage your pantry, get personalized meal suggestions, and share your storage with friends.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+          <a href="../index.html" class="rounded-2xl bg-gradient-to-r from-brand-500 to-accent-500 px-6 py-3 text-sm font-semibold text-neutral-950 shadow-glow transition hover:from-brand-400 hover:to-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-400">
+            Get Started Free
+          </a>
+          <a href="../index.html" class="rounded-2xl border border-white/10 bg-white/5 px-6 py-3 text-sm font-medium text-neutral-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">
+            Learn More
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-white/10 bg-deep-950/60 backdrop-blur mt-16">
+    <div class="mx-auto max-w-4xl px-4 py-8">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="grid h-8 w-8 place-items-center rounded-lg bg-brand-500/20 ring-1 ring-inset ring-white/15">
+            <span class="text-sm font-black text-brand-300">F</span>
+          </div>
+          <span class="text-sm font-semibold text-brand-300">fitme.io</span>
+        </div>
+        <div class="text-xs text-neutral-400">
+          Shared with ❤️ via fitme.io
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Get share ID from URL - support both query param and path
+    function getShareIdFromUrl() {
+      // Try query parameter first: ?id=shareId
+      const urlParams = new URLSearchParams(window.location.search);
+      let shareId = urlParams.get('id');
+      
+      if (!shareId) {
+        // Try path parameter: /shared/shareId
+        const pathParts = window.location.pathname.split('/');
+        shareId = pathParts[pathParts.length - 1];
+        
+        // If it's just the filename, try the second to last part
+        if (shareId.includes('.html')) {
+          shareId = pathParts[pathParts.length - 2];
+        }
+      }
+      
+      return shareId;
+    }
+
+    const shareId = getShareIdFromUrl();
+    console.log('Extracted shareId:', shareId);
+
+    if (!shareId || shareId === 'shared-storage.html') {
+      showError('Invalid share link. Please check the URL and try again.');
+    }
+    
+    // DOM elements
+    const loadingScreen = document.getElementById('loading-screen');
+    const errorScreen = document.getElementById('error-screen');
+    const mainContent = document.getElementById('main-content');
+    const errorMessage = document.getElementById('error-message');
+    const retryBtn = document.getElementById('retry-btn');
+    const usernameDisplay = document.getElementById('username-display');
+    const totalItems = document.getElementById('total-items');
+    const filteredCount = document.getElementById('filtered-count');
+    const searchInput = document.getElementById('search-input');
+    const clearSearchBtn = document.getElementById('clear-search');
+    const cardSlider = document.getElementById('card-slider');
+    const emptyState = document.getElementById('empty-state');
+    const emptyMessage = document.getElementById('empty-message');
+    const scrollLeft = document.getElementById('scroll-left');
+    const scrollRight = document.getElementById('scroll-right');
+
+    // State
+    let storageData = [];
+    let filteredData = [];
+
+    // Card slider functionality
+    function updateScrollButtons() {
+      const canScrollLeft = cardSlider.scrollLeft > 0;
+      const canScrollRight = cardSlider.scrollLeft < cardSlider.scrollWidth - cardSlider.clientWidth;
+      
+      scrollLeft.classList.toggle('hidden', !canScrollLeft);
+      scrollRight.classList.toggle('hidden', !canScrollRight);
+    }
+
+    scrollLeft.addEventListener('click', () => {
+      cardSlider.scrollBy({ left: -300, behavior: 'smooth' });
+    });
+
+    scrollRight.addEventListener('click', () => {
+      cardSlider.scrollBy({ left: 300, behavior: 'smooth' });
+    });
+
+    cardSlider.addEventListener('scroll', updateScrollButtons);
+
+    // API call
+    async function loadSharedStorage() {
+      try {
+        loadingScreen.classList.remove('hidden');
+        errorScreen.classList.add('hidden');
+        mainContent.classList.add('hidden');
+
+        console.log('Loading shared storage for shareId:', shareId);
+        
+        // Use the correct API endpoint
+        const apiUrl = `http://localhost:7005/api/user/storage/shared/${encodeURIComponent(shareId)}`;
+        console.log('API URL:', apiUrl);
+        
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            // No Authorization header needed for public endpoint
+          }
+        });
+        
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        
+        // Check if response is actually JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          console.error('Response is not JSON, content-type:', contentType);
+          throw new Error('Server returned invalid response format');
+        }
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+          if (response.status === 404) {
+            throw new Error('Share link not found. Please check the URL and try again.');
+          } else if (response.status === 403) {
+            throw new Error('This share link has been disabled by the owner.');
+          } else {
+            throw new Error(errorData.message || 'Failed to load shared storage. Please try again later.');
+          }
+        }
+
+        const data = await response.json();
+        console.log('Received data:', data);
+
+        storageData = data.storage || [];
+        filteredData = [...storageData];
+        
+        // Update UI
+        usernameDisplay.textContent = data.username || 'User';
+        updateStats();
+        renderItems();
+        
+        loadingScreen.classList.add('hidden');
+        mainContent.classList.remove('hidden');
+        
+        // Update scroll buttons after content is loaded
+        setTimeout(updateScrollButtons, 100);
+        
+      } catch (error) {
+        console.error('Error loading shared storage:', error);
+        showError(error.message);
+      }
+    }
+
+    function showError(message) {
+      // Provide more helpful error messages
+      let displayMessage = message;
+      
+      if (message.includes('SyntaxError') || message.includes('Unexpected token')) {
+        displayMessage = 'The server returned an invalid response. The share link may not exist or the server may be down.';
+      } else if (message.includes('NetworkError') || message.includes('Failed to fetch')) {
+        displayMessage = 'Unable to connect to the server. Please check your internet connection and try again.';
+      } else if (message.includes('invalid response format')) {
+        displayMessage = 'The server is not responding correctly. Please try again later or contact support.';
+      }
+      
+      errorMessage.textContent = displayMessage;
+      loadingScreen.classList.add('hidden');
+      mainContent.classList.add('hidden');
+      errorScreen.classList.remove('hidden');
+    }
+
+    function updateStats() {
+      totalItems.textContent = storageData.length;
+      filteredCount.textContent = filteredData.length;
+    }
+
+    function renderItems() {
+      if (filteredData.length === 0) {
+        cardSlider.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        scrollLeft.classList.add('hidden');
+        scrollRight.classList.add('hidden');
+        
+        // Update empty message based on search state
+        if (searchInput.value.trim()) {
+          emptyMessage.textContent = `No items found matching "${searchInput.value.trim()}". Try a different search term.`;
+        } else {
+          emptyMessage.textContent = 'This storage appears to be empty.';
+        }
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+
+      cardSlider.innerHTML = filteredData.map((item, index) => `
+        <div class="storage-card flex-shrink-0 w-56 rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur" style="animation-delay: ${index * 100}ms">
+          <div class="flex items-start justify-between mb-4">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-2">
+                <div class="h-2 w-2 rounded-full bg-gradient-to-r from-brand-400 to-accent-400"></div>
+                <span class="text-xs font-medium text-brand-200 uppercase tracking-wider">Ingredient</span>
+              </div>
+              <h3 class="text-sm font-semibold text-neutral-100 truncate">${escapeHtml(item.item_name || '')}</h3>
+              <p class="text-xs text-neutral-400 mt-1">Available in storage</p>
+            </div>
+            <div class="flex-shrink-0 ml-3">
+              <div class="h-10 w-10 rounded-full bg-gradient-to-br from-brand-500/20 to-accent-500/20 flex items-center justify-center ring-1 ring-white/10">
+                <span class="text-sm font-semibold text-brand-300">${(item.item_name || '').charAt(0).toUpperCase()}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="flex items-center justify-between">
+            <div class="flex-1 h-1 bg-white/10 rounded-full overflow-hidden mr-3">
+              <div class="h-full bg-gradient-to-r from-brand-400 to-accent-400 rounded-full" style="width: 100%"></div>
+            </div>
+            <span class="rounded-full border border-brand-500/30 bg-brand-500/10 px-2 py-1 text-xs text-brand-300">
+              ✓ In Stock
+            </span>
+          </div>
+        </div>
+      `).join('');
+
+      // Update scroll buttons after content is loaded
+      setTimeout(updateScrollButtons, 100);
+    }
+
+    function filterItems(query) {
+      const searchTerm = query.toLowerCase().trim();
+      if (!searchTerm) {
+        filteredData = [...storageData];
+        clearSearchBtn.classList.add('hidden');
+      } else {
+        filteredData = storageData.filter(item => 
+          (item.item_name || '').toLowerCase().includes(searchTerm)
+        );
+        clearSearchBtn.classList.remove('hidden');
+      }
+      updateStats();
+      renderItems();
+    }
+
+    function clearSearch() {
+      searchInput.value = '';
+      filterItems('');
+    }
+
+    function escapeHtml(str) {
+      return (str || '').toString().replace(/[&<>"']/g, (m) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[m]));
+    }
+
+    // Event listeners
+    retryBtn.addEventListener('click', loadSharedStorage);
+    searchInput.addEventListener('input', (e) => filterItems(e.target.value));
+    clearSearchBtn.addEventListener('click', clearSearch);
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && searchInput.value) {
+        clearSearch();
+        searchInput.blur();
+      }
+      if (e.key === '/' && document.activeElement !== searchInput) {
+        e.preventDefault();
+        searchInput.focus();
+      }
+    });
+
+    // Initialize
+    loadSharedStorage();
+  </script>
+</body>
+</html>

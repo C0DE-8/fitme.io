@@ -1,0 +1,583 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>fitme.io — Profile</title>
+  <meta name="description" content="Manage your fitme.io profile and subscriptions." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' rx='12' fill='%238b5cf6'/%3E%3Cpath d='M18 36c4 4 8 6 14 6 6 0 10-2 14-6' stroke='white' stroke-width='5' stroke-linecap='round' fill='none'/%3E%3Ccircle cx='24' cy='24' r='3' fill='white'/%3E%3Ccircle cx='40' cy='24' r='3' fill='white'/%3E%3C/svg%3E" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/app.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f5f3ff', 100: '#ede9fe', 200: '#ddd6fe', 300: '#c4b5fd',
+              400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9',
+              800: '#5b21b6', 900: '#4c1d95'
+            },
+            deep: { 900: '#071B13', 950: '#05150F' },
+            accent: { 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb' }
+          },
+          boxShadow: { glow: '0 0 80px 0 rgba(139,92,246,0.20)' }
+        }
+      }
+    }
+  </script>
+  <style>
+    html, body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  </style>
+</head>
+<body class="fitme-app min-h-dvh bg-deep-950 text-neutral-100">
+  <!-- Background -->
+  <div class="pointer-events-none fixed inset-0 -z-10">
+    <div class="absolute inset-0 bg-[radial-gradient(70%_60%_at_50%_0%,rgba(139,92,246,0.10),rgba(59,130,246,0.10),rgba(0,0,0,0))]"></div>
+    <div class="absolute -top-24 -left-20 h-80 w-80 rounded-full bg-violet-700/20 blur-3xl"></div>
+    <div class="absolute -bottom-24 -right-32 h-96 w-96 rounded-full bg-blue-800/20 blur-3xl"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="app-header-safe sticky top-0 z-40 border-b border-white/5 bg-deep-950/70 backdrop-blur-xl supports-[backdrop-filter]:bg-deep-950/60">
+    <nav class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:py-4">
+      <div class="flex items-center gap-6">
+        <a href="index.html" class="flex items-center gap-3">
+          <div class="grid h-9 w-9 place-items-center rounded-xl bg-brand-500/20 ring-1 ring-inset ring-white/15">
+            <span class="text-lg font-black text-brand-300">F</span>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-lg font-semibold tracking-tight text-brand-300">fitme.io</span>
+            <span class="text-xs text-neutral-400">Profile</span>
+          </div>
+        </a>
+        
+        <!-- Navigation Links -->
+        <nav class="hidden md:flex items-center gap-1">
+          <a href="dashboard.html" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-200 hover:bg-white/10">
+            Dashboard
+          </a>
+          <a href="meal-planner.html" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-200 hover:bg-white/10">
+            Meal Planner
+          </a>
+          <a href="storage.html" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-200 hover:bg-white/10">
+            Storage
+          </a>
+          <a href="profile.html" class="rounded-lg bg-brand-500/10 border border-brand-500/30 px-3 py-2 text-sm text-brand-300 hover:bg-brand-500/20">
+            Profile
+          </a>
+        </nav>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <div class="hidden sm:flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-neutral-300">
+          <div class="h-2 w-2 rounded-full bg-brand-400"></div>
+          <span id="user-name">User</span>
+        </div>
+        <button id="logout" class="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-neutral-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">
+          Log out
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Main Content -->
+  <main class="mx-auto w-full max-w-7xl px-4 py-8 sm:py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))]">
+    <!-- Header Section -->
+    <section class="mb-10">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-3xl font-bold tracking-tight bg-gradient-to-r from-brand-300 to-accent-300 bg-clip-text text-transparent mb-2">
+            My Profile
+          </h1>
+          <p class="text-neutral-300">Manage your account settings and view your subscriptions</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Alert Messages -->
+    <div id="alert" class="mb-6 hidden rounded-2xl border px-4 py-3 text-sm" role="alert" aria-live="polite"></div>
+
+    <!-- Subscription status (expired / need plan) -->
+    <div id="sub-plan-banner" class="mb-6 hidden rounded-2xl border px-4 py-3 text-sm" role="status" aria-live="polite"></div>
+
+    <div class="grid gap-8 lg:grid-cols-3">
+      <!-- Profile Information -->
+      <div class="lg:col-span-2">
+        <div class="rounded-2xl border border-white/10 bg-white/[0.04] p-6">
+          <div class="mb-6 flex items-center justify-between">
+            <h2 class="text-xl font-semibold">Profile Information</h2>
+            <button id="edit-profile-btn" class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 font-medium text-neutral-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">
+              Edit Profile
+            </button>
+          </div>
+
+          <div id="profile-view" class="space-y-6">
+            <!-- Profile details will be loaded here -->
+          </div>
+
+          <!-- Edit Form (Hidden by default) -->
+          <form id="profile-form" class="hidden space-y-6">
+            <div class="grid gap-4 md:grid-cols-2">
+              <div class="space-y-2">
+                <label for="username" class="block text-sm font-medium text-neutral-300">Username</label>
+                <input
+                  type="text"
+                  id="username"
+                  name="username"
+                  class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-400 outline-none focus:border-brand-500/40 focus:ring-2 focus:ring-accent-400"
+                  placeholder="Enter your username"
+                />
+              </div>
+
+              <div class="space-y-2">
+                <label for="email" class="block text-sm font-medium text-neutral-300">Email</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-400 outline-none focus:border-brand-500/40 focus:ring-2 focus:ring-accent-400"
+                  placeholder="Enter your email"
+                />
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <label for="bio" class="block text-sm font-medium text-neutral-300">Bio</label>
+              <textarea
+                id="bio"
+                name="bio"
+                rows="3"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-400 outline-none focus:border-brand-500/40 focus:ring-2 focus:ring-accent-400 resize-none"
+                placeholder="Tell us about yourself..."
+              ></textarea>
+            </div>
+
+            <div class="flex gap-3">
+              <button type="submit" class="rounded-xl bg-gradient-to-r from-brand-500 to-accent-500 px-4 py-2 font-semibold text-neutral-950 shadow-glow transition hover:from-brand-400 hover:to-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-400">
+                Save Changes
+              </button>
+              <button type="button" id="cancel-edit-btn" class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 font-medium text-neutral-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Account Summary -->
+      <div class="space-y-6">
+        <!-- Account Status -->
+        <div class="rounded-2xl border border-white/10 bg-white/[0.04] p-6">
+          <h3 class="text-lg font-semibold mb-4">Account Status</h3>
+          <div id="account-status" class="space-y-3">
+            <!-- Account status will be loaded here -->
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="rounded-2xl border border-white/10 bg-white/[0.04] p-6">
+          <h3 class="text-lg font-semibold mb-4">Quick Actions</h3>
+          <div class="space-y-3">
+            <a href="dashboard.html" class="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-neutral-200 hover:bg-white/10 transition">
+              <svg class="h-5 w-5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z"></path>
+              </svg>
+              <span>Go to Dashboard</span>
+            </a>
+            <a href="meal-planner.html" class="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-neutral-200 hover:bg-white/10 transition">
+              <svg class="h-5 w-5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+              <span>Plan Meals</span>
+            </a>
+            <a href="storage.html" class="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-neutral-200 hover:bg-white/10 transition">
+              <svg class="h-5 w-5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+              </svg>
+              <span>Manage Storage</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subscriptions Section -->
+    <section class="mt-10">
+      <div class="rounded-2xl border border-white/10 bg-white/[0.04] p-6">
+        <div class="mb-6 flex items-center justify-between">
+          <h2 class="text-xl font-semibold">My Subscriptions</h2>
+          <div class="flex items-center gap-2">
+            <select id="status-filter" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-100 outline-none focus:border-brand-500/40 focus:ring-2 focus:ring-accent-400">
+              <option value="">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="active">Active</option>
+              <option value="cancelled">Cancelled</option>
+              <option value="expired">Expired</option>
+            </select>
+            <button id="refresh-subscriptions" class="rounded-lg border border-white/10 bg-white/5 p-2 text-neutral-200 hover:bg-white/10" title="Refresh">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div id="subscriptions-container">
+          <div class="flex items-center justify-center py-12">
+            <div class="text-center">
+              <div class="h-12 w-12 mx-auto mb-3 animate-spin rounded-full border-4 border-brand-500/20 border-t-brand-500"></div>
+              <p class="text-neutral-400">Loading subscriptions...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // API configuration
+    const API_BASE = "http://localhost:7005/api/user";
+
+    // Authentication check
+    const token = localStorage.getItem('fitme_token');
+    const userRaw = localStorage.getItem('fitme_user');
+    const user = (() => { try { return JSON.parse(userRaw || 'null'); } catch { return null; } })();
+
+    if (!token || !user) {
+      window.location.replace('index.html');
+    }
+
+    // DOM elements
+    const profileView = document.getElementById('profile-view');
+    const profileForm = document.getElementById('profile-form');
+    const editProfileBtn = document.getElementById('edit-profile-btn');
+    const cancelEditBtn = document.getElementById('cancel-edit-btn');
+    const accountStatus = document.getElementById('account-status');
+    const subscriptionsContainer = document.getElementById('subscriptions-container');
+    const statusFilter = document.getElementById('status-filter');
+    const refreshSubscriptionsBtn = document.getElementById('refresh-subscriptions');
+    const alertBox = document.getElementById('alert');
+    const subPlanBanner = document.getElementById('sub-plan-banner');
+
+    // State
+    let currentProfile = null;
+    let subscriptions = [];
+
+    // Display user name
+    document.getElementById('user-name').textContent = user.username || user.email || 'User';
+
+    // Logout functionality
+    document.getElementById('logout').addEventListener('click', () => {
+      localStorage.removeItem('fitme_token');
+      localStorage.removeItem('fitme_user');
+      window.location.replace('index.html');
+    });
+
+    // Alert system
+    function showAlert(msg, type = 'info') {
+      alertBox.textContent = msg;
+      alertBox.classList.remove('hidden');
+      alertBox.className = 'mb-6 rounded-2xl border px-4 py-3 text-sm';
+      if (type === 'error') {
+        alertBox.classList.add('border-red-500/40','text-red-200','bg-red-500/10');
+      } else if (type === 'success') {
+        alertBox.classList.add('border-brand-500/40','text-brand-200','bg-brand-500/10');
+      } else {
+        alertBox.classList.add('border-white/10','text-neutral-200','bg-white/5');
+      }
+    }
+
+    function hideAlert() {
+      alertBox.classList.add('hidden');
+      alertBox.textContent = '';
+    }
+
+    // API helper
+    async function api(path, options = {}) {
+      const headers = { 'Authorization': `Bearer ${token}` };
+      
+      if (options.body && !(options.body instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
+        options.body = JSON.stringify(options.body);
+      }
+
+      const res = await fetch(API_BASE + path, {
+        ...options,
+        headers: { ...headers, ...(options.headers || {}) }
+      });
+
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || json?.message || 'Request failed');
+      return json;
+    }
+
+    // Load profile
+    async function loadProfile() {
+      try {
+        const response = await api('/profile');
+        currentProfile = response.profile;
+        renderProfile();
+        renderAccountStatus();
+      } catch (err) {
+        console.error('Failed to load profile:', err);
+        showAlert('Failed to load profile: ' + err.message, 'error');
+      }
+    }
+
+    // Load subscriptions
+    async function loadSubscriptions() {
+      try {
+        const status = statusFilter.value;
+        const queryParam = status ? `?status=${status}` : '';
+        const response = await api(`/subscriptions/my${queryParam}`);
+        subscriptions = response.subscriptions || [];
+        renderSubscriptions();
+      } catch (err) {
+        console.error('Failed to load subscriptions:', err);
+        showAlert('Failed to load subscriptions: ' + err.message, 'error');
+      }
+    }
+
+    async function loadSubscriptionGateBanner() {
+      if (!subPlanBanner) return;
+      try {
+        const s = await api('/subscription/status');
+        if (s.subscribed) {
+          subPlanBanner.classList.add('hidden');
+          subPlanBanner.innerHTML = '';
+          return;
+        }
+        const expD = s.expiry_date
+          ? new Date(s.expiry_date).toLocaleDateString(undefined, { dateStyle: 'medium' })
+          : '';
+        if (s.reason === 'expired') {
+          subPlanBanner.className =
+            'mb-6 rounded-2xl border border-orange-400/35 bg-orange-500/10 px-4 py-3 text-sm text-orange-100';
+          subPlanBanner.innerHTML =
+            `<strong>Plan expired</strong> — Your access ended${expD ? ` on ${expD}` : ''}. <a href="subscription.html?reason=expired" class="font-semibold text-orange-50 underline decoration-orange-200/80">Subscribe again</a> to continue.`;
+          subPlanBanner.classList.remove('hidden');
+        } else if (s.reason === 'pending') {
+          subPlanBanner.className =
+            'mb-6 rounded-2xl border border-amber-400/35 bg-amber-400/10 px-4 py-3 text-sm text-amber-100';
+          subPlanBanner.innerHTML =
+            `<strong>Subscription pending</strong> — Awaiting payment verification. <a href="subscription.html" class="font-semibold text-amber-50 underline">View status</a>.`;
+          subPlanBanner.classList.remove('hidden');
+        } else {
+          subPlanBanner.className =
+            'mb-6 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-neutral-200';
+          subPlanBanner.innerHTML =
+            `<strong>No active plan</strong> — <a href="subscription.html" class="font-semibold text-brand-300 underline">Choose a subscription</a> to use all features.`;
+          subPlanBanner.classList.remove('hidden');
+        }
+      } catch {
+        subPlanBanner.classList.add('hidden');
+      }
+    }
+
+    // Render profile
+    function renderProfile() {
+      if (!currentProfile) return;
+
+      profileView.innerHTML = `
+        <div class="flex items-start gap-6">
+          <div class="h-20 w-20 rounded-full bg-gradient-to-br from-brand-500/20 to-accent-500/20 flex items-center justify-center ring-1 ring-white/10">
+            <span class="text-2xl font-semibold text-brand-300">${currentProfile.username.charAt(0).toUpperCase()}</span>
+          </div>
+          <div class="flex-1">
+            <h3 class="text-xl font-semibold text-neutral-100 mb-1">${escapeHtml(currentProfile.username)}</h3>
+            <p class="text-neutral-400 mb-3">${escapeHtml(currentProfile.email)}</p>
+            ${currentProfile.bio ? `<p class="text-sm text-neutral-300 mb-3">${escapeHtml(currentProfile.bio)}</p>` : ''}
+            <div class="flex items-center gap-4 text-xs text-neutral-500">
+              <span>Joined ${currentProfile.created_at_from_now || new Date(currentProfile.created_at).toLocaleDateString()}</span>
+              <span>•</span>
+              <span>Updated ${currentProfile.updated_at_from_now || new Date(currentProfile.updated_at).toLocaleDateString()}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Render account status
+    function renderAccountStatus() {
+      if (!currentProfile) return;
+
+      const isVerified = currentProfile.verified;
+      const isAdmin = currentProfile.role === 'admin';
+
+      accountStatus.innerHTML = `
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-neutral-400">Email Status</span>
+          <span class="flex items-center gap-2 text-sm ${isVerified ? 'text-emerald-300' : 'text-amber-300'}">
+            <div class="h-2 w-2 rounded-full ${isVerified ? 'bg-emerald-400' : 'bg-amber-400'}"></div>
+            ${isVerified ? 'Verified' : 'Unverified'}
+          </span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-neutral-400">Account Type</span>
+          <span class="text-sm ${isAdmin ? 'text-brand-300' : 'text-neutral-300'}">${isAdmin ? 'Administrator' : 'Regular User'}</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-neutral-400">Member Since</span>
+          <span class="text-sm text-neutral-300">${new Date(currentProfile.created_at).toLocaleDateString()}</span>
+        </div>
+      `;
+    }
+
+    // Render subscriptions
+    function renderSubscriptions() {
+      if (subscriptions.length === 0) {
+        subscriptionsContainer.innerHTML = `
+          <div class="text-center py-12">
+            <div class="h-16 w-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
+              <svg class="h-8 w-8 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-neutral-300 mb-2">No subscriptions found</h3>
+            <p class="text-neutral-400">You don't have any subscriptions yet</p>
+          </div>
+        `;
+        return;
+      }
+
+      subscriptionsContainer.innerHTML = `
+        <div class="space-y-4">
+          ${subscriptions.map(subscription => `
+            <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+              <div class="flex items-center justify-between mb-3">
+                <div>
+                  <h4 class="font-medium text-neutral-100">${escapeHtml(subscription.plan_name)}</h4>
+                  <p class="text-sm text-neutral-400">Subscription #${subscription.id}</p>
+                </div>
+                <span class="rounded-full px-3 py-1 text-xs font-medium ${getStatusClasses(subscription.status)}">
+                  ${subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)}
+                </span>
+              </div>
+              
+              <div class="grid gap-2 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-neutral-400">Start Date:</span>
+                  <span class="text-neutral-300">${new Date(subscription.start_date).toLocaleDateString()}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-neutral-400">Expiry Date:</span>
+                  <span class="text-neutral-300">${new Date(subscription.expiry_date).toLocaleDateString()}</span>
+                </div>
+                ${subscription.payer_bank_name ? `
+                  <div class="flex justify-between">
+                    <span class="text-neutral-400">Payment Bank:</span>
+                    <span class="text-neutral-300">${escapeHtml(subscription.payer_bank_name)}</span>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    // Edit profile functions
+    function showEditForm() {
+      if (!currentProfile) return;
+
+      // Populate form
+      document.getElementById('username').value = currentProfile.username;
+      document.getElementById('email').value = currentProfile.email;
+      document.getElementById('bio').value = currentProfile.bio || '';
+
+      // Toggle views
+      profileView.classList.add('hidden');
+      profileForm.classList.remove('hidden');
+      editProfileBtn.textContent = 'Cancel';
+    }
+
+    function hideEditForm() {
+      profileView.classList.remove('hidden');
+      profileForm.classList.add('hidden');
+      editProfileBtn.textContent = 'Edit Profile';
+    }
+
+    // Update profile
+    async function updateProfile(formData) {
+      try {
+        const updateData = {
+          username: formData.get('username'),
+          email: formData.get('email'),
+          bio: formData.get('bio')
+        };
+
+        await api('/profile', {
+          method: 'PUT',
+          body: updateData
+        });
+
+        showAlert('Profile updated successfully', 'success');
+        hideEditForm();
+        loadProfile(); // Reload to get updated data
+      } catch (err) {
+        showAlert('Failed to update profile: ' + err.message, 'error');
+      }
+    }
+
+    // Utility functions
+    function escapeHtml(str) {
+      return (str || '').toString().replace(/[&<>"']/g, (m) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[m]));
+    }
+
+    function getStatusClasses(status) {
+      const classes = {
+        'pending': 'bg-amber-500/10 border border-amber-500/30 text-amber-300',
+        'active': 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-300',
+        'cancelled': 'bg-red-500/10 border border-red-500/30 text-red-300',
+        'expired': 'bg-neutral-500/10 border border-neutral-500/30 text-neutral-400'
+      };
+      return classes[status] || 'bg-neutral-500/10 border border-neutral-500/30 text-neutral-300';
+    }
+
+    // Event listeners
+    editProfileBtn.addEventListener('click', () => {
+      if (profileForm.classList.contains('hidden')) {
+        showEditForm();
+      } else {
+        hideEditForm();
+      }
+    });
+
+    cancelEditBtn.addEventListener('click', hideEditForm);
+
+    profileForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideAlert();
+
+      const formData = new FormData(profileForm);
+      const submitBtn = profileForm.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+
+      try {
+        submitBtn.textContent = 'Saving...';
+        submitBtn.disabled = true;
+        await updateProfile(formData);
+      } finally {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+      }
+    });
+
+    statusFilter.addEventListener('change', loadSubscriptions);
+    refreshSubscriptionsBtn.addEventListener('click', loadSubscriptions);
+
+    // Initialize
+    loadProfile();
+    loadSubscriptions();
+    loadSubscriptionGateBanner();
+  </script>
+</body>
+</html>

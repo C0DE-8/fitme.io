@@ -1,0 +1,1004 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>fitme.io — Food</title>
+  <meta name="description" content="Detailed view of a selected meal option." />
+     
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' rx='12' fill='%238b5cf6'/%3E%3Cpath d='M18 36c4 4 8 6 14 6 6 0 10-2 14-6' stroke='white' stroke-width='5' stroke-linecap='round' fill='none'/%3E%3Ccircle cx='24' cy='24' r='3' fill='white'/%3E%3Ccircle cx='40' cy='24' r='3' fill='white'/%3E%3C/svg%3E" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/app.css" />
+    
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f5f3ff', 100: '#ede9fe', 200: '#ddd6fe', 300: '#c4b5fd',
+              400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9',
+              800: '#5b21b6', 900: '#4c1d95'
+            },
+            deep: { 900: '#071B13', 950: '#05150F' },
+            accent: { 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb' }
+          },
+          boxShadow: { glow: '0 0 80px 0 rgba(139,92,246,0.20)' }
+        }
+      }
+    }
+  </script>
+  <style>
+    html, body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  </style>
+</head>
+<body class="fitme-app min-h-dvh bg-deep-950 text-neutral-100">
+
+  <div class="pointer-events-none fixed inset-0 -z-10">
+    <div class="absolute inset-0 bg-[radial-gradient(70%_60%_at_50%_0%,rgba(139,92,246,0.10),rgba(59,130,246,0.10),rgba(0,0,0,0))]"></div>
+    <div class="absolute -top-24 -left-20 h-80 w-80 rounded-full bg-violet-700/20 blur-3xl"></div>
+    <div class="absolute -bottom-24 -right-32 h-96 w-96 rounded-full bg-blue-800/20 blur-3xl"></div>
+  </div>
+
+  
+  <header class="app-header-safe sticky top-0 z-40 border-b border-white/5 bg-deep-950/70 backdrop-blur-xl supports-[backdrop-filter]:bg-deep-950/60">
+    <nav class="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-2 px-4 py-3">
+      <a href="dashboard.html" class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm hover:bg-white/10">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18l-6-6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Back
+      </a>
+      <div class="text-sm font-semibold tracking-wide text-brand-300">fitme.io</div>
+      <div class="flex items-center gap-2">
+        <button id="ambient-toggle" class="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-neutral-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400" aria-pressed="false">
+          <span class="inline-flex items-center gap-1">
+            <svg id="ambient-icon" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M9 9a3 3 0 000 6h6a3 3 0 000-6H9z"/>
+            </svg>
+            <span id="ambient-text">Ambient: Off</span>
+          </span>
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <main class="app-main-pad mx-auto w-full max-w-3xl px-4">
+   
+    <section class="pt-6 text-center sm:pt-8">
+      <div id="hero-skeleton" class="mx-auto mb-6 h-40 w-40 animate-pulse rounded-full bg-white/10"></div>
+
+      <div id="hero" class="hidden">
+        <h1 id="title" class="text-3xl font-bold tracking-tight sm:text-4xl">Loading…</h1>
+        <p id="subtitle" class="mt-1 text-base text-brand-300/80">---</p>
+
+         
+        <button id="open-lightbox" class="group mx-auto mt-6 block h-44 w-44 overflow-hidden rounded-full ring-1 ring-inset ring-white/15 shadow-glow">
+          <img id="hero-img" src="/placeholder.svg" alt="" class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]" />
+        </button>
+
+         
+        <div class="mt-6 text-4xl font-semibold">
+          <span id="price" class="bg-gradient-to-r from-brand-300 to-accent-300 bg-clip-text text-transparent">—</span>
+        </div>
+        
+        <!-- Cost breakdown -->
+        <div id="cost-breakdown" class="mt-3 text-sm text-neutral-400 hidden">
+          <div>Original: <span id="original-cost">—</span></div>
+          <div id="excluded-cost-row" class="hidden">Excluded: -<span id="excluded-cost">—</span></div>
+        </div>
+      </div>
+    </section>
+
+
+    <section class="mt-10 grid grid-cols-1 gap-6">
+    
+      <div class="rounded-3xl border border-white/10 bg-white/[0.04] p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-semibold tracking-widest text-brand-200">INGREDIENTS</h2>
+          <div class="flex gap-2">
+            <!-- Added units button -->
+            <button id="units-btn" class="rounded-full border border-accent-500/30 bg-accent-500/15 px-3 py-1.5 text-xs text-accent-300 hover:bg-accent-500/25 focus:outline-none focus:ring-2 focus:ring-accent-400">
+              Add Units
+            </button>
+            <button id="customize-btn" class="rounded-full border border-brand-500/30 bg-brand-500/15 px-3 py-1.5 text-xs text-brand-300 hover:bg-brand-500/25 focus:outline-none focus:ring-2 focus:ring-brand-400">
+              Customize
+            </button>
+          </div>
+        </div>
+        <ul id="ingredients" class="grid gap-2">
+          <li class="h-4 w-1/2 animate-pulse rounded bg-white/10"></li>
+          <li class="h-4 w-2/3 animate-pulse rounded bg-white/10"></li>
+          <li class="h-4 w-1/3 animate-pulse rounded bg-white/10"></li>
+        </ul>
+        
+        <!-- Added units breakdown section -->
+        <div id="units-section" class="mt-4 pt-4 border-t border-white/10 hidden">
+          <h3 class="text-xs font-semibold tracking-widest text-accent-300 mb-2">ADDED UNITS</h3>
+          <ul id="added-units" class="grid gap-2"></ul>
+          <div class="mt-3 flex items-center justify-between text-sm">
+            <span class="text-neutral-300">Extra Units Cost:</span>
+            <span id="added-units-cost" class="text-accent-300 font-medium">₦0</span>
+          </div>
+        </div>
+        
+        <!-- Excluded ingredients section -->
+        <div id="excluded-section" class="mt-4 pt-4 border-t border-white/10 hidden">
+          <h3 class="text-xs font-semibold tracking-widest text-red-300 mb-2">EXCLUDED INGREDIENTS</h3>
+          <ul id="excluded-ingredients" class="grid gap-2"></ul>
+        </div>
+      </div>
+
+   
+      <div class="rounded-3xl border border-white/10 bg-white/[0.04] p-5">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-semibold tracking-widest text-accent-300 inline-flex items-center gap-2">
+            <svg class="h-4 w-4 text-accent-400/90" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            MISSING INGREDIENTS
+          </h2>
+        </div>
+        <ul id="missing" class="mt-4 grid gap-2">
+          <li class="h-4 w-1/2 animate-pulse rounded bg-white/10"></li>
+          <li class="h-4 w-2/3 animate-pulse rounded bg-white/10"></li>
+        </ul>
+        <div id="missing-total-row" class="mt-4 flex items-center justify-between border-t border-white/10 pt-3 text-base font-medium">
+          <span class="text-neutral-200">TOTAL MISSING COST</span>
+          <span id="missing-total" class="text-accent-300">—</span>
+        </div>
+      </div>
+
+      
+      <div class="rounded-3xl border border-white/10 bg-white/[0.04] p-5">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-semibold tracking-widest text-brand-200">PREPARATION</h2>
+          <span id="prepared-badge" class="hidden rounded-full border border-brand-500/30 bg-brand-500/10 px-2.5 py-1 text-xs text-brand-300">Prepared</span>
+        </div>
+        <p class="mt-3 text-sm text-neutral-300">Ask fitme AI for lovely, step-by-step cooking tips tailored to your pantry.</p>
+        <button id="ask-ai" class="group mt-4 inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-brand-500 to-accent-500 px-4 py-2.5 font-semibold text-neutral-950 shadow-glow transition hover:from-brand-400 hover:to-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-400">
+          <svg class="h-4 w-4 transition group-hover:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M13 5l7 7-7 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Ask fitme AI
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Customize Ingredients Modal -->
+  <div id="customize-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="customize-title">
+    <div id="customize-backdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+    <div class="absolute inset-0 grid place-items-center p-4">
+      <div class="w-full max-w-lg rounded-3xl border border-white/10 bg-white/[0.06] p-5 backdrop-blur-xl shadow-glow max-h-[80vh] overflow-y-auto">
+        <div class="mb-4 flex items-center justify-between">
+          <h3 id="customize-title" class="text-lg font-semibold">Customize Ingredients</h3>
+          <button id="customize-close" class="rounded-full border border-white/10 bg-white/5 p-2 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400" aria-label="Close">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 6l12 12M6 18L18 6" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        
+        <p class="text-sm text-neutral-300 mb-4">Uncheck ingredients you don't want to include. This will update the cost and missing ingredients.</p>
+        
+        <div id="ingredient-checkboxes" class="space-y-2 mb-6">
+          <!-- Checkboxes will be populated here -->
+        </div>
+        
+        <div class="flex gap-3">
+          <button id="apply-exclusions" class="flex-1 rounded-2xl bg-gradient-to-r from-brand-500 to-accent-500 px-4 py-2.5 font-semibold text-neutral-950 shadow-glow transition hover:from-brand-400 hover:to-accent-400 focus:outline-none focus:ring-2 focus:ring-accent-400">
+            Apply Changes
+          </button>
+          <button id="reset-exclusions" class="rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 font-medium text-neutral-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">
+            Reset
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+ 
+  <div id="prep-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="prep-title">
+    <div id="prep-backdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+    <div class="absolute inset-0 grid place-items-center p-4">
+      <div class="w-full max-w-xl rounded-3xl border border-white/10 bg-white/[0.06] p-5 backdrop-blur-xl shadow-glow">
+        <div class="mb-3 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="relative h-8 w-8">
+              <div class="absolute inset-0 rounded-full bg-gradient-to-br from-brand-500/30 to-accent-500/30 blur"></div>
+              <div class="relative grid h-8 w-8 place-items-center rounded-full border border-white/15 bg-white/5">
+                <span class="text-xs font-bold text-brand-300">AI</span>
+              </div>
+            </div>
+            <h3 id="prep-title" class="text-lg font-semibold">How to cook this</h3>
+          </div>
+          <button id="prep-close" class="rounded-full border border-white/10 bg-white/5 p-2 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400" aria-label="Close">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 6l12 12M6 18L18 6" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+
+        <div id="prep-thinking" class="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-300">
+          <span class="inline-flex">
+            <span class="mx-0.5 h-1.5 w-1.5 animate-bounce rounded-full bg-brand-300 [animation-delay:0ms]"></span>
+            <span class="mx-0.5 h-1.5 w-1.5 animate-bounce rounded-full bg-accent-300 [animation-delay:120ms]"></span>
+            <span class="mx-0.5 h-1.5 w-1.5 animate-bounce rounded-full bg-brand-300 [animation-delay:240ms]"></span>
+          </span>
+          Thinking…
+        </div>
+
+        <div id="prep-content" class="mt-3 hidden whitespace-pre-wrap text-sm leading-6 text-neutral-100"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Added Units Modal -->
+  <div id="units-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="units-title">
+    <div id="units-backdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+    <div class="absolute inset-0 grid place-items-center p-4">
+      <div class="w-full max-w-lg rounded-3xl border border-white/10 bg-white/[0.06] p-5 backdrop-blur-xl shadow-glow max-h-[80vh] overflow-y-auto">
+        <div class="mb-4 flex items-center justify-between">
+          <h3 id="units-title" class="text-lg font-semibold">Add Extra Units</h3>
+          <button id="units-close" class="rounded-full border border-white/10 bg-white/5 p-2 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400" aria-label="Close">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 6l12 12M6 18L18 6" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        
+        <p class="text-sm text-neutral-300 mb-4">Increase ingredient quantities. Each unit adds to the base amount and updates the total cost.</p>
+        
+        <div id="ingredient-units" class="space-y-3 mb-6">
+          <!-- Unit controls will be populated here -->
+        </div>
+        
+        <div class="flex gap-3">
+          <button id="apply-units" class="flex-1 rounded-2xl bg-gradient-to-r from-accent-500 to-brand-500 px-4 py-2.5 font-semibold text-neutral-950 shadow-glow transition hover:from-accent-400 hover:to-brand-400 focus:outline-none focus:ring-2 focus:ring-accent-400">
+            Apply Units
+          </button>
+          <button id="reset-units" class="rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 font-medium text-neutral-100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400">
+            Reset
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div id="lightbox" class="fixed inset-0 z-50 hidden">
+    <div id="lightbox-backdrop" class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+    <div class="absolute inset-0 grid place-items-center p-4">
+      <div class="relative w-full max-w-2xl">
+        <img id="lightbox-img" src="/placeholder.svg" alt="" class="w-full rounded-2xl object-contain" />
+        <button id="lightbox-close" class="absolute right-2 top-2 rounded-full border border-white/10 bg-white/10 p-2 backdrop-blur hover:bg-white/20" aria-label="Close">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 6l12 12M6 18L18 6" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <nav class="app-bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-deep-950/90 backdrop-blur-xl">
+    <div class="mx-auto max-w-3xl">
+      <ul class="grid grid-cols-3">
+        <li>
+          <a href="dashboard.html" data-tab="planMeal" class="flex flex-col items-center gap-1 px-3 py-2.5 text-xs text-neutral-300 hover:text-neutral-100 sm:px-4 sm:py-3">
+            <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12h16M4 6h16M4 18h8"/></svg>
+            <span>Plan Meal</span>
+          </a>
+        </li>
+        <li>
+          <a href="budget.html" data-tab="budget" class="flex flex-col items-center gap-1 px-3 py-2.5 text-xs text-neutral-300 hover:text-neutral-100 sm:px-4 sm:py-3">
+            <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-3.866 0-7 1.79-7 4s3.134 4 7 4 7-1.79 7-4-3.134-4-7-4z"/><path stroke-width="2" d="M5 12V8m14 4V8M5 16v-4m14 4v-4"/></svg>
+            <span>Budget</span>
+          </a>
+        </li>
+        <li>
+          <a href="storage.html" data-tab="storage" class="flex flex-col items-center gap-1 px-3 py-2.5 text-xs text-neutral-300 hover:text-neutral-100 sm:px-4 sm:py-3">
+            <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="7" width="18" height="10" rx="2" ry="2" stroke-width="2"/><path stroke-width="2" d="M3 10h18"/></svg>
+            <span>Storage</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Enhanced Audio with better caching and offline support -->
+  <audio id="ambient-audio" preload="auto" crossorigin="anonymous" loop>
+    <source src="../assets/audio/ambient-soft.mp3" type="audio/mpeg">
+    <!-- Fallback message for browsers that don't support audio -->
+    Your browser does not support the audio element.
+  </audio>
+
+  <script>
+    // API configuration
+    const API_BASE = "http://localhost:7005/api/user"; // Updated API base URL
+    const API_ORIGIN = new URL(API_BASE).origin;
+    const CURRENCY = localStorage.getItem('fitme_currency') || '₦';
+
+    // Configure Axios defaults
+    axios.defaults.timeout = 10000;
+    axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('fitme_token')}`;
+
+    // Session validation
+    const token = localStorage.getItem('fitme_token');
+    const userRaw = localStorage.getItem('fitme_user');
+    const user = (() => { try { return JSON.parse(userRaw || 'null'); } catch { return null; } })();
+    if (!token || !user) { window.location.replace('../index.html'); }
+
+    (function markActiveTab() {
+      const here = 'food.html';
+      document.querySelectorAll('[data-tab]').forEach(a => {
+        const href = a.getAttribute('href') || '';
+        const isActive = href.includes('dashboard.html');
+        a.setAttribute('aria-current', isActive ? 'page' : 'false');
+      });
+    })();
+
+    // DOM refs
+    const ambientAudio = document.getElementById('ambient-audio');
+    const ambientToggle = document.getElementById('ambient-toggle');
+    const ambientIcon = document.getElementById('ambient-icon');
+    const ambientText = document.getElementById('ambient-text');
+
+    // Hero
+    const heroSkeleton = document.getElementById('hero-skeleton');
+    const hero = document.getElementById('hero');
+    const titleEl = document.getElementById('title');
+    const subtitleEl = document.getElementById('subtitle');
+    const heroImg = document.getElementById('hero-img');
+    const priceEl = document.getElementById('price');
+    const costBreakdown = document.getElementById('cost-breakdown');
+    const originalCostEl = document.getElementById('original-cost');
+    const excludedCostRow = document.getElementById('excluded-cost-row');
+    const excludedCostEl = document.getElementById('excluded-cost');
+
+    // Lists
+    const ingredientsEl = document.getElementById('ingredients');
+    const excludedSection = document.getElementById('excluded-section');
+    const excludedIngredientsEl = document.getElementById('excluded-ingredients');
+    const missingEl = document.getElementById('missing');
+    const missingTotalRow = document.getElementById('missing-total-row');
+    const missingTotalEl = document.getElementById('missing-total');
+
+    // Customize modal
+    const customizeBtn = document.getElementById('customize-btn');
+    const customizeModal = document.getElementById('customize-modal');
+    const customizeBackdrop = document.getElementById('customize-backdrop');
+    const customizeClose = document.getElementById('customize-close');
+    const ingredientCheckboxes = document.getElementById('ingredient-checkboxes');
+    const applyExclusions = document.getElementById('apply-exclusions');
+    const resetExclusions = document.getElementById('reset-exclusions');
+
+    // Preparation (AI modal)
+    const preparedBadge = document.getElementById('prepared-badge');
+    const askAiBtn = document.getElementById('ask-ai');
+    const prepModal = document.getElementById('prep-modal');
+    const prepBackdrop = document.getElementById('prep-backdrop');
+    const prepClose = document.getElementById('prep-close');
+    const prepThinking = document.getElementById('prep-thinking');
+    const prepContent = document.getElementById('prep-content');
+
+    // Lightbox
+    const lightbox = document.getElementById('lightbox');
+    const lightboxBackdrop = document.getElementById('lightbox-backdrop');
+    const lightboxClose = document.getElementById('lightbox-close');
+    const lightboxImg = document.getElementById('lightbox-img');
+    const openLightbox = document.getElementById('open-lightbox');
+
+    const unitsBtn = document.getElementById('units-btn');
+    const unitsModal = document.getElementById('units-modal');
+    const unitsBackdrop = document.getElementById('units-backdrop');
+    const unitsClose = document.getElementById('units-close');
+    const ingredientUnits = document.getElementById('ingredient-units');
+    const applyUnits = document.getElementById('apply-units');
+    const resetUnits = document.getElementById('reset-units');
+    const unitsSection = document.getElementById('units-section');
+    const addedUnits = document.getElementById('added-units');
+    const addedUnitsCost = document.getElementById('added-units-cost');
+
+    // Enhanced Ambient Audio System with proper file loading and caching
+    class AmbientAudioManager {
+      constructor() {
+        this.audio = ambientAudio;
+        this.isLoaded = false;
+        this.isEnabled = localStorage.getItem('fitme_ambient_on') === 'true';
+        this.audioUrl = '../assets/audio/ambient-soft.mp3';
+        this.retryCount = 0;
+        this.maxRetries = 3;
+        
+        this.init();
+      }
+
+      async init() {
+        // Load the audio file
+        await this.loadAudio();
+        
+        // Set initial UI state
+        this.updateUI();
+        
+        // Setup event listeners
+        this.setupEventListeners();
+      }
+
+      async loadAudio() {
+        try {
+          // Set the audio source
+          this.audio.src = this.audioUrl;
+          this.audio.loop = true;
+          this.audio.preload = 'auto';
+          this.audio.crossOrigin = 'anonymous';
+          
+          // Wait for the audio to be ready
+          await new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+              reject(new Error('Audio loading timeout'));
+            }, 10000); // 10 second timeout
+
+            this.audio.addEventListener('canplaythrough', () => {
+              clearTimeout(timeout);
+              this.isLoaded = true;
+              resolve();
+            }, { once: true });
+
+            this.audio.addEventListener('error', (e) => {
+              clearTimeout(timeout);
+              reject(new Error(`Audio loading failed: ${e.message || 'Unknown error'}`));
+            }, { once: true });
+
+            // Start loading
+            this.audio.load();
+          });
+
+          console.log('Ambient audio loaded successfully');
+          
+        } catch (error) {
+          console.warn('Audio loading failed:', error);
+          
+          // Retry loading if we haven't exceeded max retries
+          if (this.retryCount < this.maxRetries) {
+            this.retryCount++;
+            console.log(`Retrying audio load (${this.retryCount}/${this.maxRetries})...`);
+            setTimeout(() => this.loadAudio(), 1000 * this.retryCount);
+            return;
+          }
+          
+          this.isLoaded = false;
+        }
+      }
+
+      setupEventListeners() {
+        // Handle audio events
+        this.audio.addEventListener('loadstart', () => {
+          console.log('Audio loading started');
+        });
+
+        this.audio.addEventListener('canplay', () => {
+          console.log('Audio can start playing');
+          this.isLoaded = true;
+          this.updateUI();
+          
+          // Auto-play if enabled
+          if (this.isEnabled) {
+            this.play();
+          }
+        });
+
+        this.audio.addEventListener('error', (e) => {
+          console.error('Audio error:', e);
+          this.isLoaded = false;
+          this.updateUI();
+        });
+
+        this.audio.addEventListener('ended', () => {
+          // This shouldn't happen with loop=true, but just in case
+          if (this.isEnabled && this.isLoaded) {
+            this.play();
+          }
+        });
+
+        // Handle visibility change to pause/resume audio
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden) {
+            this.pause();
+          } else if (this.isEnabled && this.isLoaded) {
+            // Small delay to ensure page is fully visible
+            setTimeout(() => this.play(), 100);
+          }
+        });
+
+        // Handle page unload
+        window.addEventListener('beforeunload', () => {
+          this.cleanup();
+        });
+      }
+
+      async toggle() {
+        this.isEnabled = !this.isEnabled;
+        localStorage.setItem('fitme_ambient_on', String(this.isEnabled));
+        
+        if (this.isEnabled) {
+          await this.play();
+        } else {
+          this.pause();
+        }
+        
+        this.updateUI();
+      }
+
+      async play() {
+        if (!this.isLoaded || !this.isEnabled) {
+          console.log('Cannot play audio:', { isLoaded: this.isLoaded, isEnabled: this.isEnabled });
+          return;
+        }
+        
+        try {
+          // Set volume to a comfortable level
+          this.audio.volume = 0.08;
+          
+          // Play the audio
+          const playPromise = this.audio.play();
+          
+          if (playPromise !== undefined) {
+            await playPromise;
+            console.log('Audio playing successfully');
+          }
+          
+        } catch (error) {
+          console.warn('Audio play failed:', error);
+          
+          // If autoplay is blocked, we'll need user interaction
+          if (error.name === 'NotAllowedError') {
+            console.log('Autoplay blocked - waiting for user interaction');
+            // The audio will play when user clicks the toggle button
+          }
+        }
+      }
+
+      pause() {
+        try {
+          if (!this.audio.paused) {
+            this.audio.pause();
+            console.log('Audio paused');
+          }
+        } catch (error) {
+          console.warn('Audio pause failed:', error);
+        }
+      }
+
+      updateUI() {
+        const isOn = this.isEnabled && this.isLoaded;
+        ambientText.textContent = isOn ? 'Ambient: On' : 'Ambient: Off';
+        ambientToggle.setAttribute('aria-pressed', isOn ? 'true' : 'false');
+        
+        // Update icon and styling based on state
+        if (isOn) {
+          ambientIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M9 9a3 3 0 000 6h6a3 3 0 000-6H9z"/>';
+          ambientToggle.classList.add('bg-brand-500/10', 'border-brand-500/30', 'text-brand-300');
+          ambientToggle.classList.remove('bg-white/5', 'border-white/10', 'text-neutral-100');
+        } else {
+          ambientIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>';
+          ambientToggle.classList.remove('bg-brand-500/10', 'border-brand-500/30', 'text-brand-300');
+          ambientToggle.classList.add('bg-white/5', 'border-white/10', 'text-neutral-100');
+        }
+
+        // Show loading state if audio is not loaded
+        if (!this.isLoaded && this.retryCount > 0) {
+          ambientText.textContent = 'Loading...';
+        }
+      }
+
+      cleanup() {
+        this.pause();
+        // Don't need to clean up URLs since we're using a static file path
+      }
+    }
+
+    // Initialize ambient audio manager
+    const ambientManager = new AmbientAudioManager();
+
+    // Setup ambient toggle
+    ambientToggle.addEventListener('click', () => {
+      ambientManager.toggle();
+    });
+
+    // Enhanced API helper with Axios
+    async function api(path, data = null, method = 'GET') {
+      try {
+        const config = {
+          method,
+          url: API_BASE + path,
+          headers: { 'Authorization': `Bearer ${token}` }
+        };
+        
+        if (data) {
+          config.data = data;
+          config.headers['Content-Type'] = 'application/json';
+        }
+        
+        const response = await axios(config);
+        return response.data;
+      } catch (error) {
+        const message = error.response?.data?.error || 
+                        error.response?.data?.message || 
+                        error.message || 
+                        'Request failed';
+        throw new Error(message);
+      }
+    }
+
+    // Helpers
+    function qs(name, def=''){ const u=new URL(window.location.href); return u.searchParams.get(name) || def; }
+    function escapeHtml(str){ return (str || '').toString().replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+    function money(n){ const v = Number(n||0); return CURRENCY + v.toFixed(0); }
+    function money2(n){ const v = Number(n||0); return CURRENCY + v.toFixed(0); }
+    function cap(s){ s = String(s||''); return s.charAt(0).toUpperCase() + s.slice(1); }
+
+    // Page state
+    let currentType = '';
+    let currentId = '';
+    let cachedPrepared = null;
+    let originalFoodData = null;
+    let allIngredients = [];
+    let excludedIngredients = new Set();
+    let addedUnitsMap = new Map(); // Added units tracking
+
+    // Typewriter
+    function typewriter(el, text, speed = 14) {
+      el.textContent = '';
+      let i = 0;
+      const t = setInterval(() => {
+        el.textContent += text[i++] || '';
+        if (i >= text.length) clearInterval(t);
+      }, speed);
+    }
+
+    // Modal helpers
+    function openPrepModal() {
+      prepThinking.classList.remove('hidden');
+      prepContent.classList.add('hidden');
+      prepModal.classList.remove('hidden');
+    }
+    function closePrepModal(){ prepModal.classList.add('hidden'); }
+    prepBackdrop.addEventListener('click', closePrepModal);
+    prepClose.addEventListener('click', closePrepModal);
+    window.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closePrepModal(); closeCustomizeModal(); } });
+
+    // Customize modal helpers
+    function openCustomizeModal() {
+      populateIngredientCheckboxes();
+      customizeModal.classList.remove('hidden');
+    }
+    function closeCustomizeModal(){ customizeModal.classList.add('hidden'); }
+    customizeBackdrop.addEventListener('click', closeCustomizeModal);
+    customizeClose.addEventListener('click', closeCustomizeModal);
+    customizeBtn.addEventListener('click', openCustomizeModal);
+
+    // Populate ingredient checkboxes
+    function populateIngredientCheckboxes() {
+      ingredientCheckboxes.innerHTML = '';
+      
+      allIngredients.forEach((ingredient, index) => {
+        const isExcluded = excludedIngredients.has(ingredient.name.toLowerCase());
+        
+        const checkboxItem = document.createElement('div');
+        checkboxItem.className = 'flex items-center justify-between p-3 rounded-xl border border-white/10 bg-white/5';
+        checkboxItem.innerHTML = `
+          <label class="flex items-center gap-3 cursor-pointer flex-1">
+            <input type="checkbox" ${!isExcluded ? 'checked' : ''} 
+                   data-ingredient="${escapeHtml(ingredient.name.toLowerCase())}"
+                   class="h-4 w-4 rounded border-white/20 bg-white/10 text-brand-500 focus:ring-brand-400 focus:ring-offset-0">
+            <span class="text-sm text-neutral-100">${escapeHtml(ingredient.name)}</span>
+          </label>
+          <span class="text-sm text-neutral-300">${money2(ingredient.cost || 0)}</span>
+        `;
+        
+        ingredientCheckboxes.appendChild(checkboxItem);
+      });
+    }
+
+    // Apply exclusions
+    applyExclusions.addEventListener('click', async () => {
+      const checkboxes = ingredientCheckboxes.querySelectorAll('input[type="checkbox"]');
+      const newExclusions = [];
+      
+      checkboxes.forEach(checkbox => {
+        if (!checkbox.checked) {
+          newExclusions.push(checkbox.dataset.ingredient);
+        }
+      });
+      
+      excludedIngredients = new Set(newExclusions);
+      
+      // Update the food data with exclusions
+      await updateFoodWithExclusions();
+      closeCustomizeModal();
+    });
+
+    // Reset exclusions
+    resetExclusions.addEventListener('click', async () => {
+      excludedIngredients.clear();
+      await updateFoodWithExclusions();
+      closeCustomizeModal();
+    });
+
+    function openUnitsModal() {
+      populateIngredientUnits();
+      unitsModal.classList.remove('hidden');
+    }
+    function closeUnitsModal(){ unitsModal.classList.add('hidden'); }
+    unitsBackdrop.addEventListener('click', closeUnitsModal);
+    unitsClose.addEventListener('click', closeUnitsModal);
+    unitsBtn.addEventListener('click', openUnitsModal);
+
+    function populateIngredientUnits() {
+      ingredientUnits.innerHTML = '';
+      
+      allIngredients.forEach((ingredient) => {
+        const currentUnits = addedUnitsMap.get(ingredient.name.toLowerCase()) || 0;
+        
+        const unitItem = document.createElement('div');
+        unitItem.className = 'flex items-center justify-between p-3 rounded-xl border border-white/10 bg-white/5';
+        unitItem.innerHTML = `
+          <div class="flex-1">
+            <div class="text-sm text-neutral-100 font-medium">${escapeHtml(ingredient.name)}</div>
+            <div class="text-xs text-neutral-400">Base cost: ${money2(ingredient.cost || 0)} per unit</div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" class="units-decrease w-8 h-8 rounded-full border border-white/20 bg-white/10 hover:bg-white/20 flex items-center justify-center text-neutral-100" data-ingredient="${escapeHtml(ingredient.name.toLowerCase())}">
+              <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+            <span class="units-count w-8 text-center text-sm font-medium text-neutral-100" data-ingredient="${escapeHtml(ingredient.name.toLowerCase())}">${currentUnits}</span>
+            <button type="button" class="units-increase w-8 h-8 rounded-full border border-white/20 bg-white/10 hover:bg-white/20 flex items-center justify-center text-neutral-100" data-ingredient="${escapeHtml(ingredient.name.toLowerCase())}">
+              <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+        `;
+        
+        ingredientUnits.appendChild(unitItem);
+      });
+
+      ingredientUnits.addEventListener('click', (e) => {
+        const ingredient = e.target.closest('[data-ingredient]')?.dataset.ingredient;
+        if (!ingredient) return;
+
+        if (e.target.closest('.units-increase')) {
+          const current = addedUnitsMap.get(ingredient) || 0;
+          addedUnitsMap.set(ingredient, current + 1);
+          updateUnitsDisplay(ingredient);
+        } else if (e.target.closest('.units-decrease')) {
+          const current = addedUnitsMap.get(ingredient) || 0;
+          if (current > 0) {
+            addedUnitsMap.set(ingredient, current - 1);
+            if (addedUnitsMap.get(ingredient) === 0) {
+              addedUnitsMap.delete(ingredient);
+            }
+          }
+          updateUnitsDisplay(ingredient);
+        }
+      });
+    }
+
+    function updateUnitsDisplay(ingredient) {
+      const countEl = ingredientUnits.querySelector(`.units-count[data-ingredient="${ingredient}"]`);
+      if (countEl) {
+        countEl.textContent = addedUnitsMap.get(ingredient) || 0;
+      }
+    }
+
+    applyUnits.addEventListener('click', async () => {
+      await updateFoodWithUnits();
+      closeUnitsModal();
+    });
+
+    resetUnits.addEventListener('click', async () => {
+      addedUnitsMap.clear();
+      await updateFoodWithUnits();
+      closeUnitsModal();
+    });
+
+    // Update food data with current exclusions
+    async function updateFoodWithExclusions() {
+      await updateFoodWithUnits();
+    }
+
+    async function updateFoodWithUnits() {
+      if (!currentType || !currentId) return;
+      
+      try {
+        const excludeArray = Array.from(excludedIngredients);
+        const unitsObject = Object.fromEntries(addedUnitsMap);
+        
+        const requestData = {
+          exclude: excludeArray,
+          addUnits: unitsObject
+        };
+        
+        const food = await api(`/foods/suggest/${encodeURIComponent(currentType)}/${encodeURIComponent(currentId)}/add-units`, 
+          requestData, 'POST');
+        
+        updateFoodDisplay(food);
+      } catch (err) {
+        console.error('Error updating food with units:', err);
+      }
+    }
+
+    // Update the food display
+    function updateFoodDisplay(food) {
+      const name = food.name || 'Meal';
+      const img = food.image_url || (food.image ? `${API_ORIGIN}/uploads/${food.image}` : '');
+      const est = food.estimated_cost != null ? money(food.estimated_cost) : '';
+      const originalCost = food.original_estimated_cost != null ? money(food.original_estimated_cost) : '';
+      const excludedCost = food.excluded_ingredients_cost != null ? money(food.excluded_ingredients_cost) : '';
+      const addedUnitsCostValue = food.added_units_cost != null ? money(food.added_units_cost) : ''; // Added units cost
+      const pkg = food.package || '';
+      const created = food.created_at || '';
+      cachedPrepared = food.prepared;
+      const ingredients = Array.isArray(food.ingredients) ? food.ingredients : [];
+      const ingredientsDetailed = Array.isArray(food.ingredients_detailed) ? food.ingredients_detailed : []; // Detailed ingredients with units
+      const excludedIngs = Array.isArray(food.excludedIngredients) ? food.excludedIngredients : [];
+      const missing = Array.isArray(food.missingIngredients) ? food.missingIngredients : [];
+      const missingCost = food.totalMissingCost != null ? money2(food.totalMissingCost) : '';
+      const addedUnitsData = food.addedUnits || {}; // Added units data
+
+      titleEl.textContent = name;
+      subtitleEl.textContent = [pkg ? pkg : null, created ? `Added ${created}` : null].filter(Boolean).join(' • ') || cap(currentType);
+      heroImg.src = img || '/placeholder.svg?height=480&width=480';
+      heroImg.alt = name;
+      priceEl.textContent = est || CURRENCY + '—';
+      
+      if (excludedIngs.length > 0 || Object.keys(addedUnitsData).length > 0) {
+        costBreakdown.classList.remove('hidden');
+        originalCostEl.textContent = originalCost;
+        if (excludedIngs.length > 0) {
+          excludedCostRow.classList.remove('hidden');
+          excludedCostEl.textContent = excludedCost;
+        } else {
+          excludedCostRow.classList.add('hidden');
+        }
+      } else {
+        costBreakdown.classList.add('hidden');
+        excludedCostRow.classList.add('hidden');
+      }
+
+      heroSkeleton.classList.add('hidden');
+      hero.classList.remove('hidden');
+
+      ingredientsEl.innerHTML = ingredientsDetailed.length
+        ? ingredientsDetailed.map(i => `
+            <li class="flex items-center justify-between border-b border-white/5 pb-1 last:border-none">
+              <span class="text-[15px]">
+                ${escapeHtml(i.name)}
+                ${i.units > 1 ? `<span class="text-xs text-accent-300 ml-1">(${i.units}x)</span>` : ''}
+              </span>
+              <span class="text-[15px] text-neutral-200">${money2(i.cost || 0)}</span>
+            </li>
+          `).join('')
+        : ingredients.map(i => `
+            <li class="flex items-center justify-between border-b border-white/5 pb-1 last:border-none">
+              <span class="text-[15px]">${escapeHtml(i.name)}</span>
+              <span class="text-[15px] text-neutral-200">${money2(i.cost || 0)}</span>
+            </li>
+          `).join('') || `<li class="rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200">No ingredients listed.</li>`;
+
+      if (Object.keys(addedUnitsData).length > 0) {
+        unitsSection.classList.remove('hidden');
+        addedUnits.innerHTML = Object.entries(addedUnitsData).map(([name, units]) => {
+          const ingredient = ingredientsDetailed.find(i => i.name.toLowerCase() === name.toLowerCase());
+          const unitCost = ingredient ? ingredient.unit_cost : 0;
+          const totalCost = unitCost * units;
+          return `
+            <li class="flex items-center justify-between border-b border-accent-500/20 pb-1 last:border-none">
+              <span class="text-[15px] text-accent-300">+${units} ${escapeHtml(name)}</span>
+              <span class="text-[15px] text-accent-300">+${money2(totalCost)}</span>
+            </li>
+          `;
+        }).join('');
+        addedUnitsCost.textContent = addedUnitsCostValue || '₦0';
+      } else {
+        unitsSection.classList.add('hidden');
+      }
+
+      // Show excluded ingredients if any
+      if (excludedIngs.length > 0) {
+        excludedSection.classList.remove('hidden');
+        excludedIngredientsEl.innerHTML = excludedIngs.map(i => `
+          <li class="flex items-center justify-between border-b border-red-500/20 pb-1 last:border-none">
+            <span class="text-[15px] text-red-300 line-through">${escapeHtml(i.name)}</span>
+            <span class="text-[15px] text-red-300">-${money2(i.cost || 0)}</span>
+          </li>
+        `).join('');
+      } else {
+        excludedSection.classList.add('hidden');
+      }
+
+      missingEl.innerHTML = missing.length
+        ? missing.map(i => `
+            <li class="flex items-center justify-between border-b border-white/5 pb-1 last:border-none">
+              <span class="text-[15px]">${escapeHtml(i.name)}</span>
+              <span class="text-[15px] text-accent-300">${money2(i.cost || 0)}</span>
+            </li>
+          `).join('')
+        : `<li class="rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-neutral-300">None 🎉</li>`;
+
+      if (missingCost) { missingTotalEl.textContent = missingCost; missingTotalRow.classList.remove('hidden'); }
+      else { missingTotalRow.classList.add('hidden'); }
+
+      if (cachedPrepared) preparedBadge.classList.remove('hidden');
+    }
+
+    // Load detail
+    async function init() {
+      currentType = (qs('type','').toLowerCase());
+      currentId = qs('id','');
+      if (!currentType || !currentId) {
+        titleEl.textContent = 'Invalid link';
+        return;
+      }
+      try {
+        // First load without exclusions to get all ingredients
+        const food = await api(`/foods/suggest/${encodeURIComponent(currentType)}/${encodeURIComponent(currentId)}`);
+        originalFoodData = food;
+        
+        // Parse all ingredients for the customize modal
+        allIngredients = Array.isArray(food.ingredients) ? food.ingredients : [];
+        
+        updateFoodDisplay(food);
+      } catch (err) {
+        heroSkeleton.classList.add('hidden');
+        hero.classList.remove('hidden');
+        titleEl.textContent = 'Unable to load meal';
+        subtitleEl.textContent = String(err.message || 'Please try again.');
+        heroImg.src = '/placeholder.svg?height=480&width=480';
+        priceEl.textContent = CURRENCY + '—';
+        ingredientsEl.innerHTML = `<li class="rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200">Error: ${escapeHtml(err.message || 'Failed')}</li>`;
+        missingEl.innerHTML = '';
+        missingTotalRow.classList.add('hidden');
+      }
+    }
+
+    // Image lightbox
+    openLightbox.addEventListener('click', () => {
+      lightboxImg.src = heroImg.src; lightboxImg.alt = heroImg.alt; lightbox.classList.remove('hidden');
+    });
+    function closeLightbox(){ lightbox.classList.add('hidden'); }
+    lightboxBackdrop.addEventListener('click', closeLightbox);
+    lightboxClose.addEventListener('click', closeLightbox);
+
+    // Ask AI modal
+    askAiBtn.addEventListener('click', async () => {
+      openPrepModal();
+      try {
+        if (cachedPrepared == null) {
+          const data = await api(`/foods/suggest/${encodeURIComponent(currentType)}/${encodeURIComponent(currentId)}`);
+          cachedPrepared = data.prepared;
+        }
+        const prepText =
+          typeof cachedPrepared === 'string' && cachedPrepared.trim()
+            ? cachedPrepared.trim()
+            : (cachedPrepared ? 'This meal is pre-prepared and ready to eat.' : 'This meal requires cooking. No preparation text available.');
+        prepThinking.classList.add('hidden');
+        prepContent.classList.remove('hidden');
+        typewriter(prepContent, prepText, 12);
+      } catch (err) {
+        prepThinking.classList.add('hidden');
+        prepContent.classList.remove('hidden');
+        prepContent.textContent = 'Sorry, I could not retrieve preparation steps.';
+      }
+    });
+
+    window.addEventListener('keydown', (e) => { 
+      if (e.key === 'Escape') { 
+        closePrepModal(); 
+        closeCustomizeModal(); 
+        closeUnitsModal(); 
+        closeLightbox(); 
+      } 
+    });
+
+    // Initialize everything
+    (async function initFood() {
+      try {
+        await init();
+      } catch (error) {
+        console.error('Food page initialization failed:', error);
+      }
+    })();
+  </script>
+</body>
+</html>

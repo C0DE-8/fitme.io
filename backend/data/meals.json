@@ -1,0 +1,10 @@
+[
+  {
+    "name": "Fried Rice",
+    "ingredients": ["rice", "carrot", "green peas", "onion"]
+  },
+  {
+    "name": "Yam Porridge",
+    "ingredients": ["yam", "oil", "onion", "pepper"]
+  }
+]

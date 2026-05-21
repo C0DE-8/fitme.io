@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Welcome to Fitme.io</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../css/app.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f5f3ff', 100: '#ede9fe', 200: '#ddd6fe', 300: '#c4b5fd',
+                            400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9',
+                            800: '#5b21b6', 900: '#4c1d95'
+                        },
+                        deep: { 900: '#071B13', 950: '#05150F' },
+                        accent: { 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb' }
+                    },
+                    boxShadow: {
+                        glow: '0 0 80px 0 rgba(139,92,246,0.20)',
+                        glass: '0 20px 50px -20px rgba(0,0,0,0.6)',
+                        soft: '0 10px 40px -10px rgba(0,0,0,0.1)',
+                        inner: 'inset 0 2px 4px 0 rgba(0,0,0,0.06)'
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.6s ease-out',
+                        'slide-up': 'slideUp 0.8s ease-out',
+                        'bounce-gentle': 'bounceGentle 2s ease-in-out infinite',
+                        'pulse-soft': 'pulseSoft 2s ease-in-out infinite'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes bounceGentle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes pulseSoft {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .slide-transition {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-effect {
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="fitme-app flex min-h-dvh min-h-[100dvh] items-center justify-center bg-gradient-to-br from-deep-950 via-deep-900 to-gray-900 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]">
+    <div class="w-full max-w-md mx-auto">
+   
+        <div class="relative bg-gray-800/90 backdrop-blur-xl rounded-3xl shadow-glow overflow-hidden border border-gray-700/50">
+          
+            <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-brand-500/20 to-transparent rounded-full opacity-60 -translate-y-16 translate-x-16"></div>
+            <div class="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-accent-400/20 to-transparent rounded-full opacity-40 translate-y-12 -translate-x-12"></div>
+       
+            <div class="relative h-[600px] overflow-hidden">
+                
+                <div id="slide-0" class="slide absolute inset-0 p-8 flex flex-col justify-center items-center text-center slide-transition">
+                    <div class="animate-bounce-gentle mb-8">
+                        <div class="w-20 h-20 bg-gradient-to-br from-orange-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-soft">
+                            <span class="text-3xl">🥑</span>
+                        </div>
+                    </div>
+                    <h1 class="text-3xl font-bold text-white mb-4 animate-fade-in">Welcome to</h1>
+                    <h2 class="text-4xl font-bold bg-gradient-to-r from-brand-400 to-brand-300 bg-clip-text text-transparent mb-6 animate-slide-up">Fitme.io</h2>
+                    <p class="text-gray-300 text-lg leading-relaxed animate-fade-in">Let's explore smart meal planning and budgeting with AI</p>
+                </div>
+
+                
+                <div id="slide-1" class="slide absolute inset-0 p-8 flex flex-col justify-center items-center text-center slide-transition opacity-0 translate-x-full">
+                    <div class="w-24 h-24 bg-gradient-to-br from-brand-400 to-brand-500 rounded-3xl flex items-center justify-center shadow-glass mb-8">
+                        <span class="text-4xl">📱</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-4">Virtual Food Storage</h3>
+                    <p class="text-gray-300 leading-relaxed mb-6 px-4">Keep track of what's in your kitchen with our smart inventory system. Scan barcodes, add items manually, and get expiry reminders to never waste food again.</p>
+                    <div class="bg-gray-700/50 backdrop-blur-sm rounded-2xl p-4 w-full border border-gray-600/30">
+                        <div class="flex items-center justify-between text-sm text-gray-200">
+                            <span>🥕 Carrots</span>
+                            <span class="text-brand-400 font-medium">5 left</span>
+                        </div>
+                    </div>
+                </div>
+
+              
+                <div id="slide-2" class="slide absolute inset-0 p-8 flex flex-col justify-center items-center text-center slide-transition opacity-0 translate-x-full">
+                    <div class="w-24 h-24 bg-gradient-to-br from-accent-400 to-accent-500 rounded-3xl flex items-center justify-center shadow-glass mb-8">
+                        <span class="text-4xl">🤖</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-4">AI-Powered Suggestions</h3>
+                    <p class="text-gray-300 leading-relaxed mb-6 px-4">Get personalized meal recommendations based on your available ingredients and budget. Our AI learns your preferences and suggests cost-effective recipes.</p>
+                    <div class="bg-gray-700/50 backdrop-blur-sm rounded-2xl p-4 w-full border border-gray-600/30">
+                        <div class="text-sm text-gray-200">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span>🍝</span>
+                                <span>Pasta Primavera</span>
+                                <span class="ml-auto text-green-400 font-medium">₦3,400</span>
+                            </div>
+                            <div class="text-xs text-gray-400">Uses: carrots, pasta, herbs</div>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div id="slide-3" class="slide absolute inset-0 p-8 flex flex-col justify-center items-center text-center slide-transition opacity-0 translate-x-full">
+                    <div class="w-24 h-24 bg-gradient-to-br from-green-400 to-green-500 rounded-3xl flex items-center justify-center shadow-glass mb-8">
+                        <span class="text-4xl">👨‍👩‍👧‍👦</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-4">Family Sharing</h3>
+                    <p class="text-gray-300 leading-relaxed mb-6 px-4">Share your virtual storage with family and friends. Everyone can update the inventory, add to shopping lists, and coordinate meal planning together.</p>
+                    <div class="bg-gray-700/50 backdrop-blur-sm rounded-2xl p-4 w-full border border-gray-600/30">
+                        <div class="flex items-center gap-3 text-sm">
+                            <div class="flex -space-x-2">
+                                <div class="w-8 h-8 bg-brand-400 rounded-full border-2 border-gray-800"></div>
+                                <div class="w-8 h-8 bg-accent-400 rounded-full border-2 border-gray-800"></div>
+                                <div class="w-8 h-8 bg-green-400 rounded-full border-2 border-gray-800"></div>
+                            </div>
+                            <span class="text-gray-200">3 family members</span>
+                        </div>
+                    </div>
+                </div>
+
+              
+                <div id="slide-4" class="slide absolute inset-0 p-8 flex flex-col justify-center items-center text-center slide-transition opacity-0 translate-x-full">
+                    <div class="w-24 h-24 bg-gradient-to-br from-emerald-400 to-emerald-500 rounded-3xl flex items-center justify-center shadow-glass mb-8">
+                        <span class="text-4xl">💰</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-4">Budget Your Money</h3>
+                    <p class="text-gray-300 leading-relaxed mb-6 px-4">Smart meal suggestions help you save money on groceries. For example, drinking garri costs ₦600, but you save ₦400 thanks to Fitme.io suggestions for better alternatives.</p>
+                    <div class="bg-gray-700/50 backdrop-blur-sm rounded-2xl p-4 w-full border border-gray-600/30">
+                        <div class="text-sm">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-gray-200">🥛 Garri Alternative</span>
+                                <span class="text-red-400 line-through">₦600</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-200">💡 Fitme.io Suggestion</span>
+                                <span class="text-green-400 font-medium">Save ₦400</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="slide-5" class="slide absolute inset-0 p-8 flex flex-col justify-center items-center text-center slide-transition opacity-0 translate-x-full">
+                    <div class="animate-pulse-soft mb-8">
+                        <div class="w-24 h-24 bg-gradient-to-br from-brand-500 to-brand-600 rounded-3xl flex items-center justify-center shadow-glow">
+                            <span class="text-4xl">🚀</span>
+                        </div>
+                    </div>
+                    <h3 class="text-3xl font-bold text-white mb-4">Ready to Start?</h3>
+                    <p class="text-gray-300 leading-relaxed mb-8 px-4">Join thousands of Nigerian families who are already saving money, reducing food waste, and enjoying better meals with Fitme.io AI.</p>
+                    <a href="subscription.html" class="w-full bg-gradient-to-r from-brand-500 to-brand-600 text-white font-semibold py-4 px-8 rounded-2xl shadow-glow hover:shadow-xl transform hover:scale-105 transition-all duration-300 inline-block">
+                        Get Started Now
+                    </a>
+                </div>
+            </div>
+
+           
+            <div class="absolute bottom-8 left-0 right-0 flex flex-col items-center gap-4">
+                
+                <div class="flex gap-2">
+                    <button class="progress-dot w-3 h-3 rounded-full bg-brand-500 transition-all duration-300" data-slide="0"></button>
+                    <button class="progress-dot w-3 h-3 rounded-full bg-gray-600 hover:bg-brand-400 transition-all duration-300" data-slide="1"></button>
+                    <button class="progress-dot w-3 h-3 rounded-full bg-gray-600 hover:bg-brand-400 transition-all duration-300" data-slide="2"></button>
+                    <button class="progress-dot w-3 h-3 rounded-full bg-gray-600 hover:bg-brand-400 transition-all duration-300" data-slide="3"></button>
+                    <button class="progress-dot w-3 h-3 rounded-full bg-gray-600 hover:bg-brand-400 transition-all duration-300" data-slide="4"></button>
+                    <button class="progress-dot w-3 h-3 rounded-full bg-gray-600 hover:bg-brand-400 transition-all duration-300" data-slide="5"></button>
+                </div>
+
+               
+                <button id="nextBtn" class="bg-gray-700/80 backdrop-blur-sm text-white font-semibold py-3 px-8 rounded-xl shadow-soft hover:bg-gray-600/80 transform hover:scale-105 transition-all duration-300 border border-gray-600/50">
+                    Next
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const totalSlides = 6;
+
+        function showSlide(slideIndex) {
+            // Hide all slides
+            document.querySelectorAll('.slide').forEach((slide, index) => {
+                slide.style.opacity = '0';
+                slide.style.transform = index < slideIndex ? 'translateX(-100%)' : 'translateX(100%)';
+            });
+
+            // Show current slide
+            const currentSlideEl = document.getElementById(`slide-${slideIndex}`);
+            currentSlideEl.style.opacity = '1';
+            currentSlideEl.style.transform = 'translateX(0)';
+
+            // Update progress dots
+            document.querySelectorAll('.progress-dot').forEach((dot, index) => {
+                dot.classList.toggle('bg-brand-500', index === slideIndex);
+                dot.classList.toggle('bg-gray-600', index !== slideIndex);
+                dot.classList.toggle('scale-125', index === slideIndex);
+            });
+
+            // Update next button
+            const nextBtn = document.getElementById('nextBtn');
+            if (slideIndex === totalSlides - 1) {
+                nextBtn.style.display = 'none';
+            } else {
+                nextBtn.style.display = 'block';
+            }
+
+            currentSlide = slideIndex;
+        }
+
+        // Next button functionality
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            if (currentSlide < totalSlides - 1) {
+                showSlide(currentSlide + 1);
+            }
+        });
+
+        // Progress dots functionality
+        document.querySelectorAll('.progress-dot').forEach((dot, index) => {
+            dot.addEventListener('click', () => {
+                showSlide(index);
+            });
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' && currentSlide < totalSlides - 1) {
+                showSlide(currentSlide + 1);
+            } else if (e.key === 'ArrowLeft' && currentSlide > 0) {
+                showSlide(currentSlide - 1);
+            }
+        });
+
+        // Initialize
+        showSlide(0);
+    </script>
+</body>
+</html>

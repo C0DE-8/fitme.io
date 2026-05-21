@@ -1,0 +1,27 @@
+.footer {
+  padding: 0 16px 28px;
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: min(100%, 1280px);
+  box-sizing: border-box;
+  margin: 0 auto;
+  padding: 16px 18px;
+  border: 1px solid var(--fitme-line);
+  border-radius: 18px;
+  background: var(--fitme-surface);
+  color: var(--fitme-subtle);
+  font-size: 14px;
+  backdrop-filter: blur(16px);
+}
+
+@media (max-width: 640px) {
+  .inner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
