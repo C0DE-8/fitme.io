@@ -4,6 +4,18 @@ export function getFoodFeed(scope = "all") {
   return api.get("/user/food-feed", { params: { scope } }).then((res) => res.data.posts);
 }
 
+export function getMyFoodFeedPosts() {
+  return api.get("/user/food-feed/posts/mine").then((res) => res.data.posts);
+}
+
+export function searchFoodFeedUsers(query) {
+  return api.get("/user/food-feed/users/search", { params: { q: query } }).then((res) => res.data.users);
+}
+
+export function getFoodFeedUserProfile(id) {
+  return api.get(`/user/food-feed/users/${id}/profile`).then((res) => res.data);
+}
+
 export function createFoodFeedPost(payload) {
   const form = new FormData();
   if (payload.meal_name) form.append("meal_name", payload.meal_name);
@@ -31,6 +43,14 @@ export function createFoodFeedComment(postId, body) {
 
 export function removeFoodFeedComment(id) {
   return api.delete(`/user/food-feed/comments/${id}`).then((res) => res.data);
+}
+
+export function saveFoodFeedCommentReaction(commentId, reactionType) {
+  return api.put(`/user/food-feed/comments/${commentId}/reaction`, { reaction_type: reactionType }).then((res) => res.data);
+}
+
+export function removeFoodFeedCommentReaction(commentId) {
+  return api.delete(`/user/food-feed/comments/${commentId}/reaction`).then((res) => res.data);
 }
 
 export function followFoodFeedUser(id) {

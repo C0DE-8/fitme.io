@@ -16,6 +16,7 @@ import { UserDashboardPage } from "./pages/user/dashboard/UserDashboardPage";
 import { UserFoodDetailPage } from "./pages/user/food/UserFoodDetailPage";
 import { UserFoodFeedPage } from "./pages/user/feed/UserFoodFeedPage";
 import { UserProfilePage } from "./pages/user/profile/UserProfilePage";
+import { UserPublicProfilePage } from "./pages/user/profile/UserPublicProfilePage";
 import { UserStoragePage } from "./pages/user/storage/UserStoragePage";
 
 function AdminRoute({ children }) {
@@ -204,6 +205,19 @@ function App() {
               robots="noindex, nofollow"
             />
             <UserProfilePage />
+          </UserRoute>
+        }
+      />
+      <Route
+        path="/profile/:userId"
+        element={
+          <UserRoute>
+            <PageSeo
+              title="Food Profile | fitme.io"
+              description="View a fitme.io user's food feed profile and active food posts."
+              robots="noindex, nofollow"
+            />
+            <UserPublicProfilePage />
           </UserRoute>
         }
       />

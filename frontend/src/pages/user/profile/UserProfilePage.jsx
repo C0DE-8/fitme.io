@@ -1,20 +1,25 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  FiBookmark,
   FiCheckCircle,
   FiGrid,
   FiHeart,
-  FiLock,
   FiMail,
-  FiRepeat,
   FiSettings,
   FiUserCheck,
   FiUsers,
 } from "react-icons/fi";
 import { useToast } from "../../../components/feedback/useToast";
 import { getApiError } from "../../../lib/api";
-import { updateCurrentUser } from "../../../lib/auth";
-import { changeUserPassword, getUserProfile, updateUserProfile } from "../../../lib/api/userApi";
+import { clearSession, updateCurrentUser } from "../../../lib/auth";
+import { getMyFoodFeedPosts } from "../../../lib/api/foodFeedApi";
+import {
+  changeUserPassword,
+  deleteUserAccount,
+  getUserProfile,
+  getUserSubscriptionStatus,
+  updateUserProfile,
+} from "../../../lib/api/userApi";
 import { ProfileSettingsModal } from "./ProfileSettingsModal";
 import styles from "./UserProfilePage.module.css";
 
@@ -22,12 +27,28 @@ function initial(name) {
   return String(name || "F").trim().charAt(0).toUpperCase();
 }
 
+function formatDate(value) {
+  if (!value) return "No subscription";
+
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
 export function UserProfilePage() {
+  const navigate = useNavigate();
   const toast = useToast();
   const [profile, setProfile] = useState(null);
+  const [subscription, setSubscription] = useState(null);
+  const [posts, setPosts] = useState([]);
+  const [activeTab, setActiveTab] = useState("posts");
   const [loading, setLoading] = useState(true);
+  const [postsLoading, setPostsLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [passwordSaving, setPasswordSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
@@ -42,6 +63,25 @@ export function UserProfilePage() {
       })
       .finally(() => {
         if (alive) setLoading(false);
+      });
+
+    getUserSubscriptionStatus()
+      .then((data) => {
+        if (alive) setSubscription(data);
+      })
+      .catch((err) => {
+        if (alive) toast.error(getApiError(err, "Unable to load your subscription"), { title: "Subscription unavailable" });
+      });
+
+    getMyFoodFeedPosts()
+      .then((data) => {
+        if (alive) setPosts(data || []);
+      })
+      .catch((err) => {
+        if (alive) toast.error(getApiError(err, "Unable to load your food posts"), { title: "Posts unavailable" });
+      })
+      .finally(() => {
+        if (alive) setPostsLoading(false);
       });
 
     return () => {
@@ -67,6 +107,23 @@ export function UserProfilePage() {
       toast.error(getApiError(err, "Unable to update profile"), { title: "Profile not updated" });
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function deleteAccount(password) {
+    setDeleting(true);
+
+    try {
+      const data = await deleteUserAccount(password);
+      clearSession();
+      toast.success(data.message || "Account deleted.");
+      navigate("/", { replace: true });
+      return true;
+    } catch (err) {
+      toast.error(getApiError(err, "Unable to delete account"), { title: "Account not deleted" });
+      return false;
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -135,73 +192,116 @@ export function UserProfilePage() {
       </section>
 
       <nav className={styles.tabs} aria-label="Profile sections">
-        <span className={styles.activeTab}>
-          <FiGrid aria-hidden="true" />
-        </span>
-        <span>
-          <FiLock aria-hidden="true" />
-        </span>
-        <span>
-          <FiRepeat aria-hidden="true" />
-        </span>
-        <span>
-          <FiBookmark aria-hidden="true" />
-        </span>
-        <span>
+        <button
+          className={activeTab === "posts" ? styles.activeTab : ""}
+          type="button"
+          onClick={() => setActiveTab("posts")}
+          aria-label="Your food posts"
+        >
           <FiHeart aria-hidden="true" />
-        </span>
+        </button>
+        <button
+          className={activeTab === "summary" ? styles.activeTab : ""}
+          type="button"
+          onClick={() => setActiveTab("summary")}
+          aria-label="Profile summary"
+        >
+          <FiGrid aria-hidden="true" />
+        </button>
       </nav>
 
-      <div className={styles.grid}>
-        <section className={styles.panel}>
-          <div className={styles.summaryTitle}>
-            <FiUsers aria-hidden="true" />
+      {activeTab === "posts" ? (
+        <section className={styles.postPanel}>
+          <div className={styles.panelHeader}>
             <div>
-              <p className={styles.kicker}>Social</p>
-              <h2>Feed profile</h2>
+              <p className={styles.kicker}>Your feed</p>
+              <h2>Food posts</h2>
             </div>
+            <span>{postsLoading ? "..." : posts.length}</span>
           </div>
-          <div className={styles.socialList}>
-            <span>
-              <FiUserCheck aria-hidden="true" />
-              {Number(totals.following || 0).toLocaleString()} following
-            </span>
-            <span>
+          <div className={styles.postGrid}>
+            {posts.map((post) => (
+              <article className={styles.postCard} key={post.id}>
+                {post.image_url ? (
+                  <img src={post.image_url} alt="" />
+                ) : (
+                  <span className={styles.postFallback}>{initial(post.meal_name)}</span>
+                )}
+                <div>
+                  <strong>{post.meal_name || "Food post"}</strong>
+                  {post.caption ? <p>{post.caption}</p> : null}
+                  <small>
+                    {Number(post.reaction_count || 0)} likes · {Number(post.comment_count || 0)} comments
+                  </small>
+                </div>
+              </article>
+            ))}
+            {!postsLoading && !posts.length ? (
+              <div className={styles.emptyPosts}>
+                <strong>No active food posts.</strong>
+                <p>Food Feed posts expire after 24 hours, so only active posts appear here.</p>
+              </div>
+            ) : null}
+          </div>
+        </section>
+      ) : (
+        <div className={styles.grid}>
+          <section className={styles.panel}>
+            <div className={styles.summaryTitle}>
               <FiUsers aria-hidden="true" />
-              {Number(totals.followers || 0).toLocaleString()} followers
-            </span>
-            <span>
-              <FiHeart aria-hidden="true" />
-              {Number(totals.likes || 0).toLocaleString()} likes
-            </span>
-          </div>
-        </section>
+              <div>
+                <p className={styles.kicker}>Social</p>
+                <h2>Feed profile</h2>
+              </div>
+            </div>
+            <div className={styles.socialList}>
+              <span>
+                <FiUserCheck aria-hidden="true" />
+                {Number(totals.following || 0).toLocaleString()} following
+              </span>
+              <span>
+                <FiUsers aria-hidden="true" />
+                {Number(totals.followers || 0).toLocaleString()} followers
+              </span>
+              <span>
+                <FiHeart aria-hidden="true" />
+                {Number(totals.likes || 0).toLocaleString()} likes
+              </span>
+            </div>
+          </section>
 
-        <section className={styles.panel}>
-          <p className={styles.kicker}>Account</p>
-          <h2>Profile details</h2>
-          <dl>
-            <div>
-              <dt>Joined</dt>
-              <dd>{profile?.created_at_from_now || (loading ? "Loading..." : "Unavailable")}</dd>
-            </div>
-            <div>
-              <dt>Updated</dt>
-              <dd>{profile?.updated_at_from_now || (loading ? "Loading..." : "Unavailable")}</dd>
-            </div>
-            <div>
-              <dt>Role</dt>
-              <dd>{profile?.role || "user"}</dd>
-            </div>
-          </dl>
-        </section>
-      </div>
+          <section className={styles.panel}>
+            <p className={styles.kicker}>Account</p>
+            <h2>Profile details</h2>
+            <dl>
+              <div>
+                <dt>Joined</dt>
+                <dd>{profile?.created_at_from_now || (loading ? "Loading..." : "Unavailable")}</dd>
+              </div>
+              <div>
+                <dt>Updated</dt>
+                <dd>{profile?.updated_at_from_now || (loading ? "Loading..." : "Unavailable")}</dd>
+              </div>
+              <div>
+                <dt>Subscribed</dt>
+                <dd>{loading ? "Loading..." : formatDate(subscription?.start_date)}</dd>
+              </div>
+              <div>
+                <dt>Ends</dt>
+                <dd>{loading ? "Loading..." : formatDate(subscription?.expiry_date)}</dd>
+              </div>
+            </dl>
+          </section>
+        </div>
+      )}
 
       {settingsOpen ? (
         <ProfileSettingsModal
           profile={profile}
           saving={saving}
           passwordSaving={passwordSaving}
+          deleting={deleting}
+          onDelete={deleteAccount}
           onClose={() => setSettingsOpen(false)}
           onPasswordSave={savePassword}
           onSave={saveProfile}

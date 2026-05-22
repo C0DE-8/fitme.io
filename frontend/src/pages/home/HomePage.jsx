@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { getCurrentUser, getToken } from "../../lib/auth";
 import styles from "./HomePage.module.css";
 
 const metrics = [
@@ -8,6 +9,10 @@ const metrics = [
 ];
 
 export function HomePage() {
+  const user = getCurrentUser();
+  const hasSession = Boolean(getToken());
+  const isAdmin = user?.role === "admin";
+
   return (
     <section className={styles.page}>
       <div className={styles.hero}>
@@ -18,12 +23,20 @@ export function HomePage() {
             Plan food, manage storage, and keep subscription workflows organized from one focused app.
           </p>
           <div className={styles.actions}>
-            <Link className={styles.primary} to="/auth">
-              Get started
-            </Link>
-            <Link className={styles.secondary} to="/auth">
-              Sign in
-            </Link>
+            {hasSession ? (
+              <Link className={styles.primary} to={isAdmin ? "/admin" : "/foods"}>
+                {isAdmin ? "Admin" : "Food Feed"}
+              </Link>
+            ) : (
+              <>
+                <Link className={styles.primary} to="/auth">
+                  Get started
+                </Link>
+                <Link className={styles.secondary} to="/auth">
+                  Sign in
+                </Link>
+              </>
+            )}
           </div>
         </div>
 

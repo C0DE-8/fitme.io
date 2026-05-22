@@ -2,22 +2,21 @@
   position: fixed;
   inset: 0;
   z-index: 900;
-  display: grid;
-  place-items: center;
-  overflow-y: auto;
-  background: rgba(2, 7, 5, 0.74);
-  backdrop-filter: blur(10px);
-  padding: 22px;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(2, 7, 5, 0.68);
+  backdrop-filter: blur(9px);
 }
 
 .modal {
-  width: min(100%, 540px);
+  width: min(100%, 470px);
+  min-height: 100svh;
   box-sizing: border-box;
-  border: 1px solid var(--fitme-line);
-  border-radius: 24px;
-  background: rgba(8, 23, 18, 0.96);
-  box-shadow: 0 30px 100px -34px rgba(0, 0, 0, 0.95);
-  padding: 20px;
+  overflow-y: auto;
+  border-left: 1px solid var(--fitme-line);
+  background: rgba(8, 23, 18, 0.98);
+  box-shadow: -30px 0 100px -42px rgba(0, 0, 0, 0.95);
+  padding: 24px;
 }
 
 .modal header,
@@ -32,7 +31,8 @@
   margin-bottom: 18px;
 }
 
-.modal header p {
+.modal header p,
+.sectionTitle p {
   margin: 0 0 5px;
   color: var(--fitme-brand-text);
   font-family: var(--font-mono);
@@ -43,7 +43,7 @@
 .modal h2 {
   margin: 0;
   color: var(--fitme-strong);
-  font-size: 30px;
+  font-size: 32px;
   letter-spacing: 0;
 }
 
@@ -66,29 +66,55 @@
   padding: 0;
 }
 
+.sectionNav {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 20px;
+  border: 1px solid var(--fitme-line);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.035);
+  padding: 9px;
+}
+
+.sectionNav button {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--fitme-muted);
+  padding: 0 13px;
+  text-align: left;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.sectionNav svg {
+  font-size: 19px;
+}
+
+.sectionNav .sectionActive {
+  border-color: var(--fitme-line);
+  background: var(--fitme-surface-strong);
+  color: var(--fitme-strong);
+}
+
 .modal form {
   display: grid;
   gap: 13px;
-}
-
-.passwordForm {
-  margin-top: 18px;
-  border-top: 1px solid var(--fitme-line);
-  padding-top: 18px;
-}
-
-.sectionTitle p {
-  margin: 0 0 5px;
-  color: var(--fitme-brand-text);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  text-transform: uppercase;
+  border: 1px solid var(--fitme-line);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.035);
+  padding: 18px;
 }
 
 .sectionTitle h3 {
   margin: 0 0 2px;
   color: var(--fitme-strong);
-  font-size: 23px;
+  font-size: 25px;
   letter-spacing: 0;
 }
 
@@ -123,26 +149,39 @@
 }
 
 .actions button,
-.passwordAction button {
+.passwordAction button,
+.deleteAction button {
+  min-height: 42px;
+  border-radius: 14px;
   padding: 0 15px;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
 }
 
 .actions button:last-child,
 .passwordAction button {
-  min-height: 42px;
   border: 0;
-  border-radius: 14px;
   background: linear-gradient(90deg, var(--fitme-brand), var(--fitme-accent));
   color: var(--fitme-bg);
-  font: inherit;
-  font-weight: 900;
   box-shadow: var(--fitme-glow);
-  cursor: pointer;
 }
 
-.passwordAction {
+.passwordAction,
+.deleteAction {
   display: flex;
   justify-content: flex-end;
+}
+
+.deleteForm > p {
+  margin: 0;
+  color: var(--fitme-muted);
+}
+
+.deleteAction button {
+  border: 1px solid rgba(252, 165, 165, 0.26);
+  background: var(--fitme-danger-bg);
+  color: var(--fitme-danger);
 }
 
 button:disabled {
@@ -151,13 +190,8 @@ button:disabled {
 }
 
 @media (max-width: 560px) {
-  .backdrop {
-    align-items: end;
-    padding: 12px;
-  }
-
   .modal {
-    border-radius: 22px;
+    width: 100%;
     padding: 16px;
   }
 

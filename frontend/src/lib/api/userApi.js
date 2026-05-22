@@ -12,6 +12,10 @@ export function changeUserPassword(payload) {
   return api.put("/user/profile/password", payload).then((res) => res.data);
 }
 
+export function deleteUserAccount(password) {
+  return api.delete("/user/profile", { data: { password } }).then((res) => res.data);
+}
+
 export function getUserSubscriptionStatus() {
   return api.get("/user/subscription/status").then((res) => res.data);
 }

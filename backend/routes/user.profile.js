@@ -181,4 +181,75 @@ router.put('/profile/password', authenticateUser, async (req, res) => {
   }
 });
 
+// DELETE /profile - Delete logged-in user's own account
+router.delete('/profile', authenticateUser, async (req, res) => {
+  const userId = req.user.id;
+  const password = String(req.body?.password || '');
+
+  if (!password) {
+    return res.status(400).json({ error: 'Password is required to delete your account.' });
+  }
+
+  try {
+    const [rows] = await db.promise().query(
+      'SELECT id, password_hash FROM users WHERE id = ? LIMIT 1',
+      [userId]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const validPassword = await bcrypt.compare(password, rows[0].password_hash);
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Password is incorrect.' });
+    }
+
+    await foodFeedRoutes.ensureFoodFeedTables();
+
+    const conn = db.promise();
+    await conn.beginTransaction();
+
+    try {
+      await conn.query(
+        `DELETE c
+         FROM food_feed_comments c
+         JOIN food_feed_posts p ON p.id = c.post_id
+         WHERE p.user_id = ?`,
+        [userId]
+      );
+      await conn.query('DELETE FROM food_feed_comments WHERE user_id = ?', [userId]);
+      await conn.query('DELETE FROM food_feed_posts WHERE user_id = ?', [userId]);
+      await conn.query(
+        'DELETE FROM food_feed_reactions WHERE reactor_user_id = ? OR post_author_user_id = ?',
+        [userId, userId]
+      );
+      await conn.query(
+        'DELETE FROM food_feed_follows WHERE follower_user_id = ? OR following_user_id = ?',
+        [userId, userId]
+      );
+      try {
+        await conn.query('DELETE FROM storage_friend_suggestions WHERE owner_user_id = ?', [userId]);
+      } catch (deleteError) {
+        if (deleteError.code !== 'ER_NO_SUCH_TABLE') throw deleteError;
+      }
+      await conn.query('DELETE FROM storage_shares WHERE user_id = ?', [userId]);
+      await conn.query('DELETE FROM user_storage WHERE user_id = ?', [userId]);
+      await conn.query('DELETE FROM chat_history WHERE user_id = ?', [userId]);
+      await conn.query('DELETE FROM subscriptions WHERE user_id = ?', [userId]);
+      await conn.query('DELETE FROM otps WHERE user_id = ?', [userId]);
+      await conn.query('DELETE FROM users WHERE id = ?', [userId]);
+      await conn.commit();
+    } catch (deleteError) {
+      await conn.rollback();
+      throw deleteError;
+    }
+
+    return res.json({ message: 'Account deleted successfully.' });
+  } catch (err) {
+    console.error('Error deleting user account:', err);
+    return res.status(500).json({ error: 'Server error' });
+  }
+});
+
 module.exports = router;

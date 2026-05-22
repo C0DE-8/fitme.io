@@ -61,8 +61,14 @@
 
 .link,
 .active,
-.button {
+.button,
+.authLink,
+.authLinkActive {
   min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
   padding: 8px 13px;
   border: 1px solid transparent;
   border-radius: 999px;
@@ -75,16 +81,84 @@
   cursor: pointer;
 }
 
-.active {
+.active,
+.authLinkActive {
   border-color: rgba(139, 92, 246, 0.35);
   background: rgba(139, 92, 246, 0.14);
   color: var(--fitme-brand-text);
 }
 
 .link:hover,
-.button:hover {
+.button:hover,
+.authLink:hover {
   background: var(--fitme-surface-strong);
   color: var(--fitme-strong);
+}
+
+.account {
+  min-width: 0;
+  min-height: 46px;
+  display: grid;
+  grid-template-columns: 32px minmax(0, auto);
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 9px;
+  box-sizing: border-box;
+  border: 1px solid var(--fitme-line);
+  border-radius: 16px;
+  background: var(--fitme-soft);
+  color: var(--fitme-strong);
+  padding: 6px 11px 6px 7px;
+  text-decoration: none;
+}
+
+.account > span {
+  grid-row: 1 / span 2;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: var(--fitme-brand-soft);
+  color: var(--fitme-brand-text);
+}
+
+.account strong {
+  max-width: min(190px, 24vw);
+  overflow: hidden;
+  align-self: end;
+  color: var(--fitme-strong);
+  font-size: 13px;
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account small {
+  align-self: start;
+  color: var(--fitme-success);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.sessionState {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--fitme-line);
+  border-radius: 999px;
+  background: var(--fitme-soft);
+  color: var(--fitme-subtle);
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.authLink,
+.authLinkActive {
+  border-color: rgba(52, 211, 153, 0.24);
+  background: linear-gradient(90deg, var(--fitme-green), var(--fitme-accent));
+  color: var(--fitme-bg);
 }
 
 @media (max-width: 640px) {
@@ -103,7 +177,23 @@
 
   .link,
   .active,
-  .button {
+  .button,
+  .authLink,
+  .authLinkActive {
     padding: 7px 10px;
+  }
+
+  .account {
+    grid-template-columns: 32px;
+    padding-right: 7px;
+  }
+
+  .account strong,
+  .account small,
+  .sessionState,
+  .button span,
+  .authLink span,
+  .authLinkActive span {
+    display: none;
   }
 }
