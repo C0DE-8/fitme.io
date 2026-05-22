@@ -4,6 +4,14 @@ export function getUserProfile() {
   return api.get("/user/profile").then((res) => res.data.profile);
 }
 
+export function updateUserProfile(payload) {
+  return api.put("/user/profile", payload).then((res) => res.data);
+}
+
+export function changeUserPassword(payload) {
+  return api.put("/user/profile/password", payload).then((res) => res.data);
+}
+
 export function getUserSubscriptionStatus() {
   return api.get("/user/subscription/status").then((res) => res.data);
 }

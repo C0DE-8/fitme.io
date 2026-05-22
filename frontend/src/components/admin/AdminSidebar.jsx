@@ -6,6 +6,7 @@ import {
   FiChevronRight,
   FiCreditCard,
   FiGrid,
+  FiMessageSquare,
   FiPackage,
   FiX,
   FiUsers,
@@ -19,6 +20,7 @@ const links = [
   { to: "/admin/plans", label: "Plans", icon: FiBarChart2 },
   { to: "/admin/accounts", label: "Accounts", icon: FiPackage },
   { to: "/admin/foods", label: "Foods", icon: FiBox },
+  { to: "/admin/feed", label: "Food Feed", icon: FiMessageSquare },
 ];
 
 export function AdminSidebar({ collapsed = false, mobileOpen = false, onCloseMobile, onToggle }) {

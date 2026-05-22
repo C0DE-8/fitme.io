@@ -4,6 +4,10 @@ export function getAdminProfile() {
   return api.get("/admin/profile").then((res) => res.data.profile);
 }
 
+export function changeAdminPassword(payload) {
+  return api.put("/admin/profile/password", payload).then((res) => res.data);
+}
+
 export function getAdminStats() {
   return api.get("/admin/stats/users").then((res) => res.data);
 }

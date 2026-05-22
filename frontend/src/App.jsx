@@ -7,6 +7,7 @@ import { getToken, isAdminSession } from "./lib/auth";
 import { AdminAuthPage } from "./pages/admin/auth/AdminAuthPage";
 import { AdminPage } from "./pages/admin/dashboard/AdminPage";
 import { AdminFoodsPage } from "./pages/admin/foods/AdminFoodsPage";
+import { AdminFoodFeedPage } from "./pages/admin/feed/AdminFoodFeedPage";
 import { AuthPage } from "./pages/auth/AuthPage";
 import { HomePage } from "./pages/home/HomePage";
 import { SharedStoragePage } from "./pages/shared/SharedStoragePage";
@@ -14,7 +15,7 @@ import { UserBudgetPage } from "./pages/user/budget/UserBudgetPage";
 import { UserDashboardPage } from "./pages/user/dashboard/UserDashboardPage";
 import { UserFoodDetailPage } from "./pages/user/food/UserFoodDetailPage";
 import { UserFoodFeedPage } from "./pages/user/feed/UserFoodFeedPage";
-import { UserPlaceholderPage } from "./pages/user/placeholder/UserPlaceholderPage";
+import { UserProfilePage } from "./pages/user/profile/UserProfilePage";
 import { UserStoragePage } from "./pages/user/storage/UserStoragePage";
 
 function AdminRoute({ children }) {
@@ -99,6 +100,19 @@ function App() {
               robots="noindex, nofollow"
             />
             <AdminFoodsPage />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/feed"
+        element={
+          <AdminRoute>
+            <PageSeo
+              title="Food Feed Moderation | fitme.io Admin"
+              description="Review and moderate active fitme.io food feed posts."
+              robots="noindex, nofollow"
+            />
+            <AdminFoodFeedPage />
           </AdminRoute>
         }
       />
@@ -189,7 +203,7 @@ function App() {
               description="Manage your fitme.io profile and food planning account settings."
               robots="noindex, nofollow"
             />
-            <UserPlaceholderPage type="profile" />
+            <UserProfilePage />
           </UserRoute>
         }
       />

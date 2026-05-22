@@ -25,6 +25,13 @@ export function getCurrentUser() {
   }
 }
 
+export function updateCurrentUser(updates) {
+  const user = getCurrentUser();
+  if (!user) return;
+
+  localStorage.setItem(USER_KEY, JSON.stringify({ ...user, ...updates }));
+}
+
 export function isAdminSession() {
   return getCurrentUser()?.role === "admin";
 }

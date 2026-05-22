@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../db');
 const { authenticateAdmin } = require('../middleware');
 const moment = require('moment');
+const bcrypt = require('bcryptjs');
 
 // GET /profile - Get logged-in user's profile
 router.get('/profile', authenticateAdmin, async (req, res) => {
@@ -35,7 +36,7 @@ router.get('/profile', authenticateAdmin, async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
-// PUT /profile - Update logged-in user's profile (NO password change)
+// PUT /profile - Update logged-in admin's profile details
 router.put('/profile', authenticateAdmin, async (req, res) => {
   const userId = req.user.id;
   const { username, email, bio } = req.body;
@@ -81,6 +82,57 @@ router.put('/profile', authenticateAdmin, async (req, res) => {
   } catch (err) {
     console.error('Error updating profile:', err);
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// PUT /profile/password - Change logged-in admin's own password
+router.put('/profile/password', authenticateAdmin, async (req, res) => {
+  const userId = req.user.id;
+  const currentPassword = String(req.body?.current_password || '');
+  const newPassword = String(req.body?.new_password || '');
+  const confirmPassword = String(req.body?.confirm_password || '');
+
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    return res.status(400).json({ error: 'Current password, new password, and confirmation are required.' });
+  }
+
+  if (newPassword.length < 8) {
+    return res.status(400).json({ error: 'New password must be at least 8 characters.' });
+  }
+
+  if (newPassword !== confirmPassword) {
+    return res.status(400).json({ error: 'New password confirmation does not match.' });
+  }
+
+  if (newPassword === currentPassword) {
+    return res.status(400).json({ error: 'Choose a different new password.' });
+  }
+
+  try {
+    const [rows] = await db.promise().query(
+      'SELECT id, password_hash FROM users WHERE id = ? AND role = ? LIMIT 1',
+      [userId, 'admin']
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ error: 'Admin not found' });
+    }
+
+    const currentPasswordValid = await bcrypt.compare(currentPassword, rows[0].password_hash);
+    if (!currentPasswordValid) {
+      return res.status(401).json({ error: 'Current password is incorrect.' });
+    }
+
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+    await db.promise().query(
+      'UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [newPasswordHash, userId]
+    );
+
+    return res.json({ message: 'Password changed successfully.' });
+  } catch (err) {
+    console.error('Error changing admin password:', err);
+    return res.status(500).json({ error: 'Server error' });
   }
 });
 
