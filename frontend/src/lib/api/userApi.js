@@ -20,6 +20,40 @@ export function getUserSubscriptionStatus() {
   return api.get("/user/subscription/status").then((res) => res.data);
 }
 
+export function getUserSubscriptions(status = "") {
+  const params = status ? { status } : undefined;
+  return api.get("/user/subscriptions/my", { params }).then((res) => res.data.subscriptions);
+}
+
+export function getUserPlans() {
+  return api.get("/user/plans").then((res) => res.data.plans);
+}
+
+export function getUserAccounts() {
+  return api.get("/user/accounts").then((res) => res.data.accounts);
+}
+
+export function getFlutterwaveBanks(country = "NG") {
+  return api.get("/user/payments/banks", { params: { country } }).then((res) => res.data.banks);
+}
+
+export function resolveFlutterwaveAccount(payload) {
+  return api.post("/user/payments/resolve-account", payload).then((res) => res.data.account);
+}
+
+export function createUserSubscription(payload) {
+  const formData = new FormData();
+
+  formData.append("plan_name", payload.plan_name);
+  formData.append("payment_proof", payload.payment_proof);
+
+  return api.post("/user/subscribe", formData).then((res) => res.data);
+}
+
+export function updateUserSubscriptionPayer(id, payload) {
+  return api.put(`/user/subscriptions/${id}/payer`, payload).then((res) => res.data);
+}
+
 export function getUserStorage() {
   return api.get("/user/storage").then((res) => res.data.storage);
 }

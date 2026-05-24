@@ -43,7 +43,7 @@
   border: 1px solid var(--fitme-line);
   border-radius: 30px;
   background:
-    radial-gradient(circle at 78% 18%, rgba(139, 92, 246, 0.18), transparent 38%),
+    radial-gradient(circle at 78% 18%, rgba(56, 189, 248, 0.18), transparent 38%),
     var(--fitme-surface);
   padding: 24px;
   box-shadow: 0 22px 64px -34px rgba(0, 0, 0, 0.85);
@@ -62,6 +62,7 @@
   color: transparent;
   font-size: clamp(34px, 8vw, 62px);
   line-height: 0.95;
+  text-shadow: var(--fitme-name-glow);
 }
 
 .hero p {
@@ -168,7 +169,7 @@
   border: 1px solid var(--fitme-line);
   border-radius: 28px;
   background:
-    radial-gradient(circle at top right, rgba(139, 92, 246, 0.18), transparent 36%),
+    radial-gradient(circle at top right, rgba(56, 189, 248, 0.18), transparent 36%),
     var(--fitme-surface);
   box-shadow: 0 24px 70px -34px rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(18px);
@@ -204,7 +205,7 @@
 .userBubble {
   width: min(82%, 560px);
   justify-self: end;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.28), rgba(59, 130, 246, 0.16));
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.28), rgba(96, 165, 250, 0.16));
   color: var(--fitme-strong);
 }
 
@@ -438,8 +439,8 @@
 }
 
 .panelActions button:last-child {
-  border-color: rgba(139, 92, 246, 0.34);
-  background: rgba(139, 92, 246, 0.14);
+  border-color: rgba(56, 189, 248, 0.34);
+  background: rgba(56, 189, 248, 0.14);
   color: var(--fitme-brand-text);
 }
 
@@ -522,8 +523,8 @@
   border: 1px solid var(--fitme-line);
   border-radius: 28px;
   background:
-    radial-gradient(circle at top, rgba(139, 92, 246, 0.16), transparent 42%),
-    rgba(5, 21, 15, 0.9);
+    radial-gradient(circle at top, rgba(56, 189, 248, 0.16), transparent 42%),
+    rgba(6, 17, 33, 0.9);
   box-shadow: 0 28px 90px rgba(0, 0, 0, 0.62);
   backdrop-filter: blur(22px);
   padding: 22px;
@@ -608,7 +609,7 @@
   height: 42px;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(139, 92, 246, 0.34);
+  border: 1px solid rgba(56, 189, 248, 0.34);
   border-radius: 999px;
   background: var(--fitme-brand-soft);
   color: var(--fitme-brand-text);
@@ -663,10 +664,10 @@
   display: grid;
   gap: 8px;
   margin-bottom: 14px;
-  border: 1px solid rgba(139, 92, 246, 0.28);
+  border: 1px solid rgba(56, 189, 248, 0.28);
   border-radius: 22px;
   background:
-    radial-gradient(circle at top right, rgba(139, 92, 246, 0.2), transparent 42%),
+    radial-gradient(circle at top right, rgba(56, 189, 248, 0.2), transparent 42%),
     rgba(255, 255, 255, 0.06);
   padding: 16px;
   text-align: center;

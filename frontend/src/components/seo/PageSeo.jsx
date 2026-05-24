@@ -64,7 +64,7 @@ export function PageSeo({
     setMeta('meta[name="robots"]', { name: "robots", content: robots });
     setMeta('meta[name="author"]', { name: "author", content: "Copupbid" });
     setMeta('meta[name="application-name"]', { name: "application-name", content: siteName });
-    setMeta('meta[name="theme-color"]', { name: "theme-color", content: "#05150f" });
+    setMeta('meta[name="theme-color"]', { name: "theme-color", content: "#061121" });
     setMeta('meta[name="keywords"]', {
       name: "keywords",
       content:

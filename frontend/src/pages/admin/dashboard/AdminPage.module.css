@@ -2,7 +2,7 @@
   width: min(100%, 1180px);
   box-sizing: border-box;
   margin: 0 auto;
-  padding: 34px 32px 48px;
+  padding: 28px 20px 44px;
 }
 
 .heading {
@@ -26,8 +26,9 @@
   background: linear-gradient(90deg, var(--fitme-brand-text), var(--fitme-accent-text));
   background-clip: text;
   color: transparent;
-  font-size: 44px;
+  font-size: clamp(34px, 5vw, 48px);
   line-height: 1;
+  text-shadow: var(--fitme-name-glow);
 }
 
 .identity {
@@ -69,7 +70,8 @@
 .stats article {
   display: grid;
   gap: 10px;
-  padding: 18px;
+  min-width: 0;
+  padding: 16px;
 }
 
 .stats span {
@@ -91,8 +93,15 @@
 }
 
 .tablePanel {
-  grid-row: span 2;
   overflow: hidden;
+}
+
+.userPanel {
+  grid-row: span 3;
+}
+
+.subscriptionPanel {
+  grid-column: 1 / -1;
 }
 
 .sidePanel {
@@ -114,10 +123,16 @@
   font-size: 17px;
 }
 
-.panelHeader span {
+.panelHeader span,
+.panelHeader a {
   color: var(--fitme-muted);
   font-family: var(--font-mono);
   font-size: 13px;
+  text-decoration: none;
+}
+
+.panelHeader a:hover {
+  color: var(--fitme-brand-text);
 }
 
 .table {
@@ -125,9 +140,10 @@
 }
 
 .tableHead,
-.tableRow {
+.tableRow,
+.subscriptionHead,
+.subscriptionRow {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) 90px 90px;
   gap: 12px;
   align-items: center;
   min-height: 58px;
@@ -135,7 +151,18 @@
   border-bottom: 1px solid var(--fitme-soft);
 }
 
-.tableHead {
+.tableHead,
+.tableRow {
+  grid-template-columns: minmax(0, 1.5fr) 90px 90px;
+}
+
+.subscriptionHead,
+.subscriptionRow {
+  grid-template-columns: minmax(170px, 1.3fr) minmax(120px, 0.8fr) 92px 120px;
+}
+
+.tableHead,
+.subscriptionHead {
   min-height: 40px;
   background: var(--fitme-soft);
   color: var(--fitme-muted);
@@ -143,27 +170,83 @@
   font-weight: 800;
 }
 
-.tableRow:last-child {
+.tableRow:last-child,
+.subscriptionRow:last-child {
   border-bottom: 0;
 }
 
-.tableRow span:first-child {
+.tableRow span:first-child,
+.subscriptionRow span:first-child,
+.listItem span {
   display: grid;
   min-width: 0;
 }
 
-.tableRow strong {
+.tableRow strong,
+.subscriptionRow strong,
+.listItem strong {
   overflow: hidden;
   color: var(--fitme-ink);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.tableRow small {
+.tableRow small,
+.subscriptionRow small,
+.listItem small {
   overflow: hidden;
   color: var(--fitme-muted);
+  font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.subscriptionTable {
+  overflow-x: auto;
+}
+
+.subscriptionHead,
+.subscriptionRow {
+  min-width: 640px;
+}
+
+.subscriptionRow > span {
+  overflow: hidden;
+  color: var(--fitme-muted);
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status {
+  width: fit-content;
+  min-height: 27px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--fitme-line);
+  border-radius: 999px;
+  background: var(--fitme-soft);
+  color: var(--fitme-strong);
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: capitalize;
+}
+
+.active {
+  border-color: rgba(52, 211, 153, 0.25);
+  background: var(--fitme-success-bg);
+  color: var(--fitme-success);
+}
+
+.pending {
+  color: var(--fitme-accent-text);
+}
+
+.cancelled,
+.inactive {
+  border-color: rgba(252, 165, 165, 0.18);
+  color: var(--fitme-danger);
 }
 
 .list {
@@ -180,20 +263,28 @@
   border-bottom: 1px solid var(--fitme-soft);
 }
 
+.listItem > span {
+  min-width: 0;
+}
+
 .listItem:last-child {
   border-bottom: 0;
 }
 
-.listItem span {
+.listItem > span {
   overflow: hidden;
   color: var(--fitme-muted);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.listItem strong {
+.listItem > em {
+  overflow: hidden;
   color: var(--fitme-ink);
   font-size: 14px;
+  font-style: normal;
+  text-align: right;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -217,7 +308,7 @@
 
 @media (max-width: 900px) {
   .page {
-    padding: 24px 16px 36px;
+    padding: 16px 4px 36px;
   }
 
   .heading {
@@ -234,8 +325,55 @@
     grid-template-columns: 1fr;
   }
 
+  .stats {
+    gap: 10px;
+  }
+
+  .stats article {
+    min-height: 82px;
+  }
+
+  .userPanel,
+  .subscriptionPanel {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
   .tableHead,
   .tableRow {
-    grid-template-columns: minmax(0, 1fr) 70px 70px;
+    grid-template-columns: minmax(0, 1fr) 64px 64px;
+    gap: 8px;
+    padding: 0 12px;
+  }
+
+  .panelHeader {
+    padding: 0 12px;
+  }
+
+  .listItem {
+    padding: 0 12px;
+  }
+}
+
+@media (max-width: 520px) {
+  .heading h1 {
+    font-size: 34px;
+  }
+
+  .identity {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .subscriptionHead {
+    display: none;
+  }
+
+  .subscriptionRow {
+    min-width: 0;
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 7px;
+    padding: 12px;
   }
 }

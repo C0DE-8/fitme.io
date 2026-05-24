@@ -45,6 +45,7 @@
   color: transparent;
   font-size: clamp(38px, 7vw, 72px);
   line-height: 0.95;
+  text-shadow: var(--fitme-name-glow);
 }
 
 .heading p,
@@ -292,8 +293,8 @@
 }
 
 .typeChips .typeActive {
-  border-color: rgba(139, 92, 246, 0.42);
-  background: rgba(139, 92, 246, 0.16);
+  border-color: rgba(56, 189, 248, 0.42);
+  background: rgba(56, 189, 248, 0.16);
   color: var(--fitme-brand-text);
 }
 

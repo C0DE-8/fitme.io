@@ -11,11 +11,11 @@
   position: relative;
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr);
-  gap: 18px;
+  gap: 16px;
   width: min(100%, 1280px);
   box-sizing: border-box;
   margin: 0 auto;
-  padding: 18px 16px 24px;
+  padding: 18px 18px 28px;
 }
 
 .collapsed {
@@ -30,7 +30,7 @@
 @media (max-width: 900px) {
   .mobileBar {
     position: sticky;
-    top: 0;
+    top: 62px;
     z-index: 60;
     display: flex;
     align-items: center;
@@ -38,7 +38,9 @@
     width: min(100%, 1280px);
     box-sizing: border-box;
     margin: 0 auto;
-    padding: 10px 12px 0;
+    padding: 10px 12px 8px;
+    background: rgba(6, 17, 33, 0.72);
+    backdrop-filter: blur(18px);
   }
 
   .menuButton {
@@ -49,8 +51,8 @@
     border: 1px solid var(--fitme-line);
     border-radius: 14px;
     background:
-      linear-gradient(135deg, rgba(139, 92, 246, 0.26), rgba(59, 130, 246, 0.12)),
-      rgba(5, 21, 15, 0.86);
+      linear-gradient(135deg, rgba(56, 189, 248, 0.26), rgba(96, 165, 250, 0.12)),
+      rgba(6, 17, 33, 0.86);
     color: var(--fitme-strong);
     box-shadow: var(--fitme-glow);
     backdrop-filter: blur(16px);
@@ -70,7 +72,7 @@
 
   .body {
     grid-template-columns: minmax(0, 1fr);
-    padding: 12px 12px 20px;
+    padding: 8px 10px 20px;
   }
 
   .collapsed {

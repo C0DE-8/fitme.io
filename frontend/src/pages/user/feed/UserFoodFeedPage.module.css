@@ -45,6 +45,7 @@
   color: transparent;
   font-size: clamp(38px, 7vw, 72px);
   line-height: 0.96;
+  text-shadow: var(--fitme-name-glow);
 }
 
 .tabs {
@@ -115,7 +116,7 @@
 .composerModal,
 .post,
 .empty,
-.loading {
+.feedLoader {
   border: 1px solid var(--fitme-line);
   background: var(--fitme-surface);
   box-shadow: 0 24px 64px -34px rgba(0, 0, 0, 0.85);
@@ -766,7 +767,7 @@
 }
 
 .empty,
-.loading {
+.feedLoader {
   border-radius: 22px;
   padding: 24px;
 }
@@ -775,8 +776,163 @@
   font-size: 22px;
 }
 
-.loading {
+.feedLoader {
+  position: relative;
+  min-height: 380px;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-content: center;
+  align-items: center;
+  gap: 18px 20px;
+  overflow: hidden;
+}
+
+.feedLoader::before {
+  content: "";
+  position: absolute;
+  inset: -45% -20%;
+  background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, 0.12), transparent 65%);
+  transform: translateX(-42%);
+  animation: feedLoaderSweep 1800ms ease-in-out infinite;
+}
+
+.loaderMark,
+.loaderCopy,
+.loaderPost {
+  position: relative;
+  z-index: 1;
+}
+
+.loaderMark {
+  width: 112px;
+  height: 112px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 34px;
+  background:
+    linear-gradient(135deg, rgba(56, 189, 248, 0.22), rgba(52, 211, 153, 0.14)),
+    rgba(255, 255, 255, 0.05);
+}
+
+.loaderMark strong {
+  position: relative;
+  z-index: 2;
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border-radius: 22px;
+  background: rgba(6, 17, 33, 0.78);
+  color: var(--fitme-strong);
+  font-size: 44px;
+  line-height: 1;
+  box-shadow: inset 0 0 0 1px var(--fitme-line);
+}
+
+.loaderRing,
+.loaderPulse {
+  position: absolute;
+  inset: 14px;
+  border-radius: 28px;
+}
+
+.loaderRing {
+  border: 2px solid transparent;
+  border-top-color: var(--fitme-green);
+  border-right-color: var(--fitme-accent-text);
+  animation: fitmeLoaderTurn 1100ms linear infinite;
+}
+
+.loaderPulse {
+  inset: 6px;
+  border: 1px solid rgba(196, 181, 253, 0.22);
+  animation: fitmeLoaderPulse 1500ms ease-in-out infinite;
+}
+
+.loaderCopy {
+  display: grid;
+  gap: 3px;
+}
+
+.loaderCopy strong {
+  color: var(--fitme-strong);
+  font-size: 34px;
+  line-height: 1;
+}
+
+.loaderCopy span {
   color: var(--fitme-muted);
+  font-weight: 800;
+}
+
+.loaderPost {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--fitme-line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.035);
+  padding: 14px;
+}
+
+.loaderPost span {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.loaderPost span::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+  transform: translateX(-100%);
+  animation: feedLoaderLine 1450ms ease-in-out infinite;
+}
+
+.loaderPost span:first-child {
+  width: min(42%, 220px);
+  height: 14px;
+}
+
+.loaderPost span:nth-child(2) {
+  height: 210px;
+  border-radius: 16px;
+}
+
+.loaderPost span:last-child {
+  width: min(70%, 360px);
+  height: 12px;
+}
+
+@keyframes fitmeLoaderTurn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fitmeLoaderPulse {
+  50% {
+    opacity: 0.42;
+    transform: scale(0.91);
+  }
+}
+
+@keyframes feedLoaderSweep {
+  50% {
+    transform: translateX(42%);
+  }
+}
+
+@keyframes feedLoaderLine {
+  to {
+    transform: translateX(100%);
+  }
 }
 
 .searchPanel {
@@ -1022,6 +1178,45 @@ button:disabled {
     flex: 1;
   }
 
+  .feedLoader {
+    min-height: 420px;
+    grid-template-columns: 82px minmax(0, 1fr);
+    gap: 14px 13px;
+    border-radius: 18px;
+    padding: 18px 12px;
+  }
+
+  .loaderMark {
+    width: 82px;
+    height: 82px;
+    border-radius: 25px;
+  }
+
+  .loaderRing {
+    inset: 10px;
+    border-radius: 21px;
+  }
+
+  .loaderPulse {
+    inset: 5px;
+    border-radius: 23px;
+  }
+
+  .loaderMark strong {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    font-size: 34px;
+  }
+
+  .loaderCopy strong {
+    font-size: 26px;
+  }
+
+  .loaderPost span:nth-child(2) {
+    height: 260px;
+  }
+
   .tabs button {
     min-height: 40px;
     flex: 1;
@@ -1166,5 +1361,14 @@ button:disabled {
 
   .previewActions {
     flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feedLoader::before,
+  .loaderRing,
+  .loaderPulse,
+  .loaderPost span::after {
+    animation: none;
   }
 }

@@ -18,6 +18,7 @@
   color: transparent;
   font-size: clamp(48px, 9vw, 104px);
   line-height: 0.9;
+  text-shadow: var(--fitme-name-glow);
   letter-spacing: 0;
 }
 

@@ -87,7 +87,7 @@
   border-radius: 50%;
   background:
     linear-gradient(135deg, rgba(52, 211, 153, 0.22), transparent),
-    linear-gradient(135deg, var(--fitme-brand-soft), rgba(59, 130, 246, 0.18));
+    linear-gradient(135deg, var(--fitme-brand-soft), rgba(96, 165, 250, 0.18));
   color: var(--fitme-strong);
   font-size: 58px;
   font-weight: 1000;

@@ -2,7 +2,7 @@
   position: sticky;
   top: 0;
   z-index: 20;
-  background: rgba(5, 21, 15, 0.72);
+  background: rgba(6, 17, 33, 0.72);
   backdrop-filter: blur(18px);
 }
 
@@ -45,6 +45,7 @@
 
 .brandText strong {
   font-size: 18px;
+  text-shadow: var(--fitme-name-glow);
 }
 
 .brandText small {
@@ -75,8 +76,8 @@
 }
 
 .active {
-  border-color: rgba(139, 92, 246, 0.35);
-  background: rgba(139, 92, 246, 0.14);
+  border-color: rgba(56, 189, 248, 0.35);
+  background: rgba(56, 189, 248, 0.14);
   color: var(--fitme-brand-text);
 }
 
@@ -87,11 +88,29 @@
 }
 
 @media (max-width: 640px) {
+  .header {
+    z-index: 70;
+  }
+
   .brandText small {
     display: none;
   }
 
   .navbar {
     min-height: 62px;
+    gap: 10px;
+    padding: 0 12px;
+  }
+
+  .links {
+    gap: 6px;
+  }
+
+  .link,
+  .active,
+  .button {
+    min-height: 36px;
+    padding: 7px 10px;
+    font-size: 13px;
   }
 }

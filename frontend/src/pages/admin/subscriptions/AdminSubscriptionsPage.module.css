@@ -1,0 +1,456 @@
+.page {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.kicker {
+  margin: 0 0 8px;
+  color: var(--fitme-brand-text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.heading h1 {
+  margin: 0;
+  background: linear-gradient(90deg, var(--fitme-brand-text), var(--fitme-accent-text));
+  background-clip: text;
+  color: transparent;
+  font-size: clamp(34px, 5vw, 50px);
+  line-height: 1;
+  text-shadow: var(--fitme-name-glow);
+}
+
+.heading p {
+  margin: 10px 0 0;
+  color: var(--fitme-muted);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.stats article,
+.panel,
+.managePanel {
+  border: 1px solid var(--fitme-line);
+  background: var(--fitme-surface);
+  backdrop-filter: blur(16px);
+}
+
+.stats article {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  border-radius: 18px;
+  padding: 16px;
+}
+
+.stats span {
+  color: var(--fitme-subtle);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.stats strong {
+  color: var(--fitme-strong);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.search {
+  min-height: 44px;
+  width: min(100%, 440px);
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  border: 1px solid var(--fitme-line);
+  border-radius: 14px;
+  background: var(--fitme-surface);
+  color: var(--fitme-accent-text);
+  padding: 0 12px;
+}
+
+.search input {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--fitme-ink);
+  outline: none;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.filters button,
+.actions button,
+.extendCell button,
+.clearButton {
+  min-height: 36px;
+  border: 1px solid var(--fitme-line);
+  border-radius: 12px;
+  background: var(--fitme-soft);
+  color: var(--fitme-muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: capitalize;
+  cursor: pointer;
+}
+
+.filters button {
+  padding: 0 12px;
+}
+
+.filters .selected {
+  border-color: rgba(56, 189, 248, 0.35);
+  background: var(--fitme-brand-soft);
+  color: var(--fitme-brand-text);
+}
+
+.panel {
+  overflow: hidden;
+  border-radius: 24px;
+}
+
+.managePanel {
+  overflow: hidden;
+  margin-bottom: 14px;
+  border-radius: 24px;
+}
+
+.panelHeader {
+  min-height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--fitme-line);
+  padding: 0 18px;
+}
+
+.panelHeader h2 {
+  margin: 0;
+  color: var(--fitme-strong);
+  font-size: 22px;
+}
+
+.panelHeader span {
+  color: var(--fitme-subtle);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.clearButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 12px;
+  text-transform: none;
+}
+
+.manageForm {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  padding: 16px 18px 18px;
+}
+
+.manageForm label {
+  display: grid;
+  gap: 7px;
+  color: var(--fitme-muted);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.manageForm input,
+.manageForm select,
+.extendCell input {
+  min-height: 40px;
+  box-sizing: border-box;
+  border: 1px solid var(--fitme-line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--fitme-ink);
+  padding: 8px 10px;
+  outline: none;
+}
+
+.primaryButton {
+  align-self: end;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 13px;
+  background: linear-gradient(90deg, var(--fitme-brand), var(--fitme-accent));
+  color: var(--fitme-bg);
+  padding: 0 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 900;
+  box-shadow: var(--fitme-glow);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.manageForm .primaryButton {
+  min-width: 170px;
+}
+
+.primaryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.table {
+  overflow-x: auto;
+}
+
+.tableHead,
+.tableRow {
+  min-width: 1260px;
+  display: grid;
+  grid-template-columns: minmax(200px, 1.1fr) 130px 104px minmax(190px, 1fr) 160px 100px 128px 178px;
+  align-items: center;
+  gap: 12px;
+  padding: 0 18px;
+}
+
+.tableHead {
+  min-height: 42px;
+  background: var(--fitme-soft);
+  color: var(--fitme-muted);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.tableRow {
+  min-height: 88px;
+  border-top: 1px solid var(--fitme-soft);
+}
+
+.userCell,
+.payerCell,
+.dateCell {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.tableRow strong,
+.tableRow small,
+.tableRow em,
+.tableRow > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tableRow strong {
+  color: var(--fitme-strong);
+}
+
+.tableRow small,
+.tableRow em,
+.tableRow > span {
+  color: var(--fitme-muted);
+  font-size: 13px;
+  font-style: normal;
+}
+
+.tableRow a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--fitme-brand-text);
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.status {
+  width: fit-content;
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--fitme-line);
+  border-radius: 999px;
+  background: var(--fitme-soft);
+  color: var(--fitme-strong);
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: capitalize;
+}
+
+.active {
+  border-color: rgba(52, 211, 153, 0.25);
+  background: var(--fitme-success-bg);
+  color: var(--fitme-success);
+}
+
+.pending {
+  color: var(--fitme-accent-text);
+}
+
+.cancelled,
+.inactive {
+  border-color: rgba(252, 165, 165, 0.18);
+  color: var(--fitme-danger);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.extendCell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 54px;
+  gap: 6px;
+}
+
+.extendCell input {
+  min-width: 0;
+}
+
+.extendCell button {
+  padding: 0;
+  text-transform: none;
+}
+
+.actions button {
+  width: 36px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+
+.actions button:first-child:not(:disabled) {
+  color: var(--fitme-success);
+}
+
+.actions button:last-child:not(:disabled) {
+  color: var(--fitme-danger);
+}
+
+.actions button:nth-child(3):not(:disabled) {
+  color: var(--fitme-brand-text);
+}
+
+.actions button:disabled,
+.extendCell button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.empty {
+  margin: 0;
+  color: var(--fitme-muted);
+  padding: 24px 18px;
+}
+
+@media (max-width: 900px) {
+  .heading,
+  .tools {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .panelHeader {
+    align-items: stretch;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
+    padding: 14px;
+  }
+
+  .search {
+    width: 100%;
+  }
+
+  .filters {
+    justify-content: flex-start;
+  }
+
+  .manageForm {
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+
+  .manageForm .primaryButton {
+    width: 100%;
+  }
+}
+
+@media (max-width: 620px) {
+  .stats {
+    grid-template-columns: 1fr;
+  }
+
+  .tableHead {
+    display: none;
+  }
+
+  .tableRow {
+    min-width: 0;
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .tableRow > span,
+  .userCell,
+  .payerCell,
+  .dateCell,
+  .extendCell,
+  .actions {
+    width: 100%;
+  }
+
+  .extendCell {
+    grid-template-columns: minmax(0, 1fr) 72px;
+  }
+
+  .actions {
+    flex-wrap: wrap;
+  }
+
+  .actions button {
+    flex: 1 0 40px;
+  }
+}

@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../db');
 const { authenticateUser, hasActiveSubscription } = require('../middleware');
 const uploadPaymentProof = require('../services/paymentProofUpload');
+const { sendTelegramAdminAlert } = require('../services/telegram');
 
 // User subscribes to a plan with payment proof image
 router.post('/subscribe', authenticateUser, uploadPaymentProof.single('payment_proof'), async (req, res) => {
@@ -86,6 +87,34 @@ router.put('/subscriptions/:id/payer', authenticateUser, async (req, res) => {
        WHERE id = ?`,
       [payer_bank_name.trim(), payer_account_name.trim(), (payer_account_number || null), id]
     );
+
+    const [[subscription]] = await db.promise().query(
+      `SELECT s.id, s.plan_name, s.status, s.start_date, s.expiry_date,
+              s.payer_bank_name, s.payer_account_name, s.payer_account_number,
+              u.username, u.email
+       FROM subscriptions s
+       JOIN users u ON u.id = s.user_id
+       WHERE s.id = ?
+       LIMIT 1`,
+      [id]
+    );
+
+    if (subscription) {
+      const alert = [
+        '<b>fitme.io subscription request</b>',
+        `User: ${subscription.username} (${subscription.email})`,
+        `Plan: ${subscription.plan_name}`,
+        `Status: ${subscription.status}`,
+        `Payer bank: ${subscription.payer_bank_name || 'N/A'}`,
+        `Payer name: ${subscription.payer_account_name || 'N/A'}`,
+        `Payer number: ${subscription.payer_account_number || 'N/A'}`,
+        `Subscription ID: ${subscription.id}`
+      ].join('\n');
+
+      sendTelegramAdminAlert(alert).catch((telegramErr) => {
+        console.error('Telegram subscription alert failed:', telegramErr);
+      });
+    }
 
     res.json({ message: 'Payer info saved.' });
   } catch (err) {

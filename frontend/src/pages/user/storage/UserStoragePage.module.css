@@ -32,6 +32,7 @@
   color: transparent;
   font-size: clamp(38px, 7vw, 72px);
   line-height: 0.95;
+  text-shadow: var(--fitme-name-glow);
 }
 
 .heading p,
@@ -146,8 +147,8 @@
 
 .suggestions button:hover,
 .suggestions button:focus-visible {
-  border-color: rgba(139, 92, 246, 0.44);
-  background: rgba(139, 92, 246, 0.14);
+  border-color: rgba(56, 189, 248, 0.44);
+  background: rgba(56, 189, 248, 0.14);
   outline: none;
 }
 

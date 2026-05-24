@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useToast } from "../../../components/feedback/useToast";
 import { getApiError } from "../../../lib/api";
 import {
@@ -6,10 +7,33 @@ import {
   getAdminPlans,
   getAdminProfile,
   getAdminStats,
+  getAdminSubscriptions,
   getAdminUsers,
   getPendingSubscriptions,
 } from "../../../lib/api/adminApi";
 import styles from "./AdminPage.module.css";
+
+function formatDate(value) {
+  if (!value) return "No date";
+
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
+function formatPrice(value) {
+  const amount = Number(value);
+
+  if (!Number.isFinite(amount)) return value || "No price";
+
+  return new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: amount % 1 === 0 ? 0 : 2,
+  }).format(amount);
+}
 
 export function AdminPage() {
   const toast = useToast();
@@ -17,6 +41,7 @@ export function AdminPage() {
     profile: null,
     stats: null,
     users: [],
+    subscriptions: [],
     accounts: [],
     plans: [],
     pendingSubscriptions: [],
@@ -30,10 +55,11 @@ export function AdminPage() {
       setLoading(true);
 
       try {
-        const [profile, stats, users, accounts, plans, pendingSubscriptions] = await Promise.all([
+        const [profile, stats, users, subscriptions, accounts, plans, pendingSubscriptions] = await Promise.all([
           getAdminProfile(),
           getAdminStats(),
           getAdminUsers(),
+          getAdminSubscriptions(),
           getAdminAccounts(),
           getAdminPlans(),
           getPendingSubscriptions(),
@@ -41,7 +67,7 @@ export function AdminPage() {
 
         if (!alive) return;
 
-        setData({ profile, stats, users, accounts, plans, pendingSubscriptions });
+        setData({ profile, stats, users, subscriptions, accounts, plans, pendingSubscriptions });
       } catch (err) {
         if (alive) toast.error(getApiError(err, "Unable to load admin dashboard"), { title: "Dashboard unavailable" });
       } finally {
@@ -57,6 +83,8 @@ export function AdminPage() {
   }, [toast]);
 
   const recentUsers = useMemo(() => data.users.slice(0, 6), [data.users]);
+  const recentSubscriptions = useMemo(() => data.subscriptions.slice(0, 6), [data.subscriptions]);
+  const activeSubscriptions = data.subscriptions.filter((subscription) => subscription.status === "active").length;
 
   return (
     <section className={styles.page}>
@@ -78,23 +106,23 @@ export function AdminPage() {
         </article>
         <article>
           <span>Subscriptions</span>
-          <strong>{loading ? "..." : data.stats?.totalSubscriptions ?? 0}</strong>
+          <strong>{loading ? "..." : data.stats?.totalSubscriptions ?? data.subscriptions.length}</strong>
         </article>
         <article>
-          <span>Pending proofs</span>
+          <span>Active subs</span>
+          <strong>{loading ? "..." : activeSubscriptions}</strong>
+        </article>
+        <article>
+          <span>Pending subs</span>
           <strong>{loading ? "..." : data.pendingSubscriptions.length}</strong>
-        </article>
-        <article>
-          <span>Plans</span>
-          <strong>{loading ? "..." : data.plans.length}</strong>
         </article>
       </div>
 
       <div className={styles.grid}>
-        <section className={styles.tablePanel}>
+        <section className={`${styles.tablePanel} ${styles.userPanel}`}>
           <div className={styles.panelHeader}>
             <h2>Recent users</h2>
-            <span>{data.users.length} total</span>
+            <Link to="/admin/users">{data.users.length} total</Link>
           </div>
           <div className={styles.table}>
             <div className={styles.tableHead}>
@@ -118,14 +146,17 @@ export function AdminPage() {
 
         <section className={styles.sidePanel}>
           <div className={styles.panelHeader}>
-            <h2>Bank accounts</h2>
+            <h2>Accounts</h2>
             <span>{data.accounts.length}</span>
           </div>
           <div className={styles.list}>
             {data.accounts.slice(0, 5).map((account) => (
               <div className={styles.listItem} key={account.id}>
-                <span>{account.bank_name}</span>
-                <strong>{account.account_number}</strong>
+                <span>
+                  <strong>{account.bank_name}</strong>
+                  <small>{account.account_name}</small>
+                </span>
+                <em>{account.account_number}</em>
               </div>
             ))}
             {!loading && !data.accounts.length ? <p className={styles.empty}>No bank accounts yet.</p> : null}
@@ -134,19 +165,68 @@ export function AdminPage() {
 
         <section className={styles.sidePanel}>
           <div className={styles.panelHeader}>
-            <h2>Pending subscriptions</h2>
+            <h2>Plans</h2>
+            <span>{data.plans.length}</span>
+          </div>
+          <div className={styles.list}>
+            {data.plans.slice(0, 5).map((plan) => (
+              <div className={styles.listItem} key={plan.id}>
+                <span>
+                  <strong>{plan.plan_name}</strong>
+                  <small>{formatDate(plan.created_at)}</small>
+                </span>
+                <em>{formatPrice(plan.price)}</em>
+              </div>
+            ))}
+            {!loading && !data.plans.length ? <p className={styles.empty}>No plans yet.</p> : null}
+          </div>
+        </section>
+
+        <section className={styles.sidePanel}>
+          <div className={styles.panelHeader}>
+            <h2>Pending proofs</h2>
             <span>{data.pendingSubscriptions.length}</span>
           </div>
           <div className={styles.list}>
             {data.pendingSubscriptions.slice(0, 5).map((subscription) => (
               <div className={styles.listItem} key={subscription.id}>
-                <span>{subscription.username}</span>
-                <strong>{subscription.plan_name}</strong>
+                <span>
+                  <strong>{subscription.username}</strong>
+                  <small>{subscription.payer_bank_name || subscription.email}</small>
+                </span>
+                <em>{subscription.plan_name}</em>
               </div>
             ))}
-            {!loading && !data.pendingSubscriptions.length ? (
-              <p className={styles.empty}>No pending subscriptions.</p>
-            ) : null}
+            {!loading && !data.pendingSubscriptions.length ? <p className={styles.empty}>No pending proofs.</p> : null}
+          </div>
+        </section>
+
+        <section className={`${styles.tablePanel} ${styles.subscriptionPanel}`}>
+          <div className={styles.panelHeader}>
+            <h2>Subscriptions</h2>
+            <span>{data.subscriptions.length}</span>
+          </div>
+          <div className={styles.subscriptionTable}>
+            <div className={styles.subscriptionHead}>
+              <span>User</span>
+              <span>Plan</span>
+              <span>Status</span>
+              <span>Ends</span>
+            </div>
+            {recentSubscriptions.map((subscription) => (
+              <div className={styles.subscriptionRow} key={subscription.id}>
+                <span>
+                  <strong>{subscription.username}</strong>
+                  <small>{subscription.email}</small>
+                </span>
+                <span>{subscription.plan_name}</span>
+                <span className={`${styles.status} ${styles[subscription.status] || ""}`}>
+                  {subscription.status || "unknown"}
+                </span>
+                <span>{formatDate(subscription.expiry_date)}</span>
+              </div>
+            ))}
+            {!loading && !recentSubscriptions.length ? <p className={styles.empty}>No subscriptions found.</p> : null}
           </div>
         </section>
       </div>

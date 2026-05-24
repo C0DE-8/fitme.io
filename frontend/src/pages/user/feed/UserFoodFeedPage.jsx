@@ -66,6 +66,27 @@ function nextCommentReactionCounts(comment, nextReaction) {
   return counts;
 }
 
+function FoodFeedLoader() {
+  return (
+    <section className={styles.feedLoader} role="status" aria-label="Loading Food Feed">
+      <div className={styles.loaderMark} aria-hidden="true">
+        <span className={styles.loaderRing} />
+        <span className={styles.loaderPulse} />
+        <strong>F</strong>
+      </div>
+      <div className={styles.loaderCopy}>
+        <strong>fitme.io</strong>
+        <span>Loading Food Feed</span>
+      </div>
+      <div className={styles.loaderPost} aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </div>
+    </section>
+  );
+}
+
 export function UserFoodFeedPage() {
   const toast = useToast();
   const currentUser = getCurrentUser();
@@ -506,7 +527,7 @@ export function UserFoodFeedPage() {
             </div>
           ) : null}
 
-          {loading ? <div className={styles.loading}>Loading feed...</div> : null}
+          {loading ? <FoodFeedLoader /> : null}
         </div>
       </div>
 
