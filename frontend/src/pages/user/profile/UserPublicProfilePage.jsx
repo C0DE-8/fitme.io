@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Link, Navigate, useParams } from "react-router-dom";
-import { FiArrowLeft, FiCheckCircle } from "react-icons/fi";
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
+import { FiArrowLeft, FiCheckCircle, FiX } from "react-icons/fi";
 import { useToast } from "../../../components/feedback/useToast";
 import { getApiError } from "../../../lib/api";
 import {
   followFoodFeedUser,
+  getFoodFeedFollowList,
   getFoodFeedUserProfile,
   unfollowFoodFeedUser,
 } from "../../../lib/api/foodFeedApi";
@@ -16,11 +17,15 @@ function initial(name) {
 
 export function UserPublicProfilePage() {
   const { userId } = useParams();
+  const navigate = useNavigate();
   const toast = useToast();
   const [profile, setProfile] = useState(null);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [following, setFollowing] = useState(false);
+  const [followModal, setFollowModal] = useState(null);
+  const [followUsers, setFollowUsers] = useState([]);
+  const [followLoading, setFollowLoading] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -71,6 +76,23 @@ export function UserPublicProfilePage() {
     }
   }
 
+  async function openFollowList(kind) {
+    if (!profile?.id) return;
+
+    setFollowModal(kind);
+    setFollowUsers([]);
+    setFollowLoading(true);
+
+    try {
+      const users = await getFoodFeedFollowList(profile.id, kind);
+      setFollowUsers(users || []);
+    } catch (err) {
+      toast.error(getApiError(err, "Unable to load users"), { title: "Follow list unavailable" });
+    } finally {
+      setFollowLoading(false);
+    }
+  }
+
   if (profile?.is_self) return <Navigate to="/profile" replace />;
 
   const totals = profile?.social_totals || {};
@@ -103,14 +125,14 @@ export function UserPublicProfilePage() {
         </div>
 
         <div className={styles.stats}>
-          <article>
+          <button type="button" onClick={() => openFollowList("following")} disabled={loading || !profile}>
             <strong>{loading ? "..." : Number(totals.following || 0).toLocaleString()}</strong>
             <span>Following</span>
-          </article>
-          <article>
+          </button>
+          <button type="button" onClick={() => openFollowList("followers")} disabled={loading || !profile}>
             <strong>{loading ? "..." : Number(totals.followers || 0).toLocaleString()}</strong>
             <span>Followers</span>
-          </article>
+          </button>
           <article>
             <strong>{loading ? "..." : Number(totals.likes || 0).toLocaleString()}</strong>
             <span>Likes</span>
@@ -153,6 +175,42 @@ export function UserPublicProfilePage() {
           ) : null}
         </div>
       </section>
+
+      {followModal ? (
+        <div className={styles.followBackdrop} role="presentation">
+          <section className={styles.followModal} role="dialog" aria-modal="true" aria-label={followModal}>
+            <header>
+              <div>
+                <p className={styles.kicker}>Social</p>
+                <h2>{followModal === "followers" ? "Followers" : "Following"}</h2>
+              </div>
+              <button type="button" onClick={() => setFollowModal(null)} aria-label="Close list">
+                <FiX aria-hidden="true" />
+              </button>
+            </header>
+            <div className={styles.followList}>
+              {followUsers.map((user) => (
+                <button
+                  key={user.id}
+                  type="button"
+                  onClick={() => {
+                    setFollowModal(null);
+                    navigate(user.is_self ? "/profile" : `/profile/${user.id}`);
+                  }}
+                >
+                  <span className={styles.followAvatar}>{initial(user.username)}</span>
+                  <span>
+                    <strong>{user.username}</strong>
+                    <small>{user.is_self ? "You" : user.is_following ? "Following" : user.bio || "View profile"}</small>
+                  </span>
+                </button>
+              ))}
+              {followLoading ? <p>Loading users...</p> : null}
+              {!followLoading && !followUsers.length ? <p>No users to show.</p> : null}
+            </div>
+          </section>
+        </div>
+      ) : null}
     </section>
   );
 }

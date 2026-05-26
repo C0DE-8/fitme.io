@@ -16,6 +16,10 @@ export function getFoodFeedUserProfile(id) {
   return api.get(`/user/food-feed/users/${id}/profile`).then((res) => res.data);
 }
 
+export function getFoodFeedFollowList(id, kind) {
+  return api.get(`/user/food-feed/users/${id}/${kind}`).then((res) => res.data.users);
+}
+
 export function createFoodFeedPost(payload) {
   const form = new FormData();
   if (payload.meal_name) form.append("meal_name", payload.meal_name);

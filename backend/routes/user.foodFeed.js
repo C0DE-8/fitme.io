@@ -389,6 +389,56 @@ router.get('/food-feed/users/:id/profile', authenticateUser, requireSubscription
   }
 });
 
+router.get('/food-feed/users/:id/:kind', authenticateUser, requireSubscription(), async (req, res) => {
+  const targetId = Number(req.params.id);
+  const { kind } = req.params;
+
+  if (!Number.isInteger(targetId) || targetId <= 0) {
+    return res.status(400).json({ message: 'Invalid user profile' });
+  }
+
+  if (!['followers', 'following'].includes(kind)) {
+    return res.status(404).json({ message: 'Follow list not found' });
+  }
+
+  try {
+    await prepareFoodFeed();
+
+    const joinCondition = kind === 'followers'
+      ? 'u.id = f.follower_user_id'
+      : 'u.id = f.following_user_id';
+    const whereColumn = kind === 'followers' ? 'f.following_user_id' : 'f.follower_user_id';
+
+    const [users] = await db.promise().query(
+      `SELECT u.id, u.username, u.bio, u.verified,
+              EXISTS (
+                SELECT 1
+                FROM food_feed_follows mine
+                WHERE mine.follower_user_id = ?
+                  AND mine.following_user_id = u.id
+              ) AS is_following
+       FROM food_feed_follows f
+       JOIN users u ON ${joinCondition}
+       WHERE ${whereColumn} = ?
+       ORDER BY f.created_at DESC
+       LIMIT 100`,
+      [req.user.id, targetId]
+    );
+
+    return res.json({
+      users: users.map((user) => ({
+        ...user,
+        verified: Boolean(user.verified),
+        is_self: user.id === req.user.id,
+        is_following: Boolean(user.is_following)
+      }))
+    });
+  } catch (err) {
+    console.error('Food feed follow list error:', err);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
 router.post('/food-feed/posts', authenticateUser, requireSubscription(), upload.single('image'), async (req, res) => {
   const mealName = cleanText(req.body?.meal_name, 140) || null;
   const caption = cleanText(req.body?.caption, 1200) || null;
