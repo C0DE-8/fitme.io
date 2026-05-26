@@ -1,0 +1,173 @@
+.soundPanel {
+  margin: 0 0 14px;
+}
+
+.soundButton {
+  width: 100%;
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid rgba(223, 246, 255, 0.2);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.09), rgba(56, 189, 248, 0.09)),
+    rgba(255, 255, 255, 0.04);
+  color: var(--fitme-muted);
+  cursor: pointer;
+  overflow: hidden;
+  text-align: left;
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.soundButton:hover {
+  border-color: rgba(223, 246, 255, 0.36);
+  background: var(--fitme-surface-strong);
+  color: var(--fitme-strong);
+}
+
+.visual {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: rgba(223, 246, 255, 0.1);
+}
+
+.volumeIcon {
+  position: relative;
+  z-index: 2;
+  width: 20px;
+  height: 20px;
+}
+
+.note {
+  position: absolute;
+  z-index: 1;
+  width: 18px;
+  height: 18px;
+  opacity: 0.24;
+  transform-origin: 50% 80%;
+}
+
+.noteOne {
+  top: -5px;
+  left: 3px;
+}
+
+.noteTwo {
+  right: -3px;
+  bottom: 6px;
+  width: 15px;
+  height: 15px;
+}
+
+.noteThree {
+  top: 5px;
+  right: 4px;
+  width: 17px;
+  height: 17px;
+}
+
+.copy {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.copy strong {
+  overflow: hidden;
+  color: var(--fitme-strong);
+  font-size: 13px;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.copy small {
+  overflow: hidden;
+  color: var(--fitme-subtle);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.playing .soundButton {
+  border-color: rgba(134, 239, 172, 0.34);
+  background:
+    linear-gradient(135deg, rgba(134, 239, 172, 0.14), rgba(56, 189, 248, 0.16)),
+    rgba(255, 255, 255, 0.06);
+  color: var(--fitme-strong);
+}
+
+.playing .visual {
+  background: rgba(134, 239, 172, 0.16);
+}
+
+.playing .note {
+  opacity: 0.95;
+  animation: noteBeat 720ms ease-in-out infinite;
+}
+
+.playing .noteTwo {
+  animation-delay: 120ms;
+}
+
+.playing .noteThree {
+  animation-delay: 240ms;
+}
+
+.playing .volumeIcon {
+  animation: volumeBeat 720ms ease-in-out infinite;
+}
+
+.collapsed .soundButton {
+  grid-template-columns: 1fr;
+  min-height: 52px;
+  justify-items: center;
+  padding: 7px;
+}
+
+.collapsed .copy {
+  display: none;
+}
+
+@keyframes noteBeat {
+  0%,
+  100% {
+    transform: translateY(2px) rotate(-7deg) scale(0.74);
+  }
+
+  45% {
+    transform: translateY(-7px) rotate(9deg) scale(1.16);
+  }
+}
+
+@keyframes volumeBeat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  45% {
+    transform: scale(1.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .playing .note,
+  .playing .volumeIcon {
+    animation: none;
+  }
+}

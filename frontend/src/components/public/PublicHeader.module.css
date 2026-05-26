@@ -68,6 +68,7 @@
 .link,
 .active,
 .button,
+.musicButton,
 .authLink,
 .authLinkActive {
   min-height: 38px;
@@ -96,9 +97,35 @@
 
 .link:hover,
 .button:hover,
+.musicButton:hover,
 .authLink:hover {
   background: var(--fitme-surface-strong);
   color: var(--fitme-strong);
+}
+
+.musicButton {
+  width: 42px;
+  min-width: 42px;
+  border-color: rgba(56, 189, 248, 0.24);
+  border-radius: 50%;
+  background: var(--fitme-soft);
+  color: var(--fitme-muted);
+  padding: 0;
+}
+
+.musicButton svg {
+  width: 18px;
+  height: 18px;
+}
+
+.musicButtonActive {
+  border-color: rgba(52, 211, 153, 0.36);
+  background: rgba(52, 211, 153, 0.14);
+  color: var(--fitme-strong);
+}
+
+.musicButtonActive svg {
+  filter: drop-shadow(0 0 8px rgba(52, 211, 153, 0.48));
 }
 
 .account {

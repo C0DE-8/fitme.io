@@ -11,6 +11,7 @@ import {
   FiX,
   FiUsers,
 } from "react-icons/fi";
+import { AdminSoundToggle } from "./AdminSoundToggle";
 import styles from "./AdminSidebar.module.css";
 
 const fitmeIcon = "/favicon.png";
@@ -58,6 +59,7 @@ export function AdminSidebar({ collapsed = false, mobileOpen = false, onCloseMob
         </button>
       </div>
 
+      <AdminSoundToggle collapsed={collapsed} />
       <div className={styles.sectionLabel}>Manage</div>
       <nav className={styles.nav} aria-label="Admin sections">
         {links.map((link) => {

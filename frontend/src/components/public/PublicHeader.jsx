@@ -1,6 +1,7 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { FiLogIn, FiLogOut, FiUser } from "react-icons/fi";
 import { clearSession, getCurrentUser, getToken } from "../../lib/auth";
+import { HeaderMusicToggle } from "./HeaderMusicToggle";
 import styles from "./PublicHeader.module.css";
 
 const fitmeIcon = "/favicon.png";
@@ -42,6 +43,7 @@ export function PublicHeader() {
           ) : null}
           {hasSession ? (
             <>
+              <HeaderMusicToggle />
               <Link className={styles.account} to={accountPath} aria-label={`Open ${user?.username || "your"} account`}>
                 <span>
                   <FiUser aria-hidden="true" />
