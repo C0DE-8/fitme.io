@@ -66,26 +66,49 @@ function SubscriptionCheck({ children }) {
           width: "min(100%, 760px)",
           boxSizing: "border-box",
           margin: "0 auto",
-          padding: "64px 24px 120px",
+          padding: "72px 24px 120px",
           textAlign: "center",
         }}
       >
         <div
           style={{
-            width: 46,
-            height: 46,
-            margin: "0 auto 16px",
-            border: "4px solid var(--fitme-line)",
-            borderTopColor: "var(--fitme-brand-text)",
-            borderRadius: "999px",
-            animation: "fitmeRouteSpin 900ms linear infinite",
+            position: "relative",
+            width: 72,
+            height: 72,
+            display: "grid",
+            placeItems: "center",
+            boxSizing: "border-box",
+            margin: "0 auto 18px",
+            border: "1px solid var(--fitme-line)",
+            borderRadius: 18,
+            background: "var(--fitme-soft)",
           }}
-        />
+        >
+          <span
+            style={{
+              position: "absolute",
+              inset: -7,
+              border: "3px solid rgba(255, 255, 255, 0.12)",
+              borderTopColor: "var(--fitme-brand-text)",
+              borderRadius: 24,
+              animation: "fitmeRouteSpin 900ms linear infinite",
+            }}
+          />
+          <img
+            src="/favicon.png"
+            alt=""
+            aria-hidden="true"
+            style={{
+              width: 46,
+              height: 46,
+              borderRadius: 14,
+              objectFit: "cover",
+            }}
+          />
+        </div>
         <style>{`@keyframes fitmeRouteSpin { to { transform: rotate(360deg); } }`}</style>
-        <h1 style={{ margin: 0, color: "var(--fitme-strong)", fontSize: 24 }}>Checking account status</h1>
-        <p style={{ margin: "8px 0 0", color: "var(--fitme-muted)" }}>
-          Confirming your subscription before opening this page.
-        </p>
+        <h1 style={{ margin: 0, color: "var(--fitme-strong)", fontSize: 22 }}>Loading fitme.io</h1>
+        <p style={{ margin: "8px 0 0", color: "var(--fitme-muted)" }}>Getting everything ready.</p>
       </section>
     );
   }
