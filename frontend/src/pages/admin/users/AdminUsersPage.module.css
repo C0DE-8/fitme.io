@@ -60,7 +60,8 @@
 }
 
 .stats article,
-.panel {
+.panel,
+.autoFollowPanel {
   border: 1px solid var(--fitme-line);
   background: var(--fitme-surface);
   backdrop-filter: blur(16px);
@@ -95,6 +96,199 @@
   color: var(--fitme-strong);
   font-size: 28px;
   line-height: 1.1;
+}
+
+.autoFollowPanel {
+  display: grid;
+  gap: 16px;
+  margin-top: 14px;
+  border-radius: 22px;
+  padding: 18px;
+}
+
+.autoFollowHeader {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.autoFollowHeader h2 {
+  margin: 0;
+  color: var(--fitme-strong);
+  font-size: 24px;
+  letter-spacing: 0;
+}
+
+.autoFollowHeader p:not(.kicker) {
+  margin: 6px 0 0;
+  color: var(--fitme-muted);
+}
+
+.switch {
+  min-width: 92px;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--fitme-line);
+  border-radius: 999px;
+  background: var(--fitme-soft);
+  color: var(--fitme-strong);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.switch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.switch:has(input:checked) {
+  border-color: rgba(52, 211, 153, 0.28);
+  background: var(--fitme-success-bg);
+  color: var(--fitme-success);
+}
+
+.autoFollowGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.85fr);
+  gap: 14px;
+}
+
+.autoFollowPicker,
+.autoFollowTargets {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  border: 1px solid var(--fitme-line);
+  border-radius: 18px;
+  background: var(--fitme-soft);
+  padding: 14px;
+}
+
+.autoFollowPicker label {
+  display: grid;
+  gap: 8px;
+  color: var(--fitme-muted);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.autoFollowPicker input {
+  min-height: 42px;
+  box-sizing: border-box;
+  border: 1px solid var(--fitme-line);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--fitme-ink);
+  padding: 9px 12px;
+  outline: none;
+}
+
+.autoFollowResults {
+  display: grid;
+  gap: 8px;
+  max-height: 252px;
+  overflow: auto;
+}
+
+.autoFollowResults button,
+.autoFollowTargets article {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--fitme-line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--fitme-ink);
+  padding: 10px;
+}
+
+.autoFollowResults button {
+  text-align: left;
+  cursor: pointer;
+}
+
+.autoFollowResults svg {
+  width: 34px;
+  height: 34px;
+  box-sizing: border-box;
+  border-radius: 11px;
+  background: var(--fitme-brand-soft);
+  color: var(--fitme-brand-text);
+  padding: 8px;
+}
+
+.autoFollowResults span,
+.autoFollowTargets article > span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.autoFollowResults strong,
+.autoFollowTargets strong {
+  overflow: hidden;
+  color: var(--fitme-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.autoFollowResults small,
+.autoFollowTargets small,
+.autoFollowTargets > div > span,
+.autoFollowResults p,
+.autoFollowTargets p {
+  margin: 0;
+  overflow: hidden;
+  color: var(--fitme-muted);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.autoFollowTargets > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.autoFollowTargets article {
+  grid-template-columns: minmax(0, 1fr) 34px;
+}
+
+.autoFollowTargets article button {
+  width: 34px;
+  height: 34px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--fitme-line);
+  border-radius: 11px;
+  background: var(--fitme-surface);
+  color: var(--fitme-muted);
+  cursor: pointer;
+}
+
+.saveSettings {
+  min-height: 42px;
+  border: 0;
+  border-radius: 14px;
+  background: linear-gradient(90deg, var(--fitme-brand), var(--fitme-accent));
+  color: var(--fitme-bg);
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: var(--fitme-glow);
+}
+
+.saveSettings:disabled {
+  cursor: wait;
+  opacity: 0.7;
 }
 
 .panel {
@@ -354,6 +548,13 @@
     justify-content: center;
     min-height: 0;
     padding: 14px;
+  }
+
+  .autoFollowHeader,
+  .autoFollowGrid {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    flex-direction: column;
   }
 }
 

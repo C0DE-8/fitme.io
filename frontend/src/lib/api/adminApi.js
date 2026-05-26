@@ -24,6 +24,14 @@ export function deleteAdminUser(id) {
   return api.delete(`/admin/users/${id}`).then((res) => res.data);
 }
 
+export function getAdminAutoFollowSettings() {
+  return api.get("/admin/users/auto-follow/settings").then((res) => res.data.settings);
+}
+
+export function updateAdminAutoFollowSettings(payload) {
+  return api.put("/admin/users/auto-follow/settings", payload).then((res) => res.data);
+}
+
 export function getAdminSubscriptions() {
   return api.get("/admin/subscriptions").then((res) => res.data.subscriptions);
 }

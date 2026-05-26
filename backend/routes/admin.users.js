@@ -5,6 +5,44 @@ const { authenticateAdmin } = require('../middleware');
 const moment = require('moment');
 const foodFeedRoutes = require('./user.foodFeed');
 
+async function ensureAutoFollowSettingsTable() {
+  await db.promise().query(`
+    CREATE TABLE IF NOT EXISTS admin_auto_follow_settings (
+      id TINYINT UNSIGNED NOT NULL DEFAULT 1 PRIMARY KEY,
+      enabled TINYINT(1) NOT NULL DEFAULT 0,
+      target_user_ids TEXT NULL,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )
+  `);
+}
+
+function parseTargetUserIds(value) {
+  return String(value || '')
+    .split(',')
+    .map((id) => Number(id))
+    .filter((id) => Number.isInteger(id) && id > 0);
+}
+
+async function getAutoFollowSettings() {
+  await ensureAutoFollowSettingsTable();
+
+  const [rows] = await db.promise().query(
+    'SELECT enabled, target_user_ids FROM admin_auto_follow_settings WHERE id = 1 LIMIT 1'
+  );
+
+  if (!rows.length) {
+    await db.promise().query(
+      'INSERT INTO admin_auto_follow_settings (id, enabled, target_user_ids) VALUES (1, 0, "")'
+    );
+    return { enabled: false, target_user_ids: [] };
+  }
+
+  return {
+    enabled: Boolean(rows[0].enabled),
+    target_user_ids: parseTargetUserIds(rows[0].target_user_ids)
+  };
+}
+
 // GET /admin/users - Admin gets all users
 router.get('/users', authenticateAdmin, async (req, res) => {
   try {
@@ -118,6 +156,62 @@ router.get('/users-with-subscriptions', authenticateAdmin, async (req, res) => {
     res.json({ users: updatedData });
   } catch (err) {
     console.error('Failed to fetch users with subscriptions:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// GET /admin/users/auto-follow/settings - Admin gets new-user auto-follow settings
+router.get('/users/auto-follow/settings', authenticateAdmin, async (req, res) => {
+  try {
+    const settings = await getAutoFollowSettings();
+    res.json({ settings });
+  } catch (err) {
+    console.error('Failed to fetch auto-follow settings:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// PUT /admin/users/auto-follow/settings - Admin updates new-user auto-follow settings
+router.put('/users/auto-follow/settings', authenticateAdmin, async (req, res) => {
+  const enabled = Boolean(req.body?.enabled);
+  const targetUserIds = Array.isArray(req.body?.target_user_ids)
+    ? req.body.target_user_ids.map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0)
+    : [];
+  const uniqueTargetUserIds = [...new Set(targetUserIds)].filter((id) => id !== Number(req.user.id));
+
+  try {
+    await ensureAutoFollowSettingsTable();
+
+    if (uniqueTargetUserIds.length) {
+      const placeholders = uniqueTargetUserIds.map(() => '?').join(', ');
+      const [targets] = await db.promise().query(
+        `SELECT id FROM users WHERE id IN (${placeholders})`,
+        uniqueTargetUserIds
+      );
+      const foundIds = new Set(targets.map((user) => Number(user.id)));
+      const missingIds = uniqueTargetUserIds.filter((id) => !foundIds.has(id));
+
+      if (missingIds.length) {
+        return res.status(400).json({ error: 'One or more selected accounts were not found.' });
+      }
+    }
+
+    await db.promise().query(
+      `INSERT INTO admin_auto_follow_settings (id, enabled, target_user_ids)
+       VALUES (1, ?, ?)
+       ON DUPLICATE KEY UPDATE enabled = VALUES(enabled), target_user_ids = VALUES(target_user_ids)`,
+      [enabled ? 1 : 0, uniqueTargetUserIds.join(',')]
+    );
+
+    res.json({
+      message: 'Auto-follow settings saved.',
+      settings: {
+        enabled,
+        target_user_ids: uniqueTargetUserIds
+      }
+    });
+  } catch (err) {
+    console.error('Failed to save auto-follow settings:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });

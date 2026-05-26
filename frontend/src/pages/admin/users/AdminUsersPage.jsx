@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { FiCheckCircle, FiSearch, FiShield, FiTrash2, FiUser, FiUsers, FiX } from "react-icons/fi";
+import { FiCheckCircle, FiSearch, FiShield, FiTrash2, FiUser, FiUserPlus, FiUsers, FiX } from "react-icons/fi";
 import { useToast } from "../../../components/feedback/useToast";
 import { getApiError } from "../../../lib/api";
 import { getCurrentUser } from "../../../lib/auth";
-import { deleteAdminUser, getAdminUsersWithSubscriptions } from "../../../lib/api/adminApi";
+import {
+  deleteAdminUser,
+  getAdminAutoFollowSettings,
+  getAdminUsersWithSubscriptions,
+  updateAdminAutoFollowSettings,
+} from "../../../lib/api/adminApi";
 import styles from "./AdminUsersPage.module.css";
 
 function formatDate(value) {
@@ -40,6 +45,10 @@ export function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [autoFollowEnabled, setAutoFollowEnabled] = useState(false);
+  const [autoFollowTargetIds, setAutoFollowTargetIds] = useState([]);
+  const [autoFollowSearch, setAutoFollowSearch] = useState("");
+  const [autoFollowSaving, setAutoFollowSaving] = useState(false);
 
   const loadUsers = useCallback(async () => {
     const rows = await getAdminUsersWithSubscriptions();
@@ -49,9 +58,13 @@ export function AdminUsersPage() {
   useEffect(() => {
     let alive = true;
 
-    getAdminUsersWithSubscriptions()
-      .then((rows) => {
-        if (alive) setUsers(getLatestUsers(rows || []));
+    Promise.all([getAdminUsersWithSubscriptions(), getAdminAutoFollowSettings()])
+      .then(([rows, settings]) => {
+        if (!alive) return;
+
+        setUsers(getLatestUsers(rows || []));
+        setAutoFollowEnabled(Boolean(settings?.enabled));
+        setAutoFollowTargetIds(settings?.target_user_ids || []);
       })
       .catch((err) => {
         if (alive) toast.error(getApiError(err, "Unable to load admin users"), { title: "Users unavailable" });
@@ -82,6 +95,36 @@ export function AdminUsersPage() {
     }
   }
 
+  function addAutoFollowTarget(user) {
+    const userId = Number(user.user_id);
+    if (!Number.isInteger(userId) || Number(currentAdmin?.id) === userId) return;
+
+    setAutoFollowTargetIds((current) => (current.includes(userId) ? current : [...current, userId]));
+    setAutoFollowSearch("");
+  }
+
+  function removeAutoFollowTarget(userId) {
+    setAutoFollowTargetIds((current) => current.filter((id) => id !== Number(userId)));
+  }
+
+  async function saveAutoFollowSettings() {
+    setAutoFollowSaving(true);
+
+    try {
+      const data = await updateAdminAutoFollowSettings({
+        enabled: autoFollowEnabled,
+        target_user_ids: autoFollowTargetIds,
+      });
+      setAutoFollowEnabled(Boolean(data.settings?.enabled));
+      setAutoFollowTargetIds(data.settings?.target_user_ids || []);
+      toast.success(data.message || "Auto-follow settings saved.");
+    } catch (err) {
+      toast.error(getApiError(err, "Unable to save auto-follow settings"), { title: "Settings not saved" });
+    } finally {
+      setAutoFollowSaving(false);
+    }
+  }
+
   const normalizedQuery = query.trim().toLowerCase();
   const filteredUsers = useMemo(
     () =>
@@ -95,6 +138,22 @@ export function AdminUsersPage() {
   const totalVerified = users.filter((user) => user.verified).length;
   const activeSubscriptions = users.filter((user) => user.status === "active").length;
   const admins = users.filter((user) => user.role === "admin").length;
+  const autoFollowTargets = users.filter((user) => autoFollowTargetIds.includes(Number(user.user_id)));
+  const autoFollowCandidates = useMemo(() => {
+    const query = autoFollowSearch.trim().toLowerCase();
+
+    return users
+      .filter((user) => Number(user.user_id) !== Number(currentAdmin?.id))
+      .filter((user) => !autoFollowTargetIds.includes(Number(user.user_id)))
+      .filter(
+        (user) =>
+          !query ||
+          [user.username, user.email, user.role]
+            .filter(Boolean)
+            .some((value) => String(value).toLowerCase().includes(query))
+      )
+      .slice(0, 8);
+  }, [autoFollowSearch, autoFollowTargetIds, currentAdmin?.id, users]);
 
   return (
     <section className={styles.page}>
@@ -134,6 +193,71 @@ export function AdminUsersPage() {
           <span>Active subs</span>
           <strong>{loading ? "..." : activeSubscriptions}</strong>
         </article>
+      </section>
+
+      <section className={styles.autoFollowPanel}>
+        <div className={styles.autoFollowHeader}>
+          <div>
+            <p className={styles.kicker}>Food feed</p>
+            <h2>New user auto-follow</h2>
+            <p>Choose accounts every new user should follow automatically after registration.</p>
+          </div>
+          <label className={styles.switch}>
+            <input
+              type="checkbox"
+              checked={autoFollowEnabled}
+              onChange={(event) => setAutoFollowEnabled(event.target.checked)}
+            />
+            <span>{autoFollowEnabled ? "On" : "Off"}</span>
+          </label>
+        </div>
+
+        <div className={styles.autoFollowGrid}>
+          <div className={styles.autoFollowPicker}>
+            <label>
+              Search accounts
+              <input
+                value={autoFollowSearch}
+                onChange={(event) => setAutoFollowSearch(event.target.value)}
+                placeholder="Search username or email..."
+              />
+            </label>
+            <div className={styles.autoFollowResults}>
+              {autoFollowCandidates.map((user) => (
+                <button key={user.user_id} type="button" onClick={() => addAutoFollowTarget(user)}>
+                  <FiUserPlus aria-hidden="true" />
+                  <span>
+                    <strong>{user.username}</strong>
+                    <small>{user.email}</small>
+                  </span>
+                </button>
+              ))}
+              {!autoFollowCandidates.length ? <p>No available accounts match this search.</p> : null}
+            </div>
+          </div>
+
+          <div className={styles.autoFollowTargets}>
+            <div>
+              <strong>Selected accounts</strong>
+              <span>{autoFollowTargets.length} target{autoFollowTargets.length === 1 ? "" : "s"}</span>
+            </div>
+            {autoFollowTargets.map((user) => (
+              <article key={user.user_id}>
+                <span>
+                  <strong>{user.username}</strong>
+                  <small>{user.email}</small>
+                </span>
+                <button type="button" onClick={() => removeAutoFollowTarget(user.user_id)} aria-label={`Remove ${user.username}`}>
+                  <FiX aria-hidden="true" />
+                </button>
+              </article>
+            ))}
+            {!autoFollowTargets.length ? <p>No accounts selected yet.</p> : null}
+            <button className={styles.saveSettings} type="button" onClick={saveAutoFollowSettings} disabled={autoFollowSaving}>
+              {autoFollowSaving ? "Saving..." : "Save auto-follow"}
+            </button>
+          </div>
+        </div>
       </section>
 
       <section className={styles.panel}>

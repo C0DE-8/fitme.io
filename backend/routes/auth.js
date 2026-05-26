@@ -3,10 +3,48 @@ const router = express.Router();
 const db = require('../db');
 const bcrypt = require('bcryptjs');
 const { otpMail, welcomeMail } = require('../utils/mailer');
+const foodFeedRoutes = require('./user.foodFeed');
 
 // Generate 6-digit OTP
 function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+async function applyNewUserAutoFollows(userId) {
+  try {
+    await db.promise().query(`
+      CREATE TABLE IF NOT EXISTS admin_auto_follow_settings (
+        id TINYINT UNSIGNED NOT NULL DEFAULT 1 PRIMARY KEY,
+        enabled TINYINT(1) NOT NULL DEFAULT 0,
+        target_user_ids TEXT NULL,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `);
+
+    const [settingsRows] = await db.promise().query(
+      'SELECT enabled, target_user_ids FROM admin_auto_follow_settings WHERE id = 1 LIMIT 1'
+    );
+    const settings = settingsRows[0];
+    if (!settings?.enabled) return;
+
+    const targetUserIds = String(settings.target_user_ids || '')
+      .split(',')
+      .map((id) => Number(id))
+      .filter((id) => Number.isInteger(id) && id > 0 && id !== Number(userId));
+
+    if (!targetUserIds.length) return;
+
+    await foodFeedRoutes.ensureFoodFeedTables();
+
+    const values = [...new Set(targetUserIds)].map((targetId) => [userId, targetId]);
+    await db.promise().query(
+      `INSERT IGNORE INTO food_feed_follows (follower_user_id, following_user_id)
+       VALUES ?`,
+      [values]
+    );
+  } catch (err) {
+    console.error('Failed to apply new-user auto follows:', err);
+  }
 }
 
 // Register Route
@@ -32,6 +70,8 @@ router.post('/register', async (req, res) => {
     );
 
     const userId = result.insertId;
+    await applyNewUserAutoFollows(userId);
+
     const otp = generateOTP();
     const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
 
