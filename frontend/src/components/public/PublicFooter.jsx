@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import { getCurrentUser, getToken } from "../../lib/auth";
 import styles from "./PublicFooter.module.css";
 
+const fitmeIcon = "/favicon.png";
+
 export function PublicFooter() {
   const user = getCurrentUser();
   const hasSession = Boolean(getToken());
@@ -11,8 +13,11 @@ export function PublicFooter() {
     <footer className={styles.footer}>
       <div className={styles.inner}>
         <div className={styles.brand}>
-          <strong>fitme.io</strong>
-          <p>© {new Date().getFullYear()} All rights reserved.</p>
+          <img src={fitmeIcon} alt="" aria-hidden="true" />
+          <span>
+            <strong>fitme.io</strong>
+            <p>© {new Date().getFullYear()} All rights reserved.</p>
+          </span>
         </div>
         <nav className={styles.links} aria-label="Footer navigation">
           <Link to="/">Home</Link>

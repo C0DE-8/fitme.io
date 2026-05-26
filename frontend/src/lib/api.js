@@ -3,7 +3,7 @@ import axios from "axios";
 const rawBaseUrl =
   import.meta.env.VITE_API_BASE_URL ||
   import.meta.env.VITE_API_URL ||
-  "http://localhost:7005/api";
+  "https://api.fitme.ioa.copupbid.com/api";
 
 export const API_BASE = rawBaseUrl.replace(/\/+$/g, "");
 

@@ -13,6 +13,8 @@ import {
 } from "react-icons/fi";
 import styles from "./AdminSidebar.module.css";
 
+const fitmeIcon = "/favicon.png";
+
 const links = [
   { to: "/admin", label: "Dashboard", icon: FiGrid, end: true },
   { to: "/admin/users", label: "Users", icon: FiUsers },
@@ -31,7 +33,9 @@ export function AdminSidebar({ collapsed = false, mobileOpen = false, onCloseMob
       className={`${styles.sidebar} ${collapsed ? styles.collapsed : ""} ${mobileOpen ? styles.mobileOpen : ""}`}
     >
       <div className={styles.top}>
-        <div className={styles.brandMark}>F</div>
+        <div className={styles.brandMark}>
+          <img src={fitmeIcon} alt="" aria-hidden="true" />
+        </div>
         <div className={styles.brandText}>
           <strong>fitme.io</strong>
           <span>Admin</span>

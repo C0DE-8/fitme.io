@@ -116,8 +116,9 @@ function App() {
         element={
           <PublicLayout>
             <PageSeo
-              title="fitme.io | AI Food Planner by Copupbid"
-              description="fitme.io is a fun AI food app that suggests what to cook from your storage, lets users share storage with friends, and gives everyone a food story feed."
+              title="fitme.io | AI Meal Planner & Food Storage App"
+              description="fitme.io helps you decide what to cook with AI meal suggestions from your pantry, food storage, budget, and preferences. Share storage lists and discover food ideas."
+              keywords="fitme.io, AI meal planner, AI food planner, pantry app, food storage app, budget meal planner, recipe suggestions, ingredient planner, meal ideas, Copupbid"
             />
             <HomePage />
           </PublicLayout>

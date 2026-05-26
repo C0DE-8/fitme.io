@@ -64,6 +64,8 @@ const steps = [
   ["Share or post", "Share storage with friends or post your food story to the feed."],
 ];
 
+const fitmeLogo = "/fitme-logo.png";
+
 export function HomePage() {
   const user = getCurrentUser();
   const hasSession = Boolean(getToken());
@@ -96,6 +98,7 @@ export function HomePage() {
     <section className={styles.page}>
       <div className={styles.hero}>
         <div className={styles.copy}>
+          <img className={styles.heroLogo} src={fitmeLogo} alt="fitme.io AI smart recipes from your pantry" />
           <p className={styles.kicker}>AI food planner for real kitchens</p>
           <h1>fitme.io helps you decide what to cook next.</h1>
           <p className={styles.lead}>

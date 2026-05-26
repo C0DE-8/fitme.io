@@ -32,10 +32,15 @@
   place-items: center;
   border: 1px solid rgba(56, 189, 248, 0.32);
   border-radius: 14px;
-  background: linear-gradient(135deg, var(--fitme-brand), var(--fitme-accent));
-  color: var(--fitme-bg);
-  font-weight: 1000;
+  background: rgba(255, 255, 255, 0.08);
   box-shadow: var(--fitme-glow);
+  overflow: hidden;
+}
+
+.brandMark img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .brandText {

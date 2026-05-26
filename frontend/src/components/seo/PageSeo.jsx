@@ -2,11 +2,13 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
 const siteName = "fitme.io";
-const siteUrl = "https://app.fitme.io.copupbid.com";
-const defaultTitle = "fitme.io | AI Food Planner by Copupbid";
+const siteUrl = "https://fitme.io.copupbid.com";
+const defaultTitle = "fitme.io | AI Meal Planner & Food Storage App";
 const defaultDescription =
-  "fitme.io is an AI-powered food planner by Copupbid that helps users plan meals from available storage, ingredients, budget, and food preferences.";
-const defaultImage = `${siteUrl}/favicon.svg`;
+  "fitme.io is an AI meal planner and food storage app by Copupbid. Plan what to cook from available ingredients, manage pantry storage, share food lists, track budgets, and discover food ideas.";
+const defaultImage = `${siteUrl}/fitme-logo.png`;
+const defaultKeywords =
+  "fitme.io, AI meal planner, AI food planner, pantry app, food storage app, ingredient planner, budget meal planner, recipe ideas, meal suggestions, food sharing, Copupbid";
 
 function setMeta(selector, attributes) {
   let element = document.head.querySelector(selector);
@@ -50,6 +52,7 @@ function setJsonLd(id, data) {
 export function PageSeo({
   title = defaultTitle,
   description = defaultDescription,
+  keywords = defaultKeywords,
   robots = "index, follow",
   image = defaultImage,
   type = "website",
@@ -65,11 +68,7 @@ export function PageSeo({
     setMeta('meta[name="author"]', { name: "author", content: "Copupbid" });
     setMeta('meta[name="application-name"]', { name: "application-name", content: siteName });
     setMeta('meta[name="theme-color"]', { name: "theme-color", content: "#061121" });
-    setMeta('meta[name="keywords"]', {
-      name: "keywords",
-      content:
-        "fitme.io, AI food planner, meal planner, food storage planner, ingredient planner, budget meal planner, Copupbid",
-    });
+    setMeta('meta[name="keywords"]', { name: "keywords", content: keywords });
 
     setMeta('meta[property="og:site_name"]', { property: "og:site_name", content: siteName });
     setMeta('meta[property="og:type"]', { property: "og:type", content: type });
@@ -77,13 +76,18 @@ export function PageSeo({
     setMeta('meta[property="og:description"]', { property: "og:description", content: description });
     setMeta('meta[property="og:url"]', { property: "og:url", content: url });
     setMeta('meta[property="og:image"]', { property: "og:image", content: image });
+    setMeta('meta[property="og:image:alt"]', { property: "og:image:alt", content: "fitme.io logo" });
+    setMeta('meta[property="og:locale"]', { property: "og:locale", content: "en_US" });
 
     setMeta('meta[name="twitter:card"]', { name: "twitter:card", content: "summary_large_image" });
     setMeta('meta[name="twitter:title"]', { name: "twitter:title", content: title });
     setMeta('meta[name="twitter:description"]', { name: "twitter:description", content: description });
     setMeta('meta[name="twitter:image"]', { name: "twitter:image", content: image });
+    setMeta('meta[name="twitter:image:alt"]', { name: "twitter:image:alt", content: "fitme.io logo" });
 
     setLink('link[rel="canonical"]', { rel: "canonical", href: url });
+    setLink('link[rel="icon"]', { rel: "icon", type: "image/png", href: "/favicon.png" });
+    setLink('link[rel="apple-touch-icon"]', { rel: "apple-touch-icon", href: "/favicon.png" });
 
     setJsonLd("fitme-io-jsonld", {
       "@context": "https://schema.org",
@@ -93,6 +97,7 @@ export function PageSeo({
       operatingSystem: "Web",
       url: siteUrl,
       description: defaultDescription,
+      image: defaultImage,
       creator: {
         "@type": "Organization",
         name: "Copupbid",
@@ -103,7 +108,7 @@ export function PageSeo({
         priceCurrency: "USD",
       },
     });
-  }, [description, image, location.pathname, robots, title, type]);
+  }, [description, image, keywords, location.pathname, robots, title, type]);
 
   return null;
 }

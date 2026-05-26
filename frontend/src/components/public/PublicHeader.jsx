@@ -3,6 +3,8 @@ import { FiLogIn, FiLogOut, FiUser } from "react-icons/fi";
 import { clearSession, getCurrentUser, getToken } from "../../lib/auth";
 import styles from "./PublicHeader.module.css";
 
+const fitmeIcon = "/favicon.png";
+
 export function PublicHeader() {
   const navigate = useNavigate();
   const user = getCurrentUser();
@@ -18,7 +20,9 @@ export function PublicHeader() {
     <header className={styles.header}>
       <nav className={styles.navbar} aria-label="Main navigation">
         <Link className={styles.brand} to="/">
-          <span className={styles.brandMark}>F</span>
+          <span className={styles.brandMark}>
+            <img src={fitmeIcon} alt="" aria-hidden="true" />
+          </span>
           <span className={styles.brandText}>
             <strong>fitme.io</strong>
             <small>AI nutrition & habits</small>

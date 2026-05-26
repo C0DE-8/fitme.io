@@ -2,6 +2,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { clearSession, getCurrentUser, getToken } from "../../lib/auth";
 import styles from "./AdminHeader.module.css";
 
+const fitmeIcon = "/favicon.png";
+
 export function AdminHeader() {
   const navigate = useNavigate();
   const user = getCurrentUser();
@@ -16,7 +18,9 @@ export function AdminHeader() {
     <header className={styles.header}>
       <nav className={styles.navbar} aria-label="Admin navigation">
         <Link className={styles.brand} to={isAdmin ? "/admin" : "/"}>
-          <span className={styles.brandMark}>F</span>
+          <span className={styles.brandMark}>
+            <img src={fitmeIcon} alt="" aria-hidden="true" />
+          </span>
           <span className={styles.brandText}>
             <strong>fitme.io</strong>
             <small>Admin Dashboard</small>

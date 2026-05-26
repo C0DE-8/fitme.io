@@ -28,14 +28,19 @@
 
 .brandMark {
   display: grid;
-  width: 36px;
-  height: 36px;
+  width: 42px;
+  height: 42px;
   place-items: center;
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
-  background: var(--fitme-brand-soft);
-  color: var(--fitme-brand-text);
-  font-weight: 900;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.brandMark img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .brandText {
