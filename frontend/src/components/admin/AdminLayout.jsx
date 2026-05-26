@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FiMenu } from "react-icons/fi";
 import { AdminFooter } from "./AdminFooter";
 import { AdminHeader } from "./AdminHeader";
@@ -8,9 +8,34 @@ import styles from "./AdminLayout.module.css";
 export function AdminLayout({ children }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [loadingState, setLoadingState] = useState({ loading: false, pending: 0 });
+
+  useEffect(() => {
+    function handleAdminLoading(event) {
+      setLoadingState({
+        loading: Boolean(event.detail?.loading),
+        pending: Number(event.detail?.pending || 0),
+      });
+    }
+
+    window.addEventListener("fitme:admin-loading", handleAdminLoading);
+
+    return () => {
+      window.removeEventListener("fitme:admin-loading", handleAdminLoading);
+    };
+  }, []);
 
   return (
     <div className={styles.layout}>
+      {loadingState.loading ? (
+        <div className={styles.preloader} role="status" aria-live="polite">
+          <span className={styles.preloaderBar} />
+          <div>
+            <span className={styles.preloaderSpinner} aria-hidden="true" />
+            <strong>{loadingState.pending > 1 ? "Working on requests..." : "Working..."}</strong>
+          </div>
+        </div>
+      ) : null}
       <AdminHeader />
       <div className={styles.mobileBar}>
         <button

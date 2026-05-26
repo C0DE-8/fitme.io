@@ -105,7 +105,7 @@ export function PageSeo({
       offers: {
         "@type": "Offer",
         price: "0",
-        priceCurrency: "USD",
+        priceCurrency: "NGN",
       },
     });
   }, [description, image, keywords, location.pathname, robots, title, type]);

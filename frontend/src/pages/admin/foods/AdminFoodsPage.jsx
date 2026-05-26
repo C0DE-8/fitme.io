@@ -42,6 +42,7 @@ export function AdminFoodsPage() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [ingredientSearch, setIngredientSearch] = useState("");
+  const [foodIngredientSearch, setFoodIngredientSearch] = useState("");
   const [foodModalOpen, setFoodModalOpen] = useState(false);
   const [ingredientsModalOpen, setIngredientsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -97,6 +98,15 @@ export function AdminFoodsPage() {
     const query = ingredientSearch.trim().toLowerCase();
     return ingredients.filter((item) => !query || item.name?.toLowerCase().includes(query));
   }, [ingredients, ingredientSearch]);
+  const foodIngredientOptions = useMemo(() => {
+    const query = foodIngredientSearch.trim().toLowerCase();
+    return ingredients
+      .filter((item) => !query || item.name?.toLowerCase().includes(query))
+      .slice(0, 12);
+  }, [foodIngredientSearch, ingredients]);
+  const selectedIngredientNames = new Set(
+    form.ingredients.map((item) => item.name.trim().toLowerCase()).filter(Boolean)
+  );
 
   function resetForm() {
     setForm(emptyForm);
@@ -105,6 +115,7 @@ export function AdminFoodsPage() {
 
   function openCreateFood() {
     resetForm();
+    setFoodIngredientSearch("");
     setFoodModalOpen(true);
   }
 
@@ -118,6 +129,7 @@ export function AdminFoodsPage() {
       ingredients: parseIngredients(food.ingredients),
       image: null,
     });
+    setFoodIngredientSearch("");
     setFoodModalOpen(true);
   }
 
@@ -151,6 +163,36 @@ export function AdminFoodsPage() {
       ...current,
       ingredients: [...current.ingredients, { name: "", cost: 0 }],
     }));
+  }
+
+  function selectIngredient(item) {
+    const name = String(item.name || "").trim();
+    if (!name) return;
+
+    const normalizedName = name.toLowerCase();
+    if (selectedIngredientNames.has(normalizedName)) {
+      toast.info(`${name} is already in this food item.`, { title: "Ingredient already selected" });
+      return;
+    }
+
+    setForm((current) => {
+      const emptyIndex = current.ingredients.findIndex((ingredient) => !ingredient.name.trim());
+      const nextIngredient = { name, cost: 0 };
+
+      if (emptyIndex >= 0) {
+        return {
+          ...current,
+          ingredients: current.ingredients.map((ingredient, index) =>
+            index === emptyIndex ? nextIngredient : ingredient
+          ),
+        };
+      }
+
+      return {
+        ...current,
+        ingredients: [...current.ingredients, nextIngredient],
+      };
+    });
   }
 
   function removeIngredient(index) {
@@ -386,6 +428,44 @@ export function AdminFoodsPage() {
                   Add ingredient
                 </button>
               </div>
+
+              <section className={styles.foodIngredientPicker} aria-label="Ingredient picker">
+                <div>
+                  <strong>Pick from library</strong>
+                  <span>{ingredients.length ? `${ingredients.length} saved ingredients` : "No saved ingredients yet"}</span>
+                </div>
+                <input
+                  value={foodIngredientSearch}
+                  onChange={(event) => setFoodIngredientSearch(event.target.value)}
+                  placeholder="Search ingredient library..."
+                />
+                <div className={styles.foodIngredientOptions}>
+                  {foodIngredientOptions.map((item) => {
+                    const isSelected = selectedIngredientNames.has(String(item.name || "").trim().toLowerCase());
+
+                    return (
+                      <button
+                        className={isSelected ? styles.foodIngredientSelected : ""}
+                        key={item.id}
+                        type="button"
+                        onClick={() => selectIngredient(item)}
+                        disabled={isSelected}
+                      >
+                        {item.image_url ? (
+                          <img src={item.image_url} alt="" />
+                        ) : (
+                          <span>{item.name?.charAt(0) || "I"}</span>
+                        )}
+                        <strong>{item.name}</strong>
+                      </button>
+                    );
+                  })}
+                  {ingredients.length && !foodIngredientOptions.length ? (
+                    <p>No ingredients match this search.</p>
+                  ) : null}
+                  {!ingredients.length ? <p>Add ingredients to the library first.</p> : null}
+                </div>
+              </section>
 
               <div className={styles.ingredients}>
                 {form.ingredients.map((ingredient, index) => (

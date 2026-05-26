@@ -17,6 +17,16 @@ function foodTypeLabel(value) {
   return foodTypes.find((type) => type.value === value)?.label || value;
 }
 
+function formatMoney(value) {
+  return `₦${Number(value || 0).toLocaleString()}`;
+}
+
+function missingSummary(food) {
+  const count = food?.missingIngredients?.length || 0;
+  if (!count) return "Ready from storage";
+  return `${count} missing ingredient${count === 1 ? "" : "s"}`;
+}
+
 export function UserDashboardPage() {
   const navigate = useNavigate();
   const toast = useToast();
@@ -164,6 +174,17 @@ export function UserDashboardPage() {
               <div className={styles.recommendation}>
                 <strong>{recommendation.name}</strong>
                 {recommendation.image_url ? <img src={recommendation.image_url} alt="" /> : null}
+                {recommendation.message ? <p>{recommendation.message}</p> : null}
+                <dl>
+                  <div>
+                    <dt>Estimated cost</dt>
+                    <dd>{formatMoney(recommendation.estimated_cost)}</dd>
+                  </div>
+                  <div>
+                    <dt>Storage match</dt>
+                    <dd>{missingSummary(recommendation)}</dd>
+                  </div>
+                </dl>
                 <Link className={styles.detailsLink} to={`/foods/${recommendation.type}/${recommendation.id}`}>
                   Details
                 </Link>
@@ -179,21 +200,27 @@ export function UserDashboardPage() {
           {!finding && otherSuggestions.length ? (
             <div className={styles.otherSuggestions}>
               <div className={styles.otherHeader}>
-                <h3>Other suggestions</h3>
+                <h3>Sub suggestions</h3>
                 <span>{otherSuggestions.length} options</span>
               </div>
               <div className={styles.otherList}>
-                {otherSuggestions.map((food) => (
-                  <article key={food.id}>
-                    <div className={styles.suggestionSummary}>
-                      {food.image_url ? <img src={food.image_url} alt="" /> : <span>{food.name?.charAt(0) || "F"}</span>}
-                      <div>
-                        <strong>{food.name}</strong>
+                {otherSuggestions.map((food) => {
+                  const missingCost = Number(food.totalMissingCost || 0);
+
+                  return (
+                    <article key={food.id}>
+                      <div className={styles.suggestionSummary}>
+                        {food.image_url ? <img src={food.image_url} alt="" /> : <span>{food.name?.charAt(0) || "F"}</span>}
+                        <div>
+                          <strong>{food.name}</strong>
+                          <small>{foodTypeLabel(food.type)} · {formatMoney(food.estimated_cost)}</small>
+                          <em>{missingCost ? `Missing ${formatMoney(missingCost)}` : "Ready from storage"}</em>
+                        </div>
                       </div>
-                    </div>
-                    <Link to={`/foods/${food.type}/${food.id}`}>Details</Link>
-                  </article>
-                ))}
+                      <Link to={`/foods/${food.type}/${food.id}`}>Details</Link>
+                    </article>
+                  );
+                })}
               </div>
             </div>
           ) : null}

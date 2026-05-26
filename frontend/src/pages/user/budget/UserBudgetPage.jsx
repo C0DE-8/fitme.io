@@ -15,6 +15,10 @@ function foodTypeLabel(value) {
   return foodTypes.find((type) => type.value === value)?.label || value;
 }
 
+function formatMoney(value) {
+  return `₦${Number(value || 0).toLocaleString()}`;
+}
+
 export function UserBudgetPage() {
   const toast = useToast();
   const [budget, setBudget] = useState("");
@@ -147,6 +151,17 @@ export function UserBudgetPage() {
               <div className={styles.recommendation}>
                 <strong>{recommendation.name}</strong>
                 {recommendation.image_url ? <img src={recommendation.image_url} alt="" /> : null}
+                {recommendation.message ? <p>{recommendation.message}</p> : null}
+                <dl>
+                  <div>
+                    <dt>Estimated cost</dt>
+                    <dd>{formatMoney(recommendation.estimated_cost)}</dd>
+                  </div>
+                  <div>
+                    <dt>Budget left</dt>
+                    <dd>{formatMoney(Math.max(0, Number(budgetMeta?.budget || 0) - Number(recommendation.estimated_cost || 0)))}</dd>
+                  </div>
+                </dl>
                 <Link className={styles.detailsLink} to={`/foods/${recommendation.type}/${recommendation.id}`}>
                   Details
                 </Link>
@@ -162,14 +177,14 @@ export function UserBudgetPage() {
           {!finding && budgetMeta?.tiers?.length ? (
             <div className={styles.budgetTiers}>
               <div className={styles.otherHeader}>
-                <h3>All options</h3>
+                <h3>Sub suggestions</h3>
                 <span>{budgetMeta.tiers.length} tiers</span>
               </div>
               <div className={styles.tierList}>
                 {budgetMeta.tiers.map((tier) => (
                   <section key={tier.price}>
                     <div className={styles.tierHeader}>
-                      <strong>₦{Number(tier.price || 0).toLocaleString()} options</strong>
+                      <strong>{formatMoney(tier.price)} options</strong>
                       <span>
                         {tier.count} item{tier.count === 1 ? "" : "s"}
                       </span>
@@ -185,6 +200,7 @@ export function UserBudgetPage() {
                             )}
                             <div>
                               <strong>{food.name}</strong>
+                              <small>{foodTypeLabel(food.type)} · {formatMoney(food.estimated_cost)}</small>
                             </div>
                           </div>
                           <Link to={`/foods/${food.type}/${food.id}`}>Details</Link>

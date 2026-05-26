@@ -32,7 +32,7 @@ function formatPrice(value) {
 
   return new Intl.NumberFormat(undefined, {
     style: "currency",
-    currency: "USD",
+    currency: "NGN",
     maximumFractionDigits: amount % 1 === 0 ? 0 : 2,
   }).format(amount);
 }
@@ -205,7 +205,7 @@ export function AdminPlansPage() {
                 type="number"
                 value={form.price}
                 onChange={(event) => setForm((current) => ({ ...current, price: event.target.value }))}
-                placeholder="19.99"
+                placeholder="5000"
               />
             </label>
             <button className={styles.primary} disabled={saving} type="submit">

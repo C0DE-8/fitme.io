@@ -22,7 +22,7 @@ function formatPrice(value) {
 
   return new Intl.NumberFormat(undefined, {
     style: "currency",
-    currency: "USD",
+    currency: "NGN",
     maximumFractionDigits: amount % 1 === 0 ? 0 : 2,
   }).format(amount);
 }
