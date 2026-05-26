@@ -24,6 +24,12 @@ const emptyForm = {
   image: null,
 };
 
+function foodTypeLabel(value) {
+  if (value === "junks") return "Others";
+  if (!value) return "";
+  return String(value).charAt(0).toUpperCase() + String(value).slice(1);
+}
+
 export function AdminFoodsPage() {
   const toast = useToast();
   const [foods, setFoods] = useState([]);
@@ -260,7 +266,7 @@ export function AdminFoodsPage() {
           <option value="">All types</option>
           <option value="rice">Rice</option>
           <option value="swallow">Swallow</option>
-          <option value="junks">Junks</option>
+          <option value="junks">Others</option>
         </select>
       </div>
 
@@ -291,7 +297,7 @@ export function AdminFoodsPage() {
                 {food.image ? <img src={imageUrl(`/uploads/${food.image}`)} alt="" /> : <div className={styles.foodImageFallback}>F</div>}
                 <div>
                   <strong>{food.name}</strong>
-                  <span>{food.type} • ₦{Number(food.estimated_cost || 0).toLocaleString()}</span>
+                  <span>{foodTypeLabel(food.type)} • ₦{Number(food.estimated_cost || 0).toLocaleString()}</span>
                   <p>{food.prepared}</p>
                 </div>
                 <div className={styles.actions}>
@@ -354,7 +360,7 @@ export function AdminFoodsPage() {
                   <select value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value })} required>
                     <option value="rice">Rice</option>
                     <option value="swallow">Swallow</option>
-                    <option value="junks">Junks</option>
+                    <option value="junks">Others</option>
                   </select>
                 </label>
 

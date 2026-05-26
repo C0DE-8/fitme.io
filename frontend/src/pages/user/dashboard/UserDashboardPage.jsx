@@ -10,8 +10,12 @@ import styles from "./UserDashboardPage.module.css";
 const foodTypes = [
   { value: "rice", label: "Rice" },
   { value: "swallow", label: "Swallow" },
-  { value: "junks", label: "Junks" },
+  { value: "junks", label: "Others" },
 ];
+
+function foodTypeLabel(value) {
+  return foodTypes.find((type) => type.value === value)?.label || value;
+}
 
 export function UserDashboardPage() {
   const navigate = useNavigate();
@@ -145,7 +149,7 @@ export function UserDashboardPage() {
         <section className={styles.responsePanel}>
           <div className={styles.responseHeader}>
             <h2>Best meal match</h2>
-            <span>{finding ? "Checking" : selectedType}</span>
+            <span>{finding ? "Checking" : foodTypeLabel(selectedType)}</span>
           </div>
 
           {finding ? (

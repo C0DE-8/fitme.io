@@ -9,7 +9,7 @@ const foodTypes = [
   { value: "", label: "All" },
   { value: "rice", label: "Rice" },
   { value: "swallow", label: "Swallow" },
-  { value: "junks", label: "Junks" },
+  { value: "junks", label: "Others" },
 ];
 
 export function SharedStoragePage() {

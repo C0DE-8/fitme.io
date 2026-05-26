@@ -14,6 +14,12 @@ function formatNames(items, fallback) {
   return items.map((item) => item.name).join(", ");
 }
 
+function foodTypeLabel(value) {
+  if (value === "junks") return "Others";
+  if (!value) return "";
+  return String(value).charAt(0).toUpperCase() + String(value).slice(1);
+}
+
 function buildCookingSteps(prepared) {
   const text = prepared || "Start with your ingredients, cook them carefully, and adjust seasoning to taste.";
   const steps = text
@@ -88,7 +94,7 @@ export function UserFoodDetailPage() {
         <>
           <section className={styles.hero}>
             <div className={styles.heroCopy}>
-              <p className={styles.kicker}>{food.type}</p>
+              <p className={styles.kicker}>{foodTypeLabel(food.type)}</p>
               <h1>{food.name}</h1>
               <p>{food.package}</p>
               <div className={styles.priceRow}>

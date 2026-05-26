@@ -136,9 +136,9 @@
 
 .tableHead,
 .tableRow {
-  min-width: 760px;
+  min-width: 850px;
   display: grid;
-  grid-template-columns: minmax(260px, 1.45fr) 100px minmax(180px, 0.9fr) 150px;
+  grid-template-columns: minmax(260px, 1.45fr) 100px minmax(180px, 0.9fr) 150px 84px;
   align-items: center;
   gap: 14px;
   padding: 0 18px;
@@ -159,7 +159,8 @@
 
 .userCell,
 .subscriptionCell,
-.dateCell {
+.dateCell,
+.actionCell {
   min-width: 0;
   display: grid;
   gap: 2px;
@@ -233,6 +234,96 @@
   color: var(--fitme-danger);
 }
 
+.actionCell {
+  justify-items: end;
+}
+
+.actionCell button,
+.modal header button {
+  width: 38px;
+  height: 38px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid rgba(252, 165, 165, 0.24);
+  border-radius: 12px;
+  background: var(--fitme-danger-bg);
+  color: var(--fitme-danger);
+  cursor: pointer;
+}
+
+.actionCell button:disabled,
+.modal button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.modalBackdrop {
+  position: fixed;
+  z-index: 40;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  background: rgba(15, 23, 42, 0.48);
+  padding: 20px;
+}
+
+.modal {
+  width: min(100%, 440px);
+  border: 1px solid var(--fitme-line);
+  border-radius: 18px;
+  background: var(--fitme-surface);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.24);
+  padding: 18px;
+}
+
+.modal header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.modal h2 {
+  margin: 0;
+  color: var(--fitme-strong);
+  font-size: 24px;
+  letter-spacing: 0;
+}
+
+.modal > p {
+  margin: 16px 0 0;
+  color: var(--fitme-muted);
+  line-height: 1.55;
+}
+
+.modal footer {
+  display: flex;
+  justify-content: end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.modal footer button {
+  min-height: 42px;
+  border: 1px solid var(--fitme-line);
+  border-radius: 13px;
+  background: var(--fitme-soft);
+  color: var(--fitme-strong);
+  padding: 0 14px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.modal footer .dangerButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-color: rgba(252, 165, 165, 0.28);
+  background: var(--fitme-danger-bg);
+  color: var(--fitme-danger);
+}
+
 .empty {
   margin: 0;
   color: var(--fitme-muted);
@@ -290,5 +381,18 @@
   .role,
   .subscriptionCell > strong {
     min-height: 26px;
+  }
+
+  .actionCell {
+    justify-items: start;
+  }
+
+  .modal footer {
+    flex-direction: column-reverse;
+  }
+
+  .modal footer button {
+    width: 100%;
+    justify-content: center;
   }
 }

@@ -20,6 +20,10 @@ export function getAdminUsersWithSubscriptions() {
   return api.get("/admin/users-with-subscriptions").then((res) => res.data.users);
 }
 
+export function deleteAdminUser(id) {
+  return api.delete(`/admin/users/${id}`).then((res) => res.data);
+}
+
 export function getAdminSubscriptions() {
   return api.get("/admin/subscriptions").then((res) => res.data.subscriptions);
 }

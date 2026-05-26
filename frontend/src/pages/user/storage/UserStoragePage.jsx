@@ -18,6 +18,12 @@ function itemKey(value) {
   return String(value || "").trim().toLowerCase();
 }
 
+function foodTypeLabel(value) {
+  if (value === "junks") return "Others";
+  if (!value) return "";
+  return String(value).charAt(0).toUpperCase() + String(value).slice(1);
+}
+
 export function UserStoragePage() {
   const toast = useToast();
   const [storage, setStorage] = useState([]);
@@ -276,7 +282,7 @@ export function UserStoragePage() {
                 <strong>{suggestion.food_name}</strong>
                 <p>Suggested by {suggestion.suggested_by_name}</p>
                 {suggestion.note ? <small>{suggestion.note}</small> : null}
-                <em>{suggestion.food_type}{formatDate(suggestion.created_at) ? ` · ${formatDate(suggestion.created_at)}` : ""}</em>
+                <em>{foodTypeLabel(suggestion.food_type)}{formatDate(suggestion.created_at) ? ` · ${formatDate(suggestion.created_at)}` : ""}</em>
               </div>
               <button type="button" disabled={saving} onClick={() => removeFriendSuggestion(suggestion)}>
                 Dismiss

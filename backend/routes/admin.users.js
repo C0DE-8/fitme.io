@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../db');
 const { authenticateAdmin } = require('../middleware');
 const moment = require('moment');
+const foodFeedRoutes = require('./user.foodFeed');
 
 // GET /admin/users - Admin gets all users
 router.get('/users', authenticateAdmin, async (req, res) => {
@@ -156,6 +157,94 @@ router.get('/users/:id', authenticateAdmin, async (req, res) => {
     res.json({ user: formattedUser });
   } catch (err) {
     console.error('Failed to fetch user by ID:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// DELETE /admin/users/:id - Admin deletes a user account
+router.delete('/users/:id', authenticateAdmin, async (req, res) => {
+  const userId = Number(req.params.id);
+
+  if (!Number.isInteger(userId) || userId <= 0) {
+    return res.status(400).json({ error: 'Valid user id is required' });
+  }
+
+  if (userId === Number(req.user.id)) {
+    return res.status(400).json({ error: 'You cannot delete your own admin account from this page.' });
+  }
+
+  try {
+    const [rows] = await db.promise().query(
+      'SELECT id, username, role FROM users WHERE id = ? LIMIT 1',
+      [userId]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    await foodFeedRoutes.ensureFoodFeedTables();
+
+    const conn = db.promise();
+    await conn.beginTransaction();
+
+    try {
+      await conn.query(
+        `DELETE cr
+         FROM food_feed_comment_reactions cr
+         JOIN food_feed_comments c ON c.id = cr.comment_id
+         WHERE c.user_id = ?`,
+        [userId]
+      );
+      await conn.query(
+        `DELETE cr
+         FROM food_feed_comment_reactions cr
+         JOIN food_feed_posts p ON p.id = cr.post_id
+         WHERE p.user_id = ?`,
+        [userId]
+      );
+      await conn.query(
+        `DELETE FROM food_feed_comment_reactions
+         WHERE comment_author_user_id = ? OR reactor_user_id = ?`,
+        [userId, userId]
+      );
+      await conn.query(
+        `DELETE c
+         FROM food_feed_comments c
+         JOIN food_feed_posts p ON p.id = c.post_id
+         WHERE p.user_id = ?`,
+        [userId]
+      );
+      await conn.query('DELETE FROM food_feed_comments WHERE user_id = ?', [userId]);
+      await conn.query('DELETE FROM food_feed_posts WHERE user_id = ?', [userId]);
+      await conn.query(
+        'DELETE FROM food_feed_reactions WHERE reactor_user_id = ? OR post_author_user_id = ?',
+        [userId, userId]
+      );
+      await conn.query(
+        'DELETE FROM food_feed_follows WHERE follower_user_id = ? OR following_user_id = ?',
+        [userId, userId]
+      );
+      try {
+        await conn.query('DELETE FROM storage_friend_suggestions WHERE owner_user_id = ?', [userId]);
+      } catch (deleteError) {
+        if (deleteError.code !== 'ER_NO_SUCH_TABLE') throw deleteError;
+      }
+      await conn.query('DELETE FROM storage_shares WHERE user_id = ?', [userId]);
+      await conn.query('DELETE FROM user_storage WHERE user_id = ?', [userId]);
+      await conn.query('DELETE FROM chat_history WHERE user_id = ?', [userId]);
+      await conn.query('DELETE FROM subscriptions WHERE user_id = ?', [userId]);
+      await conn.query('DELETE FROM otps WHERE user_id = ?', [userId]);
+      await conn.query('DELETE FROM users WHERE id = ?', [userId]);
+      await conn.commit();
+    } catch (deleteError) {
+      await conn.rollback();
+      throw deleteError;
+    }
+
+    res.json({ message: `${rows[0].username || 'User'} deleted successfully.` });
+  } catch (err) {
+    console.error('Failed to delete user:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });

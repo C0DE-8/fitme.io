@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
-import { FiCheckCircle, FiSearch, FiShield, FiUser, FiUsers } from "react-icons/fi";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { FiCheckCircle, FiSearch, FiShield, FiTrash2, FiUser, FiUsers, FiX } from "react-icons/fi";
 import { useToast } from "../../../components/feedback/useToast";
 import { getApiError } from "../../../lib/api";
-import { getAdminUsersWithSubscriptions } from "../../../lib/api/adminApi";
+import { getCurrentUser } from "../../../lib/auth";
+import { deleteAdminUser, getAdminUsersWithSubscriptions } from "../../../lib/api/adminApi";
 import styles from "./AdminUsersPage.module.css";
 
 function formatDate(value) {
@@ -33,9 +34,17 @@ function getLatestUsers(rows) {
 
 export function AdminUsersPage() {
   const toast = useToast();
+  const currentAdmin = getCurrentUser();
   const [users, setUsers] = useState([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+
+  const loadUsers = useCallback(async () => {
+    const rows = await getAdminUsersWithSubscriptions();
+    setUsers(getLatestUsers(rows || []));
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -55,6 +64,23 @@ export function AdminUsersPage() {
       alive = false;
     };
   }, [toast]);
+
+  async function handleDeleteUser() {
+    if (!deleteTarget) return;
+
+    setDeletingId(deleteTarget.user_id);
+
+    try {
+      const data = await deleteAdminUser(deleteTarget.user_id);
+      toast.success(data.message || "User deleted.");
+      setDeleteTarget(null);
+      await loadUsers();
+    } catch (err) {
+      toast.error(getApiError(err, "Unable to delete user"), { title: "Delete failed" });
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   const normalizedQuery = query.trim().toLowerCase();
   const filteredUsers = useMemo(
@@ -125,6 +151,7 @@ export function AdminUsersPage() {
             <span>Role</span>
             <span>Subscription</span>
             <span>Joined</span>
+            <span>Actions</span>
           </div>
           {filteredUsers.map((user) => (
             <article className={styles.tableRow} key={user.user_id}>
@@ -143,11 +170,59 @@ export function AdminUsersPage() {
                 <strong>{formatDate(user.created_at)}</strong>
                 <small>{user.verified ? "Verified" : "Not verified"}</small>
               </div>
+              <div className={styles.actionCell}>
+                <button
+                  type="button"
+                  disabled={deletingId === user.user_id || Number(currentAdmin?.id) === Number(user.user_id)}
+                  onClick={() => setDeleteTarget(user)}
+                  aria-label={`Delete ${user.username || "user"}`}
+                  title={
+                    Number(currentAdmin?.id) === Number(user.user_id)
+                      ? "You cannot delete your own admin account here"
+                      : "Delete user"
+                  }
+                >
+                  <FiTrash2 aria-hidden="true" />
+                </button>
+              </div>
             </article>
           ))}
           {!loading && !filteredUsers.length ? <p className={styles.empty}>No users match this search.</p> : null}
         </div>
       </section>
+
+      {deleteTarget ? (
+        <div className={styles.modalBackdrop} role="presentation">
+          <section className={styles.modal} role="dialog" aria-modal="true" aria-label="Delete user">
+            <header>
+              <div>
+                <p className={styles.kicker}>Delete user</p>
+                <h2>{deleteTarget.username || "User account"}</h2>
+              </div>
+              <button type="button" onClick={() => setDeleteTarget(null)} aria-label="Cancel delete">
+                <FiX aria-hidden="true" />
+              </button>
+            </header>
+            <p>
+              This permanently removes the user account, subscriptions, storage, chat history, and food feed activity.
+            </p>
+            <footer>
+              <button type="button" onClick={() => setDeleteTarget(null)} disabled={deletingId === deleteTarget.user_id}>
+                Cancel
+              </button>
+              <button
+                className={styles.dangerButton}
+                type="button"
+                onClick={handleDeleteUser}
+                disabled={deletingId === deleteTarget.user_id}
+              >
+                <FiTrash2 aria-hidden="true" />
+                {deletingId === deleteTarget.user_id ? "Deleting..." : "Delete user"}
+              </button>
+            </footer>
+          </section>
+        </div>
+      ) : null}
     </section>
   );
 }
