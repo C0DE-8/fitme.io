@@ -14,6 +14,7 @@ import { AdminPlansPage } from "./pages/admin/plans/AdminPlansPage";
 import { AdminSubscriptionsPage } from "./pages/admin/subscriptions/AdminSubscriptionsPage";
 import { AdminUsersPage } from "./pages/admin/users/AdminUsersPage";
 import { AuthPage } from "./pages/auth/AuthPage";
+import { ErrorPage } from "./pages/error/ErrorPage";
 import { HomePage } from "./pages/home/HomePage";
 import { LegalPage } from "./pages/legal/LegalPage";
 import { SharedStoragePage } from "./pages/shared/SharedStoragePage";
@@ -158,6 +159,19 @@ function App() {
               robots="noindex, nofollow"
             />
             <AuthPage />
+          </PublicLayout>
+        }
+      />
+      <Route
+        path="/500"
+        element={
+          <PublicLayout>
+            <PageSeo
+              title="Server Error | fitme.io"
+              description="fitme.io is temporarily unable to load this page."
+              robots="noindex, nofollow"
+            />
+            <ErrorPage status={500} />
           </PublicLayout>
         }
       />
@@ -382,7 +396,19 @@ function App() {
           </UserRoute>
         }
       />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route
+        path="*"
+        element={
+          <PublicLayout>
+            <PageSeo
+              title="Page Not Found | fitme.io"
+              description="The fitme.io page you opened could not be found."
+              robots="noindex, nofollow"
+            />
+            <ErrorPage status={404} />
+          </PublicLayout>
+        }
+      />
     </Routes>
   );
 }
