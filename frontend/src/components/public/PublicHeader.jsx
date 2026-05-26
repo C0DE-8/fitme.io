@@ -27,9 +27,14 @@ export function PublicHeader() {
 
         <div className={styles.links}>
           {!hasSession ? (
-            <NavLink className={({ isActive }) => (isActive ? styles.active : styles.link)} to="/">
-              Home
-            </NavLink>
+            <>
+              <NavLink className={({ isActive }) => (isActive ? styles.active : styles.link)} to="/">
+                Home
+              </NavLink>
+              <NavLink className={({ isActive }) => (isActive ? styles.active : styles.link)} to="/terms">
+                Terms
+              </NavLink>
+            </>
           ) : null}
           {hasSession ? (
             <>

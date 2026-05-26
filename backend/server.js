@@ -40,6 +40,10 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
+app.get('/', (req, res) => {
+  res.send('fitme is working');
+});
+
 // Routes
 const userProfileRoutes = require('./routes/user.profile');
 const userSubscriptionRoutes = require('./routes/user.subscriptions');

@@ -15,6 +15,7 @@ import { AdminSubscriptionsPage } from "./pages/admin/subscriptions/AdminSubscri
 import { AdminUsersPage } from "./pages/admin/users/AdminUsersPage";
 import { AuthPage } from "./pages/auth/AuthPage";
 import { HomePage } from "./pages/home/HomePage";
+import { LegalPage } from "./pages/legal/LegalPage";
 import { SharedStoragePage } from "./pages/shared/SharedStoragePage";
 import { UserBudgetPage } from "./pages/user/budget/UserBudgetPage";
 import { UserDashboardPage } from "./pages/user/dashboard/UserDashboardPage";
@@ -116,9 +117,33 @@ function App() {
           <PublicLayout>
             <PageSeo
               title="fitme.io | AI Food Planner by Copupbid"
-              description="fitme.io is an AI-powered food planner by Copupbid that helps you plan meals from your storage, ingredients, and food preferences."
+              description="fitme.io is a fun AI food app that suggests what to cook from your storage, lets users share storage with friends, and gives everyone a food story feed."
             />
             <HomePage />
+          </PublicLayout>
+        }
+      />
+      <Route
+        path="/terms"
+        element={
+          <PublicLayout>
+            <PageSeo
+              title="Terms | fitme.io"
+              description="Read the fitme.io terms for using the food AI, storage sharing, subscriptions, and food feed."
+            />
+            <LegalPage type="terms" />
+          </PublicLayout>
+        }
+      />
+      <Route
+        path="/privacy"
+        element={
+          <PublicLayout>
+            <PageSeo
+              title="Privacy Policy | fitme.io"
+              description="Read how fitme.io uses account, storage, subscription, sharing, and food feed data."
+            />
+            <LegalPage type="privacy" />
           </PublicLayout>
         }
       />

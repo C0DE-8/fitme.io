@@ -16,6 +16,8 @@ export function PublicFooter() {
         </div>
         <nav className={styles.links} aria-label="Footer navigation">
           <Link to="/">Home</Link>
+          <Link to="/terms">Terms</Link>
+          <Link to="/privacy">Privacy</Link>
           {hasSession ? <Link to={accountPath}>{user?.username || "Account"}</Link> : <Link to="/auth">Log in</Link>}
         </nav>
         <p className={styles.session}>
