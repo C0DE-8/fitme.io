@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "../../../components/feedback/useToast";
 import { getApiError } from "../../../lib/api";
-import { getFoodSuggestions } from "../../../lib/api/usersFoodApi";
+import { getFoodSuggestions, markFoodAsEaten } from "../../../lib/api/usersFoodApi";
 import { getUserProfile, getUserStorage } from "../../../lib/api/userApi";
 import { hasSeenStoragePrompt, markStoragePromptSeen } from "../../../lib/auth";
 import styles from "./UserDashboardPage.module.css";
@@ -37,6 +37,7 @@ export function UserDashboardPage() {
   const [otherSuggestions, setOtherSuggestions] = useState([]);
   const [storageModalOpen, setStorageModalOpen] = useState(false);
   const [finding, setFinding] = useState(false);
+  const [markingEatenId, setMarkingEatenId] = useState(null);
 
   useEffect(() => {
     let alive = true;
@@ -92,6 +93,20 @@ export function UserDashboardPage() {
 
     markStoragePromptSeen();
     setStorageModalOpen(true);
+  }
+
+  async function markSuggestionEaten(food) {
+    setMarkingEatenId(food.id);
+
+    try {
+      await markFoodAsEaten(food.id);
+      toast.success(`${food.name} marked as eaten.`, { title: "Suggestion rotated" });
+      await runFindMeals();
+    } catch (err) {
+      toast.error(getApiError(err, "Unable to mark this food as eaten"), { title: "Update failed" });
+    } finally {
+      setMarkingEatenId(null);
+    }
   }
 
   return (
@@ -185,9 +200,25 @@ export function UserDashboardPage() {
                     <dd>{missingSummary(recommendation)}</dd>
                   </div>
                 </dl>
-                <Link className={styles.detailsLink} to={`/foods/${recommendation.type}/${recommendation.id}`}>
-                  Details
-                </Link>
+                {recommendation.favorited || recommendation.recently_eaten ? (
+                  <div className={styles.preferenceNote}>
+                    {recommendation.favorited ? <span>Favorite match</span> : null}
+                    {recommendation.recently_eaten ? <span>Recently eaten</span> : null}
+                  </div>
+                ) : null}
+                <div className={styles.recommendationActions}>
+                  <Link className={styles.detailsLink} to={`/foods/${recommendation.type}/${recommendation.id}`}>
+                    Details
+                  </Link>
+                  <button
+                    className={styles.markEatenButton}
+                    type="button"
+                    disabled={markingEatenId === recommendation.id || finding}
+                    onClick={() => markSuggestionEaten(recommendation)}
+                  >
+                    {markingEatenId === recommendation.id ? "Rotating..." : "I've eaten this"}
+                  </button>
+                </div>
               </div>
             </>
           ) : (
@@ -217,7 +248,16 @@ export function UserDashboardPage() {
                           <em>{missingCost ? `Missing ${formatMoney(missingCost)}` : "Ready from storage"}</em>
                         </div>
                       </div>
-                      <Link to={`/foods/${food.type}/${food.id}`}>Details</Link>
+                      <div className={styles.suggestionActions}>
+                        <Link to={`/foods/${food.type}/${food.id}`}>Details</Link>
+                        <button
+                          type="button"
+                          disabled={markingEatenId === food.id || finding}
+                          onClick={() => markSuggestionEaten(food)}
+                        >
+                          Eaten
+                        </button>
+                      </div>
                     </article>
                   );
                 })}

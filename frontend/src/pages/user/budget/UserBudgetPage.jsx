@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useToast } from "../../../components/feedback/useToast";
 import { getApiError } from "../../../lib/api";
-import { getBudgetFoodSuggestions } from "../../../lib/api/usersFoodApi";
+import { getBudgetFoodSuggestions, markFoodAsEaten } from "../../../lib/api/usersFoodApi";
 import styles from "../dashboard/UserDashboardPage.module.css";
 
 const foodTypes = [
@@ -26,11 +26,9 @@ export function UserBudgetPage() {
   const [selectedType, setSelectedType] = useState("rice");
   const [recommendation, setRecommendation] = useState(null);
   const [finding, setFinding] = useState(false);
+  const [markingEatenId, setMarkingEatenId] = useState(null);
 
-  async function runBudgetMeals(event) {
-    event.preventDefault();
-
-    const amount = Number(budget);
+  async function loadBudgetMeals(amount) {
     if (!Number.isFinite(amount) || amount <= 0) {
       toast.error("Enter a valid budget amount.", { title: "Budget required" });
       return;
@@ -57,6 +55,25 @@ export function UserBudgetPage() {
       toast.error(getApiError(err, "Could not find meals within this budget"), { title: "Budget search failed" });
     } finally {
       setFinding(false);
+    }
+  }
+
+  async function runBudgetMeals(event) {
+    event.preventDefault();
+    await loadBudgetMeals(Number(budget));
+  }
+
+  async function markSuggestionEaten(food) {
+    setMarkingEatenId(food.id);
+
+    try {
+      await markFoodAsEaten(food.id);
+      toast.success(`${food.name} marked as eaten.`, { title: "Suggestion rotated" });
+      await loadBudgetMeals(Number(budget));
+    } catch (err) {
+      toast.error(getApiError(err, "Unable to mark this food as eaten"), { title: "Update failed" });
+    } finally {
+      setMarkingEatenId(null);
     }
   }
 
@@ -162,9 +179,25 @@ export function UserBudgetPage() {
                     <dd>{formatMoney(Math.max(0, Number(budgetMeta?.budget || 0) - Number(recommendation.estimated_cost || 0)))}</dd>
                   </div>
                 </dl>
-                <Link className={styles.detailsLink} to={`/foods/${recommendation.type}/${recommendation.id}`}>
-                  Details
-                </Link>
+                {recommendation.favorited || recommendation.recently_eaten ? (
+                  <div className={styles.preferenceNote}>
+                    {recommendation.favorited ? <span>Favorite match</span> : null}
+                    {recommendation.recently_eaten ? <span>Recently eaten</span> : null}
+                  </div>
+                ) : null}
+                <div className={styles.recommendationActions}>
+                  <Link className={styles.detailsLink} to={`/foods/${recommendation.type}/${recommendation.id}`}>
+                    Details
+                  </Link>
+                  <button
+                    className={styles.markEatenButton}
+                    type="button"
+                    disabled={markingEatenId === recommendation.id || finding}
+                    onClick={() => markSuggestionEaten(recommendation)}
+                  >
+                    {markingEatenId === recommendation.id ? "Rotating..." : "I've eaten this"}
+                  </button>
+                </div>
               </div>
             </>
           ) : (
@@ -203,7 +236,16 @@ export function UserBudgetPage() {
                               <small>{foodTypeLabel(food.type)} · {formatMoney(food.estimated_cost)}</small>
                             </div>
                           </div>
-                          <Link to={`/foods/${food.type}/${food.id}`}>Details</Link>
+                          <div className={styles.suggestionActions}>
+                            <Link to={`/foods/${food.type}/${food.id}`}>Details</Link>
+                            <button
+                              type="button"
+                              disabled={markingEatenId === food.id || finding}
+                              onClick={() => markSuggestionEaten(food)}
+                            >
+                              Eaten
+                            </button>
+                          </div>
                         </article>
                       ))}
                     </div>

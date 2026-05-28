@@ -31,3 +31,7 @@ export function addFavoriteFood(foodId) {
 export function removeFavoriteFood(foodId) {
   return api.delete(`/user/foods/favorites/${foodId}`).then((res) => res.data);
 }
+
+export function markFoodAsEaten(foodId) {
+  return api.post("/user/foods/eaten", { food_id: foodId }).then((res) => res.data);
+}

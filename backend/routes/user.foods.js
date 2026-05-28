@@ -4,6 +4,8 @@ const db = require('../db');
 const { authenticateUser, requireSubscription } = require('../middleware');
 const moment = require('moment');
 
+const RECENTLY_EATEN_DAYS = 7;
+
 function makeUploadUrl(req, filename) {
   return filename ? `${req.protocol}://${req.get('host')}/uploads/${filename}` : null;
 }
@@ -50,7 +52,10 @@ function foodSummary(req, food) {
     created_at: food.created_at ? moment(food.created_at).format('YYYY-MM-DD HH:mm') : null,
     favorited: Boolean(food.favorited),
     favorite_id: food.favorite_id || null,
-    favorited_at: food.favorited_at ? moment(food.favorited_at).format('YYYY-MM-DD HH:mm') : null
+    favorited_at: food.favorited_at ? moment(food.favorited_at).format('YYYY-MM-DD HH:mm') : null,
+    eaten_count: Number(food.eaten_count || 0),
+    last_eaten_at: food.last_eaten_at || null,
+    recently_eaten: Boolean(food.recently_eaten)
   };
 }
 
@@ -58,6 +63,98 @@ function parseFoodId(value) {
   const id = Number(value);
   return Number.isInteger(id) && id > 0 ? id : null;
 }
+
+async function getUserFoodPreferences(userId) {
+  const [favorites, eaten] = await Promise.all([
+    db.promise().query('SELECT food_id FROM user_favorite_foods WHERE user_id = ?', [userId]),
+    db.promise().query(
+      `SELECT food_id, eaten_count, last_eaten_at,
+              CASE WHEN last_eaten_at >= DATE_SUB(NOW(), INTERVAL ${RECENTLY_EATEN_DAYS} DAY) THEN 1 ELSE 0 END AS recently_eaten
+       FROM user_eaten_foods
+       WHERE user_id = ?`,
+      [userId]
+    )
+  ]);
+
+  return {
+    favoriteSet: new Set(favorites[0].map((row) => Number(row.food_id))),
+    eatenMap: new Map(
+      eaten[0].map((row) => [
+        Number(row.food_id),
+        {
+          eaten_count: Number(row.eaten_count || 0),
+          last_eaten_at: row.last_eaten_at,
+          recently_eaten: Boolean(row.recently_eaten)
+        }
+      ])
+    )
+  };
+}
+
+function attachPreference(food, preferences) {
+  const foodId = Number(food.id);
+  const eaten = preferences.eatenMap.get(foodId);
+
+  return {
+    ...food,
+    favorited: preferences.favoriteSet.has(foodId),
+    eaten_count: eaten?.eaten_count || 0,
+    last_eaten_at: eaten?.last_eaten_at ? moment(eaten.last_eaten_at).format('YYYY-MM-DD HH:mm') : null,
+    recently_eaten: Boolean(eaten?.recently_eaten)
+  };
+}
+
+function comparePreferenceRank(a, b, tieBreaker) {
+  if (a.recently_eaten !== b.recently_eaten) return a.recently_eaten ? 1 : -1;
+  if (a.favorited !== b.favorited) return a.favorited ? -1 : 1;
+
+  const tie = tieBreaker(a, b);
+  if (tie !== 0) return tie;
+
+  if (a.eaten_count !== b.eaten_count) return a.eaten_count - b.eaten_count;
+  return Number(a.id) - Number(b.id);
+}
+
+// POST /foods/eaten
+router.post('/foods/eaten', authenticateUser, requireSubscription(), async (req, res) => {
+  const userId = req.user.id;
+  const foodId = parseFoodId(req.body?.food_id);
+
+  if (!foodId) {
+    return res.status(400).json({ message: 'food_id must be a positive number' });
+  }
+
+  try {
+    const [foods] = await db.promise().query(
+      'SELECT id, name, package, estimated_cost, image, type, prepared, created_at FROM foods WHERE id = ? LIMIT 1',
+      [foodId]
+    );
+
+    if (!foods.length) {
+      return res.status(404).json({ message: 'Food not found in the system' });
+    }
+
+    await db.promise().query(
+      `INSERT INTO user_eaten_foods (user_id, food_id, eaten_count, last_eaten_at)
+       VALUES (?, ?, 1, CURRENT_TIMESTAMP)
+       ON DUPLICATE KEY UPDATE
+         eaten_count = eaten_count + 1,
+         last_eaten_at = CURRENT_TIMESTAMP`,
+      [userId, foodId]
+    );
+
+    const preferences = await getUserFoodPreferences(userId);
+    const food = attachPreference(foods[0], preferences);
+
+    res.status(201).json({
+      message: 'Food marked as eaten',
+      food: foodSummary(req, food)
+    });
+  } catch (error) {
+    console.error('Error marking food as eaten:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
 
 // GET /foods/favorites/search?q=rice&type=rice
 router.get('/foods/favorites/search', authenticateUser, requireSubscription(), async (req, res) => {
@@ -231,6 +328,7 @@ router.get('/foods/suggest/:type', authenticateUser, requireSubscription(), asyn
        WHERE type = ?`,
       [foodType]
     );
+    const preferences = await getUserFoodPreferences(userId);
 
     // Messages for this food type
     const [messages] = await db.promise().query(
@@ -253,7 +351,7 @@ router.get('/foods/suggest/:type', authenticateUser, requireSubscription(), asyn
       const missing = ingredients.filter(i => !storageSet.has(i.name));
       const missingCost = missing.reduce((sum, i) => sum + i.cost, 0);
 
-      return {
+      return attachPreference({
         id: food.id,
         name: food.name,
         package: food.package,
@@ -270,15 +368,14 @@ router.get('/foods/suggest/:type', authenticateUser, requireSubscription(), asyn
           missingCost === 0
             ? messageMap['perfect'] || 'You have all ingredients to prepare this food.'
             : messageMap['missing'] || 'You are missing some ingredients to prepare this food.'
-      };
+      }, preferences);
     });
 
     if (suggestions.length === 0) {
       return res.json({ message: `No ${foodType} foods found.` });
     }
 
-    // Sort cheapest missing cost first
-    suggestions.sort((a, b) => a.totalMissingCost - b.totalMissingCost);
+    suggestions.sort((a, b) => comparePreferenceRank(a, b, (left, right) => left.totalMissingCost - right.totalMissingCost));
 
     res.json({
       type: foodType,
@@ -310,6 +407,7 @@ router.get('/foods/suggest/:type/:id', authenticateUser, requireSubscription(), 
     );
     const storageSet = new Set(storageItems.map(i => i.item_name.toLowerCase()));
     const ingredientImageMap = await getIngredientImageMap(req);
+    const preferences = await getUserFoodPreferences(userId);
 
     // Fetch the food by id, but ensure the type matches
     const [rows] = await db.promise().query(
@@ -347,6 +445,8 @@ router.get('/foods/suggest/:type/:id', authenticateUser, requireSubscription(), 
     const missing = ingredients.filter(i => !storageSet.has(i.name));
     const missingCost = missing.reduce((sum, i) => sum + i.cost, 0);
 
+    const preferredFood = attachPreference(food, preferences);
+
     res.json({
       id: food.id,
       type: food.type, // echoes the type path param
@@ -357,6 +457,10 @@ router.get('/foods/suggest/:type/:id', authenticateUser, requireSubscription(), 
       image: food.image,
       image_url: makeUploadUrl(req, food.image),
       created_at: food.created_at ? moment(food.created_at).format('YYYY-MM-DD HH:mm') : null,
+      favorited: preferredFood.favorited,
+      eaten_count: preferredFood.eaten_count,
+      last_eaten_at: preferredFood.last_eaten_at,
+      recently_eaten: preferredFood.recently_eaten,
       ingredients,
       missingIngredients: missing,
       totalMissingCost: missingCost,
@@ -386,7 +490,7 @@ router.post('/foods/suggest-budget/:type', authenticateUser, requireSubscription
   }
 
   try {
-    // Pull ALL foods within budget, highest price first
+    // Pull ALL foods within budget. Final rank is preference-aware below.
     const [foods] = await db.promise().query(
       `SELECT id, name, package, ingredients, estimated_cost, image, type, prepared, created_at
        FROM foods
@@ -394,6 +498,7 @@ router.post('/foods/suggest-budget/:type', authenticateUser, requireSubscription
        ORDER BY estimated_cost DESC, created_at DESC`,
       [foodType, budget]
     );
+    const preferences = await getUserFoodPreferences(userId);
 
     if (!foods.length) {
       return res.json({
@@ -404,9 +509,13 @@ router.post('/foods/suggest-budget/:type', authenticateUser, requireSubscription
       });
     }
 
+    const rankedFoods = foods
+      .map((food) => attachPreference(food, preferences))
+      .sort((a, b) => comparePreferenceRank(a, b, (left, right) => Number(right.estimated_cost) - Number(left.estimated_cost)));
+
     // Group into price tiers by exact estimated_cost (e.g., 1000, 700, 500...)
     const tiersMap = new Map();
-    for (const f of foods) {
+    for (const f of rankedFoods) {
       const price = Number(f.estimated_cost);
       if (!tiersMap.has(price)) tiersMap.set(price, []);
       tiersMap.get(price).push({
@@ -418,11 +527,15 @@ router.post('/foods/suggest-budget/:type', authenticateUser, requireSubscription
         estimated_cost: price,
         image: f.image,
         image_url: f.image ? `${req.protocol}://${req.get('host')}/uploads/${f.image}` : null,
-        created_at: f.created_at ? moment(f.created_at).format('YYYY-MM-DD HH:mm') : null
+        created_at: f.created_at ? moment(f.created_at).format('YYYY-MM-DD HH:mm') : null,
+        favorited: f.favorited,
+        eaten_count: f.eaten_count,
+        last_eaten_at: f.last_eaten_at,
+        recently_eaten: f.recently_eaten
       });
     }
 
-    // Build sorted tiers array (highest tier first)
+    // Keep tiers by price, with each tier already preference-ranked.
     const tiers = Array.from(tiersMap.entries())
       .sort((a, b) => b[0] - a[0])
       .map(([price, items]) => ({
@@ -431,8 +544,23 @@ router.post('/foods/suggest-budget/:type', authenticateUser, requireSubscription
         foods: items
       }));
 
-    // Optional: include a quick “top pick” = highest-priced within budget
-    const topPick = tiers[0]?.foods[0] || null;
+    const topPick = rankedFoods[0]
+      ? {
+          id: rankedFoods[0].id,
+          name: rankedFoods[0].name,
+          package: rankedFoods[0].package,
+          type: rankedFoods[0].type,
+          prepared: rankedFoods[0].prepared,
+          estimated_cost: Number(rankedFoods[0].estimated_cost),
+          image: rankedFoods[0].image,
+          image_url: rankedFoods[0].image ? `${req.protocol}://${req.get('host')}/uploads/${rankedFoods[0].image}` : null,
+          created_at: rankedFoods[0].created_at ? moment(rankedFoods[0].created_at).format('YYYY-MM-DD HH:mm') : null,
+          favorited: rankedFoods[0].favorited,
+          eaten_count: rankedFoods[0].eaten_count,
+          last_eaten_at: rankedFoods[0].last_eaten_at,
+          recently_eaten: rankedFoods[0].recently_eaten
+        }
+      : null;
 
     // Optional: contextual messages by budget usage (kept simple)
     const amountUsed = topPick ? topPick.estimated_cost : 0;
@@ -448,7 +576,8 @@ router.post('/foods/suggest-budget/:type', authenticateUser, requireSubscription
       topPick,
       amountUsed,
       amountSaved,
-      tiers
+      tiers,
+      message
     });
 
   } catch (error) {
