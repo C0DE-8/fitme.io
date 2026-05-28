@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const bcrypt = require('bcryptjs');
 const { authenticateAdmin } = require('../middleware');
 const moment = require('moment');
 const foodFeedRoutes = require('./user.foodFeed');
@@ -21,6 +22,15 @@ function parseTargetUserIds(value) {
     .split(',')
     .map((id) => Number(id))
     .filter((id) => Number.isInteger(id) && id > 0);
+}
+
+function generateDemoPassword() {
+  return `Demo${Math.random().toString(36).slice(2, 8)}${Math.floor(1000 + Math.random() * 9000)}!`;
+}
+
+function cleanPositiveInteger(value, fallback) {
+  const number = Number(value);
+  return Number.isInteger(number) && number > 0 ? number : fallback;
 }
 
 async function getAutoFollowSettings() {
@@ -54,6 +64,7 @@ router.get('/users', authenticateAdmin, async (req, res) => {
          bio,
          role,
          verified,
+         is_demo,
          created_at,
          updated_at
        FROM users
@@ -83,6 +94,7 @@ router.get('/users/subscriptions', authenticateAdmin, async (req, res) => {
          u.email,
          u.role,
          u.verified,
+         u.is_demo,
          s.id AS subscription_id,
          s.plan_name,
          s.status AS subscription_status,
@@ -125,6 +137,7 @@ router.get('/users-with-subscriptions', authenticateAdmin, async (req, res) => {
          u.email,
          u.role,
          u.verified,
+         u.is_demo,
          u.created_at,
          u.updated_at,
          s.id AS subscription_id,
@@ -216,6 +229,100 @@ router.put('/users/auto-follow/settings', authenticateAdmin, async (req, res) =>
   }
 });
 
+// POST /admin/users/demo - Admin creates a demo user account
+router.post('/users/demo', authenticateAdmin, async (req, res) => {
+  const username = String(req.body?.username || '').trim();
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  const bio = String(req.body?.bio || '').trim().slice(0, 500);
+  const requestedPassword = String(req.body?.password || '').trim();
+  const password = requestedPassword || generateDemoPassword();
+  const verified = req.body?.verified === undefined ? true : Boolean(req.body.verified);
+  const createSubscription = Boolean(req.body?.create_subscription);
+  const planName = String(req.body?.plan_name || '').trim();
+  const subscriptionDays = cleanPositiveInteger(req.body?.subscription_days, 30);
+
+  if (!username || !email) {
+    return res.status(400).json({ error: 'Username and email are required.' });
+  }
+
+  if (password.length < 8) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+  }
+
+  if (createSubscription && !planName) {
+    return res.status(400).json({ error: 'Plan name is required when creating a subscription.' });
+  }
+
+  const conn = db.promise();
+
+  try {
+    const [existing] = await conn.query(
+      'SELECT id FROM users WHERE email = ? OR username = ? LIMIT 1',
+      [email, username]
+    );
+
+    if (existing.length) {
+      return res.status(409).json({ error: 'Username or email is already in use.' });
+    }
+
+    if (createSubscription) {
+      const [plans] = await conn.query('SELECT id FROM plans WHERE plan_name = ? LIMIT 1', [planName]);
+      if (!plans.length) {
+        return res.status(400).json({ error: 'Selected plan was not found.' });
+      }
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    await conn.beginTransaction();
+
+    try {
+      const [result] = await conn.query(
+        `INSERT INTO users (username, email, bio, password_hash, role, verified, is_demo)
+         VALUES (?, ?, ?, ?, 'user', ?, 1)`,
+        [username, email, bio, passwordHash, verified ? 1 : 0]
+      );
+      const userId = result.insertId;
+
+      if (createSubscription) {
+        await conn.query(
+          `INSERT INTO subscriptions (user_id, plan_name, status, start_date, expiry_date)
+           VALUES (?, ?, 'active', CURDATE(), DATE_ADD(CURDATE(), INTERVAL ? DAY))`,
+          [userId, planName, subscriptionDays]
+        );
+      }
+
+      await conn.commit();
+
+      res.status(201).json({
+        message: 'Demo user created successfully.',
+        demo_password: requestedPassword ? undefined : password,
+        user: {
+          user_id: userId,
+          username,
+          email,
+          bio,
+          role: 'user',
+          verified: verified ? 1 : 0,
+          is_demo: 1,
+          status: createSubscription ? 'active' : null,
+          plan_name: createSubscription ? planName : null,
+          created_at: moment().format('YYYY-MM-DD HH:mm:ss')
+        }
+      });
+    } catch (createError) {
+      await conn.rollback();
+      throw createError;
+    }
+  } catch (err) {
+    console.error('Failed to create demo user:', err);
+    if (err.code === 'ER_BAD_FIELD_ERROR') {
+      return res.status(500).json({ error: 'Run the demo-users migration before creating demo accounts.' });
+    }
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // GET /admin/users/:id - Admin gets single user by ID
 router.get('/users/:id', authenticateAdmin, async (req, res) => {
   const { id } = req.params;
@@ -229,6 +336,7 @@ router.get('/users/:id', authenticateAdmin, async (req, res) => {
          bio,
          role,
          verified,
+         is_demo,
          created_at,
          updated_at
        FROM users

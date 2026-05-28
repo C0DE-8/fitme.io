@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { FiCheckCircle, FiSearch, FiShield, FiTrash2, FiUser, FiUserPlus, FiUsers, FiX } from "react-icons/fi";
+import { FiCheckCircle, FiPlus, FiSearch, FiShield, FiTrash2, FiUser, FiUserPlus, FiUsers, FiX } from "react-icons/fi";
 import { useToast } from "../../../components/feedback/useToast";
 import { getApiError } from "../../../lib/api";
 import { getCurrentUser } from "../../../lib/auth";
 import {
+  createAdminDemoUser,
   deleteAdminUser,
   getAdminAutoFollowSettings,
+  getAdminPlans,
   getAdminUsersWithSubscriptions,
   updateAdminAutoFollowSettings,
 } from "../../../lib/api/adminApi";
@@ -41,10 +43,24 @@ export function AdminUsersPage() {
   const toast = useToast();
   const currentAdmin = getCurrentUser();
   const [users, setUsers] = useState([]);
+  const [plans, setPlans] = useState([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [demoModalOpen, setDemoModalOpen] = useState(false);
+  const [demoSaving, setDemoSaving] = useState(false);
+  const [createdDemoPassword, setCreatedDemoPassword] = useState("");
+  const [demoForm, setDemoForm] = useState({
+    username: "",
+    email: "",
+    password: "",
+    bio: "",
+    verified: true,
+    create_subscription: true,
+    plan_name: "",
+    subscription_days: "30",
+  });
   const [autoFollowEnabled, setAutoFollowEnabled] = useState(false);
   const [autoFollowTargetIds, setAutoFollowTargetIds] = useState([]);
   const [autoFollowSearch, setAutoFollowSearch] = useState("");
@@ -58,13 +74,18 @@ export function AdminUsersPage() {
   useEffect(() => {
     let alive = true;
 
-    Promise.all([getAdminUsersWithSubscriptions(), getAdminAutoFollowSettings()])
-      .then(([rows, settings]) => {
+    Promise.all([getAdminUsersWithSubscriptions(), getAdminAutoFollowSettings(), getAdminPlans().catch(() => [])])
+      .then(([rows, settings, planRows]) => {
         if (!alive) return;
 
         setUsers(getLatestUsers(rows || []));
         setAutoFollowEnabled(Boolean(settings?.enabled));
         setAutoFollowTargetIds(settings?.target_user_ids || []);
+        setPlans(planRows || []);
+        setDemoForm((current) => ({
+          ...current,
+          plan_name: current.plan_name || planRows?.[0]?.plan_name || "",
+        }));
       })
       .catch((err) => {
         if (alive) toast.error(getApiError(err, "Unable to load admin users"), { title: "Users unavailable" });
@@ -92,6 +113,44 @@ export function AdminUsersPage() {
       toast.error(getApiError(err, "Unable to delete user"), { title: "Delete failed" });
     } finally {
       setDeletingId(null);
+    }
+  }
+
+  function updateDemoField(name, value) {
+    setDemoForm((current) => ({ ...current, [name]: value }));
+    setCreatedDemoPassword("");
+  }
+
+  function openDemoModal() {
+    setCreatedDemoPassword("");
+    setDemoModalOpen(true);
+  }
+
+  async function handleCreateDemoUser(event) {
+    event.preventDefault();
+    setDemoSaving(true);
+    setCreatedDemoPassword("");
+
+    try {
+      const payload = {
+        ...demoForm,
+        subscription_days: Number(demoForm.subscription_days),
+      };
+      const data = await createAdminDemoUser(payload);
+      toast.success(data.message || "Demo user created.");
+      if (data.demo_password) setCreatedDemoPassword(data.demo_password);
+      setDemoForm((current) => ({
+        ...current,
+        username: "",
+        email: "",
+        password: "",
+        bio: "",
+      }));
+      await loadUsers();
+    } catch (err) {
+      toast.error(getApiError(err, "Unable to create demo user"), { title: "Demo user failed" });
+    } finally {
+      setDemoSaving(false);
     }
   }
 
@@ -138,6 +197,7 @@ export function AdminUsersPage() {
   const totalVerified = users.filter((user) => user.verified).length;
   const activeSubscriptions = users.filter((user) => user.status === "active").length;
   const admins = users.filter((user) => user.role === "admin").length;
+  const demoUsers = users.filter((user) => user.is_demo).length;
   const autoFollowTargets = users.filter((user) => autoFollowTargetIds.includes(Number(user.user_id)));
   const autoFollowCandidates = useMemo(() => {
     const query = autoFollowSearch.trim().toLowerCase();
@@ -170,6 +230,10 @@ export function AdminUsersPage() {
             placeholder="Search name, email, plan..."
           />
         </label>
+        <button className={styles.createDemoButton} type="button" onClick={openDemoModal}>
+          <FiPlus aria-hidden="true" />
+          Demo user
+        </button>
       </header>
 
       <section className={styles.stats} aria-label="User totals">
@@ -192,6 +256,11 @@ export function AdminUsersPage() {
           <FiUser aria-hidden="true" />
           <span>Active subs</span>
           <strong>{loading ? "..." : activeSubscriptions}</strong>
+        </article>
+        <article>
+          <FiUserPlus aria-hidden="true" />
+          <span>Demo users</span>
+          <strong>{loading ? "..." : demoUsers}</strong>
         </article>
       </section>
 
@@ -280,7 +349,10 @@ export function AdminUsersPage() {
           {filteredUsers.map((user) => (
             <article className={styles.tableRow} key={user.user_id}>
               <div className={styles.userCell}>
-                <strong>{user.username}</strong>
+                <strong>
+                  {user.username}
+                  {user.is_demo ? <em>Demo</em> : null}
+                </strong>
                 <small>{user.email}</small>
                 {user.bio ? <p>{user.bio}</p> : null}
               </div>
@@ -344,6 +416,128 @@ export function AdminUsersPage() {
                 {deletingId === deleteTarget.user_id ? "Deleting..." : "Delete user"}
               </button>
             </footer>
+          </section>
+        </div>
+      ) : null}
+
+      {demoModalOpen ? (
+        <div className={styles.modalBackdrop} role="presentation">
+          <section className={`${styles.modal} ${styles.demoModal}`} role="dialog" aria-modal="true" aria-label="Create demo user">
+            <header>
+              <div>
+                <p className={styles.kicker}>Demo account</p>
+                <h2>Create demo user</h2>
+              </div>
+              <button type="button" onClick={() => setDemoModalOpen(false)} aria-label="Close demo user form">
+                <FiX aria-hidden="true" />
+              </button>
+            </header>
+
+            <form className={styles.demoForm} onSubmit={handleCreateDemoUser}>
+              <label>
+                Username
+                <input
+                  value={demoForm.username}
+                  onChange={(event) => updateDemoField("username", event.target.value)}
+                  placeholder="e.g. demo chef"
+                  required
+                />
+              </label>
+
+              <label>
+                Email
+                <input
+                  type="email"
+                  value={demoForm.email}
+                  onChange={(event) => updateDemoField("email", event.target.value)}
+                  placeholder="demo@example.com"
+                  required
+                />
+              </label>
+
+              <label>
+                Password
+                <input
+                  type="text"
+                  value={demoForm.password}
+                  onChange={(event) => updateDemoField("password", event.target.value)}
+                  placeholder="Leave empty to auto-generate"
+                />
+              </label>
+
+              <label>
+                Bio
+                <textarea
+                  value={demoForm.bio}
+                  onChange={(event) => updateDemoField("bio", event.target.value)}
+                  placeholder="Short demo profile bio"
+                  rows={3}
+                />
+              </label>
+
+              <div className={styles.demoToggles}>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={demoForm.verified}
+                    onChange={(event) => updateDemoField("verified", event.target.checked)}
+                  />
+                  Verified
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={demoForm.create_subscription}
+                    onChange={(event) => updateDemoField("create_subscription", event.target.checked)}
+                  />
+                  Active subscription
+                </label>
+              </div>
+
+              {demoForm.create_subscription ? (
+                <div className={styles.demoSubscriptionGrid}>
+                  <label>
+                    Plan
+                    <select
+                      value={demoForm.plan_name}
+                      onChange={(event) => updateDemoField("plan_name", event.target.value)}
+                      required={demoForm.create_subscription}
+                    >
+                      {plans.map((plan) => (
+                        <option key={plan.id || plan.plan_name} value={plan.plan_name}>
+                          {plan.plan_name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Days
+                    <input
+                      min="1"
+                      type="number"
+                      value={demoForm.subscription_days}
+                      onChange={(event) => updateDemoField("subscription_days", event.target.value)}
+                    />
+                  </label>
+                </div>
+              ) : null}
+
+              {createdDemoPassword ? (
+                <p className={styles.demoPassword}>
+                  Generated password: <strong>{createdDemoPassword}</strong>
+                </p>
+              ) : null}
+
+              <footer>
+                <button type="button" onClick={() => setDemoModalOpen(false)} disabled={demoSaving}>
+                  Cancel
+                </button>
+                <button className={styles.saveDemoButton} type="submit" disabled={demoSaving}>
+                  <FiUserPlus aria-hidden="true" />
+                  {demoSaving ? "Creating..." : "Create demo"}
+                </button>
+              </footer>
+            </form>
           </section>
         </div>
       ) : null}

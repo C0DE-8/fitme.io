@@ -53,9 +53,27 @@
   outline: none;
 }
 
+.createDemoButton {
+  min-height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 17px;
+  background: linear-gradient(90deg, var(--fitme-brand), var(--fitme-accent));
+  color: var(--fitme-bg);
+  padding: 0 16px;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: var(--fitme-glow);
+  white-space: nowrap;
+}
+
 .stats {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -360,7 +378,7 @@
   gap: 2px;
 }
 
-.userCell strong,
+.userCell > strong,
 .subscriptionCell small,
 .dateCell strong {
   overflow: hidden;
@@ -368,9 +386,27 @@
   white-space: nowrap;
 }
 
-.userCell strong,
+.userCell > strong,
 .dateCell strong {
   color: var(--fitme-strong);
+}
+
+.userCell > strong {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.userCell > strong em {
+  flex: 0 0 auto;
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  border-radius: 999px;
+  background: rgba(56, 189, 248, 0.12);
+  color: var(--fitme-brand-text);
+  padding: 3px 7px;
+  font-size: 11px;
+  font-style: normal;
+  text-transform: uppercase;
 }
 
 .userCell small,
@@ -518,6 +554,98 @@
   color: var(--fitme-danger);
 }
 
+.demoModal {
+  width: min(100%, 560px);
+}
+
+.demoForm {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.demoForm label {
+  display: grid;
+  gap: 7px;
+  color: var(--fitme-muted);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.demoForm input,
+.demoForm textarea,
+.demoForm select {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  border: 1px solid var(--fitme-line);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--fitme-ink);
+  padding: 10px 12px;
+  font: inherit;
+  outline: none;
+}
+
+.demoForm textarea {
+  min-height: 84px;
+  resize: vertical;
+}
+
+.demoForm input:focus,
+.demoForm textarea:focus,
+.demoForm select:focus {
+  border-color: rgba(56, 189, 248, 0.45);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12);
+}
+
+.demoToggles,
+.demoSubscriptionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.demoToggles label {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--fitme-line);
+  border-radius: 13px;
+  background: var(--fitme-soft);
+  color: var(--fitme-strong);
+  padding: 0 12px;
+}
+
+.demoToggles input {
+  width: auto;
+  min-height: 0;
+}
+
+.demoPassword {
+  margin: 0;
+  border: 1px solid rgba(52, 211, 153, 0.25);
+  border-radius: 14px;
+  background: var(--fitme-success-bg);
+  color: var(--fitme-success);
+  padding: 12px;
+}
+
+.demoPassword strong {
+  user-select: all;
+}
+
+.modal footer .saveDemoButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: linear-gradient(90deg, var(--fitme-brand), var(--fitme-accent));
+  color: var(--fitme-bg);
+  box-shadow: var(--fitme-glow);
+}
+
 .empty {
   margin: 0;
   color: var(--fitme-muted);
@@ -567,6 +695,10 @@
     grid-template-columns: 1fr;
   }
 
+  .createDemoButton {
+    width: 100%;
+  }
+
   .tableHead {
     display: none;
   }
@@ -595,5 +727,10 @@
   .modal footer button {
     width: 100%;
     justify-content: center;
+  }
+
+  .demoToggles,
+  .demoSubscriptionGrid {
+    grid-template-columns: 1fr;
   }
 }
