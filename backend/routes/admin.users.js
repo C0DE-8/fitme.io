@@ -327,6 +327,77 @@ router.post('/users/demo', authenticateAdmin, async (req, res) => {
   }
 });
 
+// GET /admin/users/demo-management - Admin manages demo accounts
+router.get('/users/demo-management', authenticateAdmin, async (req, res) => {
+  try {
+    await foodFeedRoutes.ensureFoodFeedTables();
+
+    const [users] = await db.promise().query(
+      `SELECT
+         u.id AS user_id,
+         u.username,
+         u.email,
+         u.bio,
+         u.role,
+         u.verified,
+         u.is_demo,
+         u.demo_password,
+         u.created_at,
+         u.updated_at,
+         s.id AS subscription_id,
+         s.plan_name,
+         s.status,
+         s.start_date,
+         s.expiry_date,
+         (SELECT COUNT(*) FROM food_feed_follows f WHERE f.following_user_id = u.id) AS followers,
+         (SELECT COUNT(*) FROM food_feed_follows f WHERE f.follower_user_id = u.id) AS following,
+         (SELECT COUNT(*) FROM food_feed_reactions r WHERE r.post_author_user_id = u.id) AS likes,
+         (SELECT COUNT(*) FROM food_feed_posts p WHERE p.user_id = u.id AND p.expires_at > NOW()) AS active_posts,
+         (SELECT COUNT(*) FROM food_feed_posts p WHERE p.user_id = u.id) AS total_posts
+       FROM users u
+       LEFT JOIN subscriptions s ON s.id = (
+         SELECT latest.id
+         FROM subscriptions latest
+         WHERE latest.user_id = u.id
+         ORDER BY latest.expiry_date DESC, latest.id DESC
+         LIMIT 1
+       )
+       WHERE u.is_demo = 1
+       ORDER BY u.created_at DESC`
+    );
+
+    const formatted = users.map((user) => ({
+      ...user,
+      verified: Boolean(user.verified),
+      is_demo: Boolean(user.is_demo),
+      followers: Number(user.followers || 0),
+      following: Number(user.following || 0),
+      likes: Number(user.likes || 0),
+      active_posts: Number(user.active_posts || 0),
+      total_posts: Number(user.total_posts || 0),
+      created_at: user.created_at ? moment(user.created_at).format('YYYY-MM-DD HH:mm:ss') : null,
+      updated_at: user.updated_at ? moment(user.updated_at).format('YYYY-MM-DD HH:mm:ss') : null
+    }));
+
+    res.json({
+      demoUsers: formatted,
+      totals: {
+        users: formatted.length,
+        followers: formatted.reduce((sum, user) => sum + user.followers, 0),
+        following: formatted.reduce((sum, user) => sum + user.following, 0),
+        likes: formatted.reduce((sum, user) => sum + user.likes, 0),
+        active_posts: formatted.reduce((sum, user) => sum + user.active_posts, 0)
+      }
+    });
+  } catch (err) {
+    console.error('Failed to fetch demo user management data:', err);
+    if (err.code === 'ER_BAD_FIELD_ERROR') {
+      return res.status(500).json({ error: 'Run the demo-users migrations before opening demo management.' });
+    }
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // GET /admin/users/:id - Admin gets single user by ID
 router.get('/users/:id', authenticateAdmin, async (req, res) => {
   const { id } = req.params;

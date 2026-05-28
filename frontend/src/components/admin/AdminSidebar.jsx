@@ -8,6 +8,7 @@ import {
   FiGrid,
   FiMessageSquare,
   FiPackage,
+  FiUserCheck,
   FiX,
   FiUsers,
 } from "react-icons/fi";
@@ -19,6 +20,7 @@ const fitmeIcon = "/favicon.png";
 const links = [
   { to: "/admin", label: "Dashboard", icon: FiGrid, end: true },
   { to: "/admin/users", label: "Users", icon: FiUsers },
+  { to: "/admin/demo-users", label: "Demo Users", icon: FiUserCheck },
   { to: "/admin/subscriptions", label: "Subscriptions", icon: FiCreditCard },
   { to: "/admin/plans", label: "Plans", icon: FiBarChart2 },
   { to: "/admin/accounts", label: "Accounts", icon: FiPackage },

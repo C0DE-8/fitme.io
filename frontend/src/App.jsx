@@ -7,6 +7,7 @@ import { UserLayout } from "./components/user/UserLayout";
 import { getToken, isAdminSession } from "./lib/auth";
 import { AdminAccountsPage } from "./pages/admin/accounts/AdminAccountsPage";
 import { AdminAuthPage } from "./pages/admin/auth/AdminAuthPage";
+import { AdminDemoUsersPage } from "./pages/admin/demo/AdminDemoUsersPage";
 import { AdminPage } from "./pages/admin/dashboard/AdminPage";
 import { AdminFoodsPage } from "./pages/admin/foods/AdminFoodsPage";
 import { AdminFoodFeedPage } from "./pages/admin/feed/AdminFoodFeedPage";
@@ -234,6 +235,19 @@ function App() {
               robots="noindex, nofollow"
             />
             <AdminUsersPage />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/demo-users"
+        element={
+          <AdminRoute>
+            <PageSeo
+              title="Demo Users | fitme.io Admin"
+              description="Manage fitme.io demo user accounts and their food feed social metrics."
+              robots="noindex, nofollow"
+            />
+            <AdminDemoUsersPage />
           </AdminRoute>
         }
       />

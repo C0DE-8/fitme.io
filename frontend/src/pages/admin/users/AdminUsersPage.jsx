@@ -217,10 +217,11 @@ export function AdminUsersPage() {
   const paginatedUsers = filteredUsers.slice(pageStart, pageStart + USERS_PER_PAGE);
   const pageFirstItem = filteredUsers.length ? pageStart + 1 : 0;
   const pageLastItem = Math.min(pageStart + USERS_PER_PAGE, filteredUsers.length);
-  const totalVerified = users.filter((user) => user.verified).length;
-  const activeSubscriptions = users.filter((user) => user.status === "active").length;
-  const admins = users.filter((user) => user.role === "admin").length;
+  const realUsers = users.filter((user) => !user.is_demo);
   const demoUsers = users.filter((user) => user.is_demo).length;
+  const totalVerified = realUsers.filter((user) => user.verified).length;
+  const activeSubscriptions = realUsers.filter((user) => user.status === "active").length;
+  const admins = users.filter((user) => user.role === "admin").length;
   const autoFollowTargets = users.filter((user) => autoFollowTargetIds.includes(Number(user.user_id)));
   const autoFollowCandidates = useMemo(() => {
     const query = autoFollowSearch.trim().toLowerCase();
@@ -265,8 +266,8 @@ export function AdminUsersPage() {
       <section className={styles.stats} aria-label="User totals">
         <article>
           <FiUsers aria-hidden="true" />
-          <span>Total users</span>
-          <strong>{loading ? "..." : users.length}</strong>
+          <span>Real users</span>
+          <strong>{loading ? "..." : realUsers.length}</strong>
         </article>
         <article>
           <FiCheckCircle aria-hidden="true" />

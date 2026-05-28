@@ -498,18 +498,23 @@
 
 .modalBackdrop {
   position: fixed;
-  z-index: 40;
+  z-index: 140;
   inset: 0;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   box-sizing: border-box;
   background: rgba(2, 6, 23, 0.68);
-  padding: 20px;
+  padding: 18px;
   backdrop-filter: blur(14px) saturate(120%);
 }
 
 .modal {
   width: min(100%, 440px);
+  max-height: calc(100svh - 36px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
   border: 1px solid var(--fitme-line);
   border-radius: 18px;
   background: rgba(8, 18, 33, 0.96);
@@ -518,13 +523,16 @@
 }
 
 .modal header {
+  min-width: 0;
   display: flex;
   align-items: start;
   justify-content: space-between;
   gap: 16px;
+  padding-bottom: 12px;
 }
 
 .modal h2 {
+  overflow-wrap: anywhere;
   margin: 0;
   color: var(--fitme-strong);
   font-size: 24px;
@@ -532,8 +540,11 @@
 }
 
 .modal > p {
-  margin: 16px 0 0;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0;
   color: var(--fitme-muted);
+  padding-right: 4px;
   line-height: 1.55;
 }
 
@@ -541,7 +552,7 @@
   display: flex;
   justify-content: end;
   gap: 10px;
-  margin-top: 20px;
+  margin-top: 14px;
 }
 
 .modal footer button {
@@ -566,10 +577,6 @@
 
 .demoModal {
   width: min(100%, 560px);
-  max-height: min(760px, calc(100svh - 28px));
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  overflow: hidden;
   border-color: rgba(255, 255, 255, 0.14);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.035)),
@@ -579,10 +586,6 @@
 
 .userInfoModal {
   width: min(100%, 620px);
-  max-height: min(760px, calc(100svh - 28px));
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  overflow: hidden;
 }
 
 .userInfoList {
@@ -631,7 +634,7 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  margin-top: 16px;
+  margin-top: 0;
   padding-right: 4px;
   scrollbar-color: var(--fitme-brand-text) rgba(255, 255, 255, 0.08);
   scrollbar-width: thin;
@@ -861,16 +864,31 @@
     justify-content: center;
   }
 
-  .demoModal {
-    width: min(100%, calc(100vw - 18px));
+  .modalBackdrop {
+    align-items: stretch;
+    padding: 9px;
+  }
+
+  .modal {
+    width: 100%;
     max-height: calc(100svh - 18px);
     padding: 14px;
   }
 
+  .modal header {
+    gap: 10px;
+  }
+
+  .modal h2 {
+    font-size: 21px;
+  }
+
+  .demoModal {
+    width: 100%;
+  }
+
   .userInfoModal {
-    width: min(100%, calc(100vw - 18px));
-    max-height: calc(100svh - 18px);
-    padding: 14px;
+    width: 100%;
   }
 
   .userInfoList {
@@ -878,7 +896,6 @@
   }
 
   .demoForm {
-    margin-top: 12px;
     padding-right: 2px;
   }
 
