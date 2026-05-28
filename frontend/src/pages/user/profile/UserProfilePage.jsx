@@ -6,6 +6,7 @@ import {
   FiHeart,
   FiMail,
   FiSettings,
+  FiStar,
   FiUserCheck,
   FiUsers,
   FiX,
@@ -14,6 +15,12 @@ import { useToast } from "../../../components/feedback/useToast";
 import { getApiError } from "../../../lib/api";
 import { clearSession, updateCurrentUser } from "../../../lib/auth";
 import { getFoodFeedFollowList, getMyFoodFeedPosts } from "../../../lib/api/foodFeedApi";
+import {
+  addFavoriteFood,
+  getFavoriteFoods,
+  removeFavoriteFood,
+  searchFavoriteFoodOptions,
+} from "../../../lib/api/usersFoodApi";
 import {
   changeUserPassword,
   deleteUserAccount,
@@ -24,8 +31,23 @@ import {
 import { ProfileSettingsModal } from "./ProfileSettingsModal";
 import styles from "./UserProfilePage.module.css";
 
+const foodTypes = [
+  { value: "", label: "All" },
+  { value: "rice", label: "Rice" },
+  { value: "swallow", label: "Swallow" },
+  { value: "junks", label: "Others" },
+];
+
 function initial(name) {
   return String(name || "F").trim().charAt(0).toUpperCase();
+}
+
+function foodTypeLabel(value) {
+  return foodTypes.find((type) => type.value === value)?.label || value;
+}
+
+function formatMoney(value) {
+  return `₦${Number(value || 0).toLocaleString()}`;
 }
 
 function formatDate(value) {
@@ -54,6 +76,12 @@ export function UserProfilePage() {
   const [followModal, setFollowModal] = useState(null);
   const [followUsers, setFollowUsers] = useState([]);
   const [followLoading, setFollowLoading] = useState(false);
+  const [favoriteSearch, setFavoriteSearch] = useState("");
+  const [favoriteType, setFavoriteType] = useState("");
+  const [favoriteOptions, setFavoriteOptions] = useState([]);
+  const [favoriteFoods, setFavoriteFoods] = useState([]);
+  const [favoritesLoading, setFavoritesLoading] = useState(true);
+  const [favoriteActionId, setFavoriteActionId] = useState(null);
 
   useEffect(() => {
     let alive = true;
@@ -92,6 +120,53 @@ export function UserProfilePage() {
       alive = false;
     };
   }, [toast]);
+
+  useEffect(() => {
+    let alive = true;
+
+    async function loadFavorites() {
+      setFavoritesLoading(true);
+
+      try {
+        const favorites = await getFavoriteFoods();
+        if (alive) setFavoriteFoods(favorites || []);
+      } catch (err) {
+        if (alive) toast.error(getApiError(err, "Unable to load favorite foods"), { title: "Favorites unavailable" });
+      } finally {
+        if (alive) setFavoritesLoading(false);
+      }
+    }
+
+    loadFavorites();
+
+    return () => {
+      alive = false;
+    };
+  }, [toast]);
+
+  useEffect(() => {
+    let alive = true;
+    const search = window.setTimeout(async () => {
+      const query = favoriteSearch.trim();
+
+      if (!query) {
+        if (alive) setFavoriteOptions([]);
+        return;
+      }
+
+      try {
+        const data = await searchFavoriteFoodOptions({ q: query, type: favoriteType, limit: 10 });
+        if (alive) setFavoriteOptions(data?.foods || []);
+      } catch (err) {
+        if (alive) toast.error(getApiError(err, "Could not search foods"), { title: "Food search failed" });
+      }
+    }, 300);
+
+    return () => {
+      alive = false;
+      window.clearTimeout(search);
+    };
+  }, [favoriteSearch, favoriteType, toast]);
 
   async function saveProfile(payload) {
     setSaving(true);
@@ -163,6 +238,39 @@ export function UserProfilePage() {
     }
   }
 
+  async function saveFavoriteFood(food) {
+    setFavoriteActionId(food.id);
+
+    try {
+      const data = await addFavoriteFood(food.id);
+      const favorite = data?.favorite;
+      if (favorite) {
+        setFavoriteFoods((current) => [favorite, ...current.filter((item) => item.id !== favorite.id)]);
+        setFavoriteOptions((current) => current.map((item) => (item.id === favorite.id ? { ...item, favorited: true } : item)));
+      }
+      toast.success(`${food.name} saved to favorites`, { title: "Favorite added" });
+    } catch (err) {
+      toast.error(getApiError(err, "Unable to save favorite food"), { title: "Favorite failed" });
+    } finally {
+      setFavoriteActionId(null);
+    }
+  }
+
+  async function deleteFavoriteFood(food) {
+    setFavoriteActionId(food.id);
+
+    try {
+      await removeFavoriteFood(food.id);
+      setFavoriteFoods((current) => current.filter((item) => item.id !== food.id));
+      setFavoriteOptions((current) => current.map((item) => (item.id === food.id ? { ...item, favorited: false } : item)));
+      toast.success(`${food.name} removed from favorites`, { title: "Favorite removed" });
+    } catch (err) {
+      toast.error(getApiError(err, "Unable to remove favorite food"), { title: "Remove failed" });
+    } finally {
+      setFavoriteActionId(null);
+    }
+  }
+
   const totals = profile?.social_totals || {};
 
   return (
@@ -229,6 +337,14 @@ export function UserProfilePage() {
         >
           <FiGrid aria-hidden="true" />
         </button>
+        <button
+          className={activeTab === "favorites" ? styles.activeTab : ""}
+          type="button"
+          onClick={() => setActiveTab("favorites")}
+          aria-label="Favorite foods"
+        >
+          <FiStar aria-hidden="true" />
+        </button>
       </nav>
 
       {activeTab === "posts" ? (
@@ -265,7 +381,7 @@ export function UserProfilePage() {
             ) : null}
           </div>
         </section>
-      ) : (
+      ) : activeTab === "summary" ? (
         <div className={styles.grid}>
           <section className={styles.panel}>
             <div className={styles.summaryTitle}>
@@ -314,6 +430,106 @@ export function UserProfilePage() {
             </dl>
           </section>
         </div>
+      ) : (
+        <section className={styles.favoritePanel}>
+          <div className={styles.panelHeader}>
+            <div>
+              <p className={styles.kicker}>Saved food</p>
+              <h2>Favorite foods</h2>
+            </div>
+            <span>{favoritesLoading ? "..." : favoriteFoods.length}</span>
+          </div>
+
+          <div className={styles.favoriteBody}>
+            <div className={styles.favoriteTools}>
+              <label className={styles.favoriteSearch}>
+                <span>Search system foods</span>
+                <input
+                  type="search"
+                  value={favoriteSearch}
+                  onChange={(event) => setFavoriteSearch(event.target.value)}
+                  placeholder="Search by food or ingredient"
+                />
+              </label>
+
+              <div className={styles.favoriteChips} aria-label="Favorite food type">
+                {foodTypes.map((type) => (
+                  <button
+                    className={favoriteType === type.value ? styles.favoriteChipActive : ""}
+                    key={type.value || "all"}
+                    type="button"
+                    onClick={() => setFavoriteType(type.value)}
+                  >
+                    {type.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {favoriteOptions.length ? (
+              <div className={styles.favoriteResults}>
+                {favoriteOptions.map((food) => (
+                  <article key={food.id}>
+                    {food.image_url ? <img src={food.image_url} alt="" /> : <span>{initial(food.name)}</span>}
+                    <div>
+                      <strong>{food.name}</strong>
+                      <small>{foodTypeLabel(food.type)} · {formatMoney(food.estimated_cost)}</small>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={favoriteActionId === food.id}
+                      onClick={() => (food.favorited ? deleteFavoriteFood(food) : saveFavoriteFood(food))}
+                    >
+                      {favoriteActionId === food.id ? "Saving..." : food.favorited ? "Remove" : "Add"}
+                    </button>
+                  </article>
+                ))}
+              </div>
+            ) : favoriteSearch.trim() ? (
+              <p className={styles.favoriteEmpty}>No matching food found in the system.</p>
+            ) : null}
+
+            <div className={styles.favoriteListHeader}>
+              <h3>Saved favorites</h3>
+              <span>{favoriteFoods.length}</span>
+            </div>
+
+            {favoritesLoading ? (
+              <div className={styles.favoriteGrid}>
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <article className={styles.favoriteSkeleton} key={`favorite-skeleton-${index}`} aria-hidden="true">
+                    <span />
+                    <div>
+                      <span />
+                      <span />
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : favoriteFoods.length ? (
+              <div className={styles.favoriteGrid}>
+                {favoriteFoods.map((food) => (
+                  <article className={styles.favoriteCard} key={food.id}>
+                    {food.image_url ? <img src={food.image_url} alt="" /> : <span>{initial(food.name)}</span>}
+                    <div>
+                      <strong>{food.name}</strong>
+                      <small>{foodTypeLabel(food.type)} · {formatMoney(food.estimated_cost)}</small>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={favoriteActionId === food.id}
+                      onClick={() => deleteFavoriteFood(food)}
+                    >
+                      Remove
+                    </button>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p className={styles.favoriteEmpty}>No favorite foods yet.</p>
+            )}
+          </div>
+        </section>
       )}
 
       {settingsOpen ? (
@@ -342,6 +558,17 @@ export function UserProfilePage() {
               </button>
             </header>
             <div className={styles.followList}>
+              {followLoading
+                ? Array.from({ length: 6 }).map((_, index) => (
+                    <div className={styles.followSkeleton} key={`follow-skeleton-${index}`} aria-hidden="true">
+                      <span />
+                      <div>
+                        <span />
+                        <span />
+                      </div>
+                    </div>
+                  ))
+                : null}
               {followUsers.map((user) => (
                 <button
                   key={user.id}
@@ -358,7 +585,6 @@ export function UserProfilePage() {
                   </span>
                 </button>
               ))}
-              {followLoading ? <p>Loading users...</p> : null}
               {!followLoading && !followUsers.length ? <p>No users to show.</p> : null}
             </div>
           </section>

@@ -189,6 +189,17 @@ export function UserPublicProfilePage() {
               </button>
             </header>
             <div className={styles.followList}>
+              {followLoading
+                ? Array.from({ length: 6 }).map((_, index) => (
+                    <div className={styles.followSkeleton} key={`follow-skeleton-${index}`} aria-hidden="true">
+                      <span />
+                      <div>
+                        <span />
+                        <span />
+                      </div>
+                    </div>
+                  ))
+                : null}
               {followUsers.map((user) => (
                 <button
                   key={user.id}
@@ -205,7 +216,6 @@ export function UserPublicProfilePage() {
                   </span>
                 </button>
               ))}
-              {followLoading ? <p>Loading users...</p> : null}
               {!followLoading && !followUsers.length ? <p>No users to show.</p> : null}
             </div>
           </section>

@@ -37,6 +37,174 @@ function attachIngredientImages(ingredients, imageMap) {
   });
 }
 
+function foodSummary(req, food) {
+  return {
+    id: food.id,
+    name: food.name,
+    package: food.package,
+    type: food.type,
+    prepared: food.prepared,
+    estimated_cost: food.estimated_cost,
+    image: food.image,
+    image_url: makeUploadUrl(req, food.image),
+    created_at: food.created_at ? moment(food.created_at).format('YYYY-MM-DD HH:mm') : null,
+    favorited: Boolean(food.favorited),
+    favorite_id: food.favorite_id || null,
+    favorited_at: food.favorited_at ? moment(food.favorited_at).format('YYYY-MM-DD HH:mm') : null
+  };
+}
+
+function parseFoodId(value) {
+  const id = Number(value);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+// GET /foods/favorites/search?q=rice&type=rice
+router.get('/foods/favorites/search', authenticateUser, requireSubscription(), async (req, res) => {
+  const userId = req.user.id;
+  const q = String(req.query.q || '').trim();
+  const type = String(req.query.type || '').trim().toLowerCase();
+  const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 50);
+  const allowedTypes = ['rice', 'swallow', 'junks'];
+
+  if (type && !allowedTypes.includes(type)) {
+    return res.status(400).json({ message: `Invalid type. Allowed types: ${allowedTypes.join(', ')}` });
+  }
+
+  try {
+    const where = [];
+    const params = [userId];
+
+    if (q) {
+      where.push('(f.name LIKE ? OR f.package LIKE ? OR f.ingredients LIKE ?)');
+      const search = `%${q}%`;
+      params.push(search, search, search);
+    }
+
+    if (type) {
+      where.push('f.type = ?');
+      params.push(type);
+    }
+
+    params.push(limit);
+
+    const [foods] = await db.promise().query(
+      `SELECT f.id, f.name, f.package, f.ingredients, f.estimated_cost, f.image, f.type, f.prepared, f.created_at,
+              uff.id AS favorite_id, uff.created_at AS favorited_at,
+              CASE WHEN uff.id IS NULL THEN 0 ELSE 1 END AS favorited
+       FROM foods f
+       LEFT JOIN user_favorite_foods uff ON uff.food_id = f.id AND uff.user_id = ?
+       ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+       ORDER BY favorited DESC, f.name ASC
+       LIMIT ?`,
+      params
+    );
+
+    res.json({
+      query: q,
+      type: type || null,
+      foods: foods.map((food) => foodSummary(req, food))
+    });
+  } catch (error) {
+    console.error('Error searching favorite foods:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// GET /foods/favorites
+router.get('/foods/favorites', authenticateUser, requireSubscription(), async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const [foods] = await db.promise().query(
+      `SELECT f.id, f.name, f.package, f.estimated_cost, f.image, f.type, f.prepared, f.created_at,
+              uff.id AS favorite_id, uff.created_at AS favorited_at,
+              1 AS favorited
+       FROM user_favorite_foods uff
+       JOIN foods f ON f.id = uff.food_id
+       WHERE uff.user_id = ?
+       ORDER BY uff.created_at DESC`,
+      [userId]
+    );
+
+    res.json({ favorites: foods.map((food) => foodSummary(req, food)) });
+  } catch (error) {
+    console.error('Error fetching favorite foods:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// POST /foods/favorites
+router.post('/foods/favorites', authenticateUser, requireSubscription(), async (req, res) => {
+  const userId = req.user.id;
+  const foodId = parseFoodId(req.body?.food_id);
+
+  if (!foodId) {
+    return res.status(400).json({ message: 'food_id must be a positive number' });
+  }
+
+  try {
+    const [foods] = await db.promise().query(
+      'SELECT id FROM foods WHERE id = ? LIMIT 1',
+      [foodId]
+    );
+
+    if (!foods.length) {
+      return res.status(404).json({ message: 'Food not found in the system' });
+    }
+
+    await db.promise().query(
+      'INSERT IGNORE INTO user_favorite_foods (user_id, food_id) VALUES (?, ?)',
+      [userId, foodId]
+    );
+
+    const [rows] = await db.promise().query(
+      `SELECT f.id, f.name, f.package, f.estimated_cost, f.image, f.type, f.prepared, f.created_at,
+              uff.id AS favorite_id, uff.created_at AS favorited_at,
+              1 AS favorited
+       FROM user_favorite_foods uff
+       JOIN foods f ON f.id = uff.food_id
+       WHERE uff.user_id = ? AND uff.food_id = ?
+       LIMIT 1`,
+      [userId, foodId]
+    );
+
+    res.status(201).json({
+      message: 'Favorite food saved',
+      favorite: foodSummary(req, rows[0])
+    });
+  } catch (error) {
+    console.error('Error saving favorite food:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// DELETE /foods/favorites/:foodId
+router.delete('/foods/favorites/:foodId', authenticateUser, requireSubscription(), async (req, res) => {
+  const userId = req.user.id;
+  const foodId = parseFoodId(req.params.foodId);
+
+  if (!foodId) {
+    return res.status(400).json({ message: 'foodId must be a positive number' });
+  }
+
+  try {
+    const [result] = await db.promise().query(
+      'DELETE FROM user_favorite_foods WHERE user_id = ? AND food_id = ?',
+      [userId, foodId]
+    );
+
+    if (!result.affectedRows) {
+      return res.status(404).json({ message: 'Favorite food not found' });
+    }
+
+    res.json({ message: 'Favorite food removed' });
+  } catch (error) {
+    console.error('Error removing favorite food:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 // GET /foods/suggest/:type
 router.get('/foods/suggest/:type', authenticateUser, requireSubscription(), async (req, res) => {
   const userId = req.user.id;
