@@ -1,5 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { FiCheckCircle, FiPlus, FiSearch, FiShield, FiTrash2, FiUser, FiUserPlus, FiUsers, FiX } from "react-icons/fi";
+import {
+  FiCheckCircle,
+  FiChevronLeft,
+  FiChevronRight,
+  FiPlus,
+  FiSearch,
+  FiShield,
+  FiTrash2,
+  FiUser,
+  FiEye,
+  FiUserPlus,
+  FiUsers,
+  FiX,
+} from "react-icons/fi";
 import { useToast } from "../../../components/feedback/useToast";
 import { getApiError } from "../../../lib/api";
 import { getCurrentUser } from "../../../lib/auth";
@@ -12,6 +25,8 @@ import {
   updateAdminAutoFollowSettings,
 } from "../../../lib/api/adminApi";
 import styles from "./AdminUsersPage.module.css";
+
+const USERS_PER_PAGE = 10;
 
 function formatDate(value) {
   if (!value) return "Unavailable";
@@ -45,9 +60,11 @@ export function AdminUsersPage() {
   const [users, setUsers] = useState([]);
   const [plans, setPlans] = useState([]);
   const [query, setQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [viewTarget, setViewTarget] = useState(null);
   const [demoModalOpen, setDemoModalOpen] = useState(false);
   const [demoSaving, setDemoSaving] = useState(false);
   const [createdDemoPassword, setCreatedDemoPassword] = useState("");
@@ -194,6 +211,12 @@ export function AdminUsersPage() {
       ),
     [normalizedQuery, users]
   );
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / USERS_PER_PAGE));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const pageStart = (safeCurrentPage - 1) * USERS_PER_PAGE;
+  const paginatedUsers = filteredUsers.slice(pageStart, pageStart + USERS_PER_PAGE);
+  const pageFirstItem = filteredUsers.length ? pageStart + 1 : 0;
+  const pageLastItem = Math.min(pageStart + USERS_PER_PAGE, filteredUsers.length);
   const totalVerified = users.filter((user) => user.verified).length;
   const activeSubscriptions = users.filter((user) => user.status === "active").length;
   const admins = users.filter((user) => user.role === "admin").length;
@@ -226,7 +249,10 @@ export function AdminUsersPage() {
           <FiSearch aria-hidden="true" />
           <input
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setCurrentPage(1);
+            }}
             placeholder="Search name, email, plan..."
           />
         </label>
@@ -335,7 +361,11 @@ export function AdminUsersPage() {
             <p className={styles.kicker}>Accounts</p>
             <h2>All users</h2>
           </div>
-          <span>{loading ? "Loading..." : `${filteredUsers.length} shown`}</span>
+          <span>
+            {loading
+              ? "Loading..."
+              : `${pageFirstItem}-${pageLastItem} of ${filteredUsers.length}`}
+          </span>
         </div>
 
         <div className={styles.table}>
@@ -346,7 +376,7 @@ export function AdminUsersPage() {
             <span>Joined</span>
             <span>Actions</span>
           </div>
-          {filteredUsers.map((user) => (
+          {paginatedUsers.map((user) => (
             <article className={styles.tableRow} key={user.user_id}>
               <div className={styles.userCell}>
                 <strong>
@@ -368,6 +398,15 @@ export function AdminUsersPage() {
               </div>
               <div className={styles.actionCell}>
                 <button
+                  className={styles.viewButton}
+                  type="button"
+                  onClick={() => setViewTarget(user)}
+                  aria-label={`View ${user.username || "user"}`}
+                  title="View user"
+                >
+                  <FiEye aria-hidden="true" />
+                </button>
+                <button
                   type="button"
                   disabled={deletingId === user.user_id || Number(currentAdmin?.id) === Number(user.user_id)}
                   onClick={() => setDeleteTarget(user)}
@@ -385,6 +424,32 @@ export function AdminUsersPage() {
           ))}
           {!loading && !filteredUsers.length ? <p className={styles.empty}>No users match this search.</p> : null}
         </div>
+
+        {!loading && filteredUsers.length ? (
+          <div className={styles.pagination}>
+            <button
+              type="button"
+              disabled={safeCurrentPage <= 1}
+              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+              aria-label="Previous users page"
+            >
+              <FiChevronLeft aria-hidden="true" />
+              Previous
+            </button>
+            <span>
+              Page {safeCurrentPage} of {totalPages}
+            </span>
+            <button
+              type="button"
+              disabled={safeCurrentPage >= totalPages}
+              onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+              aria-label="Next users page"
+            >
+              Next
+              <FiChevronRight aria-hidden="true" />
+            </button>
+          </div>
+        ) : null}
       </section>
 
       {deleteTarget ? (
@@ -416,6 +481,81 @@ export function AdminUsersPage() {
                 {deletingId === deleteTarget.user_id ? "Deleting..." : "Delete user"}
               </button>
             </footer>
+          </section>
+        </div>
+      ) : null}
+
+      {viewTarget ? (
+        <div className={styles.modalBackdrop} role="presentation">
+          <section className={`${styles.modal} ${styles.userInfoModal}`} role="dialog" aria-modal="true" aria-label="User information">
+            <header>
+              <div>
+                <p className={styles.kicker}>User information</p>
+                <h2>{viewTarget.username || "User account"}</h2>
+              </div>
+              <button type="button" onClick={() => setViewTarget(null)} aria-label="Close user information">
+                <FiX aria-hidden="true" />
+              </button>
+            </header>
+
+            <dl className={styles.userInfoList}>
+              <div>
+                <dt>User ID</dt>
+                <dd>{viewTarget.user_id}</dd>
+              </div>
+              <div>
+                <dt>Username</dt>
+                <dd>{viewTarget.username || "Unavailable"}</dd>
+              </div>
+              <div>
+                <dt>Email</dt>
+                <dd>{viewTarget.email || "Unavailable"}</dd>
+              </div>
+              <div>
+                <dt>Role</dt>
+                <dd>{viewTarget.role || "user"}</dd>
+              </div>
+              <div>
+                <dt>Account type</dt>
+                <dd>{viewTarget.is_demo ? "Demo user" : "Real user"}</dd>
+              </div>
+              <div>
+                <dt>Verified</dt>
+                <dd>{viewTarget.verified ? "Yes" : "No"}</dd>
+              </div>
+              <div>
+                <dt>Subscription</dt>
+                <dd>{viewTarget.status || "No plan"}</dd>
+              </div>
+              <div>
+                <dt>Plan</dt>
+                <dd>{viewTarget.plan_name || "No subscription"}</dd>
+              </div>
+              <div>
+                <dt>Joined</dt>
+                <dd>{formatDate(viewTarget.created_at)}</dd>
+              </div>
+              <div>
+                <dt>Expires</dt>
+                <dd>{formatDate(viewTarget.expiry_date)}</dd>
+              </div>
+              {viewTarget.bio ? (
+                <div className={styles.wideInfo}>
+                  <dt>Bio</dt>
+                  <dd>{viewTarget.bio}</dd>
+                </div>
+              ) : null}
+              <div className={styles.wideInfo}>
+                <dt>Password</dt>
+                <dd>
+                  {viewTarget.is_demo && viewTarget.demo_password ? (
+                    <strong className={styles.demoPasswordText}>{viewTarget.demo_password}</strong>
+                  ) : (
+                    "Only demo account passwords can be viewed."
+                  )}
+                </dd>
+              </div>
+            </dl>
           </section>
         </div>
       ) : null}

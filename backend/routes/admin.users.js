@@ -65,6 +65,7 @@ router.get('/users', authenticateAdmin, async (req, res) => {
          role,
          verified,
          is_demo,
+         demo_password,
          created_at,
          updated_at
        FROM users
@@ -95,6 +96,7 @@ router.get('/users/subscriptions', authenticateAdmin, async (req, res) => {
          u.role,
          u.verified,
          u.is_demo,
+         u.demo_password,
          s.id AS subscription_id,
          s.plan_name,
          s.status AS subscription_status,
@@ -138,6 +140,7 @@ router.get('/users-with-subscriptions', authenticateAdmin, async (req, res) => {
          u.role,
          u.verified,
          u.is_demo,
+         u.demo_password,
          u.created_at,
          u.updated_at,
          s.id AS subscription_id,
@@ -278,9 +281,9 @@ router.post('/users/demo', authenticateAdmin, async (req, res) => {
 
     try {
       const [result] = await conn.query(
-        `INSERT INTO users (username, email, bio, password_hash, role, verified, is_demo)
-         VALUES (?, ?, ?, ?, 'user', ?, 1)`,
-        [username, email, bio, passwordHash, verified ? 1 : 0]
+        `INSERT INTO users (username, email, bio, password_hash, role, verified, is_demo, demo_password)
+         VALUES (?, ?, ?, ?, 'user', ?, 1, ?)`,
+        [username, email, bio, passwordHash, verified ? 1 : 0, password]
       );
       const userId = result.insertId;
 
@@ -305,6 +308,7 @@ router.post('/users/demo', authenticateAdmin, async (req, res) => {
           role: 'user',
           verified: verified ? 1 : 0,
           is_demo: 1,
+          demo_password: password,
           status: createSubscription ? 'active' : null,
           plan_name: createSubscription ? planName : null,
           created_at: moment().format('YYYY-MM-DD HH:mm:ss')
@@ -337,6 +341,7 @@ router.get('/users/:id', authenticateAdmin, async (req, res) => {
          role,
          verified,
          is_demo,
+         demo_password,
          created_at,
          updated_at
        FROM users
