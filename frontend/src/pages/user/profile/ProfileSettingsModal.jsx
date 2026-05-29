@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { FiKey, FiTrash2, FiUser, FiX } from "react-icons/fi";
+import { FiKey, FiTrash2, FiUser, FiX, FiSun } from "react-icons/fi";
+import { useTheme } from "../../../components/feedback/ThemeContext";
 import styles from "./ProfileSettingsModal.module.css";
 
 const sections = [
   { value: "profile", label: "Update profile", icon: FiUser },
   { value: "password", label: "Change password", icon: FiKey },
+  { value: "theme", label: "Theme", icon: FiSun },
   { value: "delete", label: "Delete account", icon: FiTrash2 },
 ];
 
@@ -18,6 +20,7 @@ export function ProfileSettingsModal({
   onPasswordSave,
   onSave,
 }) {
+  const { theme, toggleTheme } = useTheme();
   const [section, setSection] = useState("profile");
   const [form, setForm] = useState({
     username: profile?.username || "",
@@ -184,6 +187,36 @@ export function ProfileSettingsModal({
               </button>
             </div>
           </form>
+        ) : null}
+
+        {section === "theme" ? (
+          <div className={styles.themeSection}>
+            <div className={styles.sectionTitle}>
+              <p>Appearance</p>
+              <h3>Theme</h3>
+            </div>
+            <div className={styles.themeOptions}>
+              <button
+                type="button"
+                className={`${styles.themeButton} ${theme === "dark" ? styles.themeActive : ""}`}
+                onClick={toggleTheme}
+              >
+                <span className={styles.themePreview} style={{ background: "var(--fitme-bg)" }} />
+                <span>Dark</span>
+              </button>
+              <button
+                type="button"
+                className={`${styles.themeButton} ${theme === "light" ? styles.themeActive : ""}`}
+                onClick={toggleTheme}
+              >
+                <span className={styles.themePreview} style={{ background: "#f8fafc" }} />
+                <span>Light</span>
+              </button>
+            </div>
+            <div className={styles.themeInfo}>
+              <p>Current theme: <strong>{theme === "dark" ? "Dark" : "Light"}</strong></p>
+            </div>
+          </div>
         ) : null}
 
         {section === "delete" ? (
